@@ -1,5 +1,5 @@
-# CENTOSY ARENA — SESSION HANDOFF 03
-_Cập nhật: 06/06/2026 — Bàn giao sau chuỗi STEP 23A–23H_
+# CENTOSY ARENA — SESSION HANDOFF 04
+_Cập nhật: 06/06/2026 — Bàn giao sau chuỗi STEP 24A–24F_
 
 ---
 
@@ -15,7 +15,7 @@ Tech stack:
 - Vite 5 · React 18 · TypeScript 5 · Tailwind CSS 3
 - Supabase Auth / Database (@supabase/supabase-js ^2.107.0)
 
-Chạy: `npm run dev` → `http://localhost:5173`
+Chạy local: `npm run dev` → `http://localhost:5173`
 Thư mục: `F:\CLAUDE CODE HÓA\`
 Build: `npm run build` → ✅ 94 modules, 0 lỗi TypeScript
 
@@ -27,7 +27,7 @@ Build: `npm run build` → ✅ 94 modules, 0 lỗi TypeScript
 |---|---|---|
 | Home Dashboard | `src/pages/HomePage.tsx` | ✅ UI OK, data mock |
 | Game Center | `src/pages/GamesPage.tsx` | ✅ UI OK, 1 game active |
-| Leaderboard / Rank | `src/pages/RankPage.tsx` | ✅ **Đọc điểm thật từ Supabase RPC** |
+| Leaderboard / Rank | `src/pages/RankPage.tsx` | ✅ Đọc điểm thật qua `get_leaderboard()` RPC |
 | Honor Wall | `src/pages/HonorPage.tsx` | ✅ UI OK, data mock |
 | Profile | `src/pages/ProfilePage.tsx` | ✅ Identity từ Supabase, badges/history mock |
 | Bottom Navigation | `src/components/BottomNav.tsx` | ✅ 5 tab cố định |
@@ -38,191 +38,161 @@ Build: `npm run build` → ✅ 94 modules, 0 lỗi TypeScript
 | Game: Khách hàng khó tính — Intro | `src/components/games/DifficultCustomerIntro.tsx` | ✅ |
 | Game: Khách hàng khó tính — Play | `src/components/games/DifficultCustomerGame.tsx` | ✅ Logic OK |
 | Game: Khách hàng khó tính — Feedback | `src/components/games/DifficultCustomerFeedback.tsx` | ✅ |
-| Game: Khách hàng khó tính — Result | `src/components/games/DifficultCustomerResult.tsx` | ✅ **Lưu điểm thật vào Supabase** |
+| Game: Khách hàng khó tính — Result | `src/components/games/DifficultCustomerResult.tsx` | ✅ Lưu điểm thật vào Supabase |
 
 ---
 
-## 3. Supabase Auth Status
+## 3. STEP 23 Status (đã hoàn thành)
 
-| Step | Trạng thái | Evidence |
+| Step | Trạng thái | File |
 |---|---|---|
-| STEP 21A — Setup client | ✅ DONE | `src/lib/supabaseClient.ts` · `@supabase/supabase-js ^2.107.0` |
-| STEP 21B — Schema SQL | ✅ DONE | `supabase/schema.sql` — profiles, RLS, trigger |
-| STEP 21C — AuthContext | ✅ DONE | Dùng `signInWithPassword`, `getSession`, `onAuthStateChange` |
-| STEP 21D — LoginScreen | ✅ DONE | Gọi `useAuth().login()` async, lỗi tiếng Việt |
-| STEP 21E — Role-based UI | ✅ DONE | Badge ADMIN/NHÂN VIÊN từ DB role |
-| STEP 21F — AdminPanel | ✅ DONE | Fetch profiles + game stats từ Supabase |
-| STEP 21G — QA Auth | ✅ DONE | |
+| 23A — game_results SQL | ✅ DONE | `supabase/game_results.sql` |
+| 23B — Save game result | ✅ DONE | `src/components/games/DifficultCustomerResult.tsx` |
+| 23C — Rank real data | ✅ DONE | `src/pages/RankPage.tsx` |
+| 23C-2 — leaderboard_view | ✅ DONE | `supabase/leaderboard_view.sql` |
+| 23D — AdminPanel staff status | ✅ DONE | `src/components/admin/AdminPanel.tsx` |
+| 23E — Beta accounts guide | ✅ DONE | `docs/PUBLIC_BETA_ACCOUNTS.md` |
+| 23F — QA + bug fix | ✅ DONE | `src/index.css` · `src/pages/RankPage.tsx` |
+| 23H — Handoff | ✅ DONE | `SESSION_HANDOFF.md` |
 
 ---
 
-## 4. STEP 23 Status
+## 4. STEP 24 Status
 
-| Step | Trạng thái | File tạo/sửa |
+| Step | Trạng thái | Ghi chú |
 |---|---|---|
-| **23A** — game_results SQL | ✅ CODE DONE | `supabase/game_results.sql` tạo mới |
-| **23B** — Save game result | ✅ CODE DONE | `src/components/games/DifficultCustomerResult.tsx` |
-| **23C** — Rank real data | ✅ CODE DONE | `src/pages/RankPage.tsx` (viết lại) |
-| **23C-2** — leaderboard_view | ✅ CODE DONE | `supabase/leaderboard_view.sql` tạo mới |
-| **23D** — AdminPanel staff status | ✅ CODE DONE | `src/components/admin/AdminPanel.tsx` |
-| **23E** — Beta accounts guide | ✅ CODE DONE | `docs/PUBLIC_BETA_ACCOUNTS.md` tạo mới |
-| **23F** — QA + bug fix | ✅ CODE DONE | `src/index.css` + `src/pages/RankPage.tsx` |
-| **23G** — Deploy | ⏳ CHƯA LÀM | Chờ xác nhận SQL + tài khoản test |
-| **23H** — Update handoff | ✅ CODE DONE | `SESSION_HANDOFF.md` |
+| **24A** — Pre-deploy check | ✅ DONE | Build PASS · Security PASS · Env PASS · Git chưa init |
+| **24B** — Fix deploy blocker | ✅ DONE | `git init` · initial commit `8181d02` · 51 files |
+| **24C** — Vercel config | ✅ DONE | `vercel.json` tạo mới · commit `4d40058` |
+| **24D** — Deploy guide | ✅ DONE | `docs/VERCEL_DEPLOY_GUIDE.md` · commit `07b9b66` |
+| **24E** — Public link QA | ⏳ CHỜ URL | Deploy thủ công chưa xong — chờ bạn push GitHub + deploy Vercel |
+| **24F** — Handoff update | ✅ DONE | File này |
 
 ---
 
-## 5. Việc cần xác nhận thủ công trên Supabase
+## 5. Deploy Status
 
-> Các bước dưới đây phải làm trên Supabase Dashboard — không tự động từ code.
+### Git repository
+- ✅ Đã `git init`
+- ✅ Initial commit: `8181d02` — 51 files
+- ✅ Vercel config commit: `4d40058`
+- ✅ Deploy guide commit: `07b9b66`
+- ✅ `.env.local` không nằm trong commit (đúng)
+- ⏳ **Chưa push lên GitHub** — bạn cần làm thủ công
 
-### SQL cần chạy trong Supabase SQL Editor (theo thứ tự):
+### Vercel
+- ⏳ **Chưa deploy** — chờ GitHub push xong
+
+### Public URL
+- ⏳ **Chưa có** — sẽ cập nhật sau khi deploy
+
+---
+
+## 6. Vercel Environment Variables
+
+Khi deploy, thêm đúng 2 biến sau vào Vercel Dashboard (không ghi giá trị thật vào file này):
+
+| Name | Environments |
+|---|---|
+| `VITE_SUPABASE_URL` | Production · Preview · Development |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Production · Preview · Development |
+
+**Tuyệt đối không thêm:**
+- `SUPABASE_SERVICE_ROLE_KEY`
+- Database password
+- JWT secret
+
+---
+
+## 7. Supabase Manual Checklist
+
+Các SQL cần chạy trên Supabase SQL Editor (theo thứ tự):
 
 | Thứ tự | File | Trạng thái |
 |---|---|---|
-| 1 | `supabase/schema.sql` | Phải chạy trước (profiles, RLS, trigger) |
-| 2 | `supabase/game_results.sql` | **Cần xác nhận đã chạy chưa** |
-| 3 | `supabase/leaderboard_view.sql` | **Cần xác nhận đã chạy chưa** — RankPage cần function này |
+| 1 | `supabase/schema.sql` | **Cần xác nhận thủ công** |
+| 2 | `supabase/game_results.sql` | **Cần xác nhận thủ công** |
+| 3 | `supabase/leaderboard_view.sql` | **Cần xác nhận thủ công** — Rank Page phụ thuộc file này |
 
-### Tài khoản test cần tạo:
-
-- Ít nhất **1 admin** và **2 staff** từ các phòng ban khác nhau.
-- Xem hướng dẫn đầy đủ: `docs/PUBLIC_BETA_ACCOUNTS.md`
-- SQL update profile mẫu: `docs/PUBLIC_BETA_ACCOUNTS.md` — mục 5A, 5B, 5C.
-
-### Kiểm tra sau khi tạo tài khoản:
-
-- [ ] Đăng nhập được
-- [ ] Profile đúng tên/phòng ban/role
-- [ ] Chơi game → thấy "Đã lưu điểm vào BXH"
-- [ ] Rank Page hiển thị điểm thật (cần `leaderboard_view.sql` đã chạy)
-- [ ] AdminPanel hiển thị đúng trạng thái nhân sự
-
-### Biến môi trường:
-
-- [ ] `.env.local` có `VITE_SUPABASE_URL`
-- [ ] `.env.local` có `VITE_SUPABASE_PUBLISHABLE_KEY`
-- Không commit `.env.local` lên git (đã có trong `.gitignore`)
+Tài khoản test cần có: ít nhất **1 admin** + **2 staff** từ các phòng ban khác nhau.
+Xem hướng dẫn: `docs/PUBLIC_BETA_ACCOUNTS.md`
 
 ---
 
-## 6. Current Auth Mode & Data Status
+## 8. Mock Data còn lại (chấp nhận được cho beta)
 
-**Auth:** Supabase Auth — hoàn toàn thật.
+| Page | Phần còn mock |
+|---|---|
+| ProfilePage | `weeklyRank`, `mockGameHistory`, `mockRecentAchievements` |
+| HomePage | `mockCampaigns`, top 5 users |
+| HonorPage | Toàn bộ `mockHonors` |
 
-**Dữ liệu thật:**
-- `public.profiles` → tên, email, role, department
-- `public.game_results` → điểm game, lượt chơi
-- Rank Page → gọi `supabase.rpc('get_leaderboard')` — SECURITY DEFINER, bypass RLS an toàn
-
-**Mock data còn lại (chấp nhận được cho beta):**
-- `RankPage` → không còn mock ✅
-- `ProfilePage` → `weeklyRank`, `mockGameHistory`, `mockRecentAchievements` vẫn mock
-- `HomePage` → `mockCampaigns`, top 5 mock
-- `HonorPage` → `mockHonors`
+Các phần này không crash app, chỉ hiển thị dữ liệu giả — chấp nhận được cho beta sớm.
 
 ---
 
-## 7. Public Beta Readiness
+## 9. Lỗi còn tồn tại
 
-**Mức sẵn sàng: 8/10** _(sau khi SQL đã chạy và tài khoản đã tạo)_
-
-### Chặn deploy (phải xong trước):
-
-1. **Chạy `supabase/game_results.sql`** trên Supabase SQL Editor
-2. **Chạy `supabase/leaderboard_view.sql`** trên Supabase SQL Editor
-3. **Tạo ít nhất 1 admin + 2 staff** theo `docs/PUBLIC_BETA_ACCOUNTS.md`
-4. **Xác nhận `.env.local`** có đủ 2 biến Supabase
-
-### Chấp nhận được cho beta sớm:
-
-5. Profile weeklyRank/badges/gameHistory còn mock
-6. Honor Wall còn mock
-7. Home Dashboard còn mock
-8. Chỉ có 1 game playable (6 game còn "Sắp ra mắt")
-
-### Build status:
-
-- `npm run build` → ✅ PASS (94 modules, ~2s, 0 lỗi TypeScript)
-- `npx tsc --noEmit` → ✅ 0 lỗi
-- Không có `service_role` key trong source code
-- `.gitignore` đã có `.env`, `.env.local`, `.env.production`
+| Lỗi | Mức độ | Ghi chú |
+|---|---|---|
+| ProfilePage weeklyRank/gameHistory là mock | Chấp nhận được | Không crash, chỉ hiển thị giả |
+| Leaderboard filter phòng ban cần `leaderboard_view.sql` đã chạy | Chặn nếu SQL chưa chạy | Rank Page hiện `fetchError` nếu function chưa tồn tại |
+| Chỉ 1 game playable (6 game còn "Sắp ra mắt") | Chấp nhận được | Game thứ 2 là roadmap tiếp theo |
 
 ---
 
-## 8. Next Roadmap
+## 10. Next Roadmap
 
 ```
-STEP 23G — Deploy public beta lên Vercel / Netlify
-STEP 24A — QA public link trên điện thoại thật
-STEP 24B — Tạo hàng loạt tài khoản cho 80 nhân sự (script / bulk import)
-STEP 24C — ProfilePage đọc game history thật từ game_results
-STEP 24D — Honor Wall thật từ Supabase
-STEP 24E — Home Dashboard thật (campaigns, top 5)
-STEP 24F — Game thứ 2
+[ĐỢI] Deploy lên Vercel + push GitHub
+[ĐỢI] STEP 24E — QA public link trên điện thoại thật
+[SAU KHI QA PASS]
+  → Mời 5–10 nhân sự test nội bộ
+  → Thu thập feedback
+  → STEP 25A — Fix lỗi từ beta feedback
+  → STEP 25B — ProfilePage đọc game history thật từ game_results
+  → STEP 25C — Bulk tạo tài khoản 80 nhân sự
+  → STEP 25D — Game thứ 2
 ```
 
 ---
 
-## 9. Recommended Next Step
+## 11. Recommended Next Step
 
-**Next step: STEP 23G — Deploy public beta lên Vercel**
+**Nếu QA public link PASS:**
+→ Mời 5–10 nhân sự Centosy test theo hướng dẫn `docs/PUBLIC_BETA_ACCOUNTS.md`
 
-Điều kiện trước khi deploy:
-- Tất cả SQL đã chạy trên Supabase
-- Ít nhất 1 admin + 2 staff tạo thành công
-- Test end-to-end: login → chơi game → thấy điểm trên Rank
+**Nếu QA public link FAIL (lỗi cụ thể):**
+→ Paste lỗi vào Claude Code → sửa đúng 1 lỗi → redeploy
 
-Likely steps khi deploy Vercel:
-1. `npm run build` → kiểm tra 0 lỗi
-2. Push code lên GitHub (chú ý không commit `.env.local`)
-3. Kết nối Vercel với repo
-4. Thêm env vars trên Vercel dashboard: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`
-5. Deploy → lấy public URL
-6. Test trên điện thoại thật
+**Việc cần làm ngay (thủ công):**
+1. Tạo repo GitHub → push code
+2. Deploy lên Vercel + thêm 2 env vars
+3. Chạy 3 file SQL trên Supabase nếu chưa chạy
+4. Tạo tài khoản test theo `docs/PUBLIC_BETA_ACCOUNTS.md`
+5. Test trên điện thoại thật → báo kết quả
 
 ---
 
-## 10. Important Rules (không thay đổi)
-
-- Không dùng `service_role` key trong frontend
-- Không hardcode key thật trong source code
-- Không tạo signup public tự do cho nhân viên
-- Không mở quyền staff xem toàn bộ profiles của người khác
-- Không refactor toàn bộ project
-- Không phá UI MVP
-- Không deploy trước khi SQL đã chạy và tài khoản test đã xác nhận
-- Mỗi prompt chỉ làm 1 step nhỏ
-- Sau mỗi step phải báo: `DONE STEP [code]` + files changed + notes + cách test nhanh
-
----
-
-## 11. Files Changed in STEP 23
+## 12. Files Changed in STEP 24
 
 ### Tạo mới:
-- `supabase/game_results.sql` — bảng game_results + RLS + indexes
-- `supabase/leaderboard_view.sql` — SECURITY DEFINER function get_leaderboard()
-- `docs/PUBLIC_BETA_ACCOUNTS.md` — hướng dẫn tạo tài khoản beta
+- `vercel.json` — SPA rewrite config
+- `docs/VERCEL_DEPLOY_GUIDE.md` — hướng dẫn deploy 8 bước + 7 lỗi thường gặp
 
-### Sửa:
-- `src/components/games/DifficultCustomerResult.tsx` — lưu điểm vào Supabase
-- `src/pages/RankPage.tsx` — đọc điểm thật qua RPC, không dùng mock
-- `src/components/admin/AdminPanel.tsx` — KPI cards + game stats + status badge
-- `src/index.css` — thêm `@keyframes spin` cho spinner
-- `SESSION_HANDOFF.md` — file này
+### Git commits:
+- `8181d02` — Initial commit (51 files)
+- `4d40058` — Add vercel.json
+- `07b9b66` — Add VERCEL_DEPLOY_GUIDE.md
 
 ### Không sửa:
-- `src/context/AuthContext.tsx`
-- `src/components/auth/LoginScreen.tsx`
-- `supabase/schema.sql`
+- Toàn bộ `src/` (không có thay đổi code trong STEP 24)
+- `supabase/` SQL files
 - `tailwind.config.js`
-- `src/components/Layout.tsx`
-- `src/components/BottomNav.tsx`
-- `src/components/games/DifficultCustomerGame.tsx`
 
 ---
 
-## 12. Prompt To Start New Session
+## 13. Prompt To Start New Session
 
 Copy đoạn sau sang Claude Code new session:
 
@@ -244,17 +214,20 @@ READY FOR NEXT STEP
 1. Tôi hiểu app CENTOSY ARENA hiện tại:
 - ...
 
-2. STEP 23 đã hoàn thành:
+2. STEP 24 đã hoàn thành:
 - ...
 
-3. Việc cần xác nhận thủ công trên Supabase:
+3. Việc còn cần làm thủ công:
 - ...
 
-4. Next step duy nhất:
-- STEP 23G — Deploy public beta lên Vercel
-
-5. Những việc không được tự làm:
+4. Lỗi còn tồn tại:
 - ...
 
-Sau đó chờ tôi đưa prompt STEP tiếp theo.
+5. Next step duy nhất:
+- STEP 24E — QA public link trên điện thoại thật (sau khi deploy Vercel)
+
+6. Những việc không được tự làm:
+- ...
+
+Sau đó chờ tôi đưa prompt tiếp theo.
 ```
