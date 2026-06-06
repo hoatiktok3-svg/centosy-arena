@@ -1,0 +1,143 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Base ──────────────────────────────────────── */
+@layer base {
+  html, body, #root {
+    @apply bg-arena-bg text-text-primary min-h-screen;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  * { box-sizing: border-box; }
+
+  /* Scroll behaviour */
+  html { scroll-behavior: smooth; }
+  ::-webkit-scrollbar { display: none; }
+  * { scrollbar-width: none; -ms-overflow-style: none; }
+}
+
+/* ─── Components ─────────────────────────────────── */
+@layer components {
+
+  /* ── Cards ── */
+  .arena-card {
+    @apply bg-arena-card rounded-2xl border border-arena-border p-4 shadow-card-sm;
+  }
+
+  .arena-card-glow {
+    @apply bg-arena-card rounded-2xl border border-brand-border p-4;
+    box-shadow: 0 0 22px rgba(233,78,27,0.16), 0 4px 24px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.04);
+  }
+
+  .arena-card-high {
+    @apply bg-arena-cardHigh rounded-2xl border border-arena-border p-4 shadow-card;
+  }
+
+  /* ── Buttons ── */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2
+           bg-brand text-white font-black text-sm
+           px-5 py-3 rounded-2xl tracking-wide
+           hover:bg-brand-hover active:scale-[0.97]
+           transition-all duration-150
+           shadow-glow-sm;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2
+           bg-transparent text-brand font-bold text-sm
+           px-5 py-3 rounded-2xl
+           border border-brand-border
+           hover:bg-brand hover:text-white hover:border-brand
+           active:scale-[0.97]
+           transition-all duration-150;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2
+           bg-arena-muted text-text-secondary font-semibold text-sm
+           px-5 py-3 rounded-2xl
+           hover:bg-arena-border hover:text-white
+           active:scale-[0.97]
+           transition-all duration-150;
+  }
+
+  /* ── Badges ── */
+  .badge {
+    @apply inline-flex items-center gap-1
+           text-[11px] font-bold
+           px-2.5 py-1 rounded-full leading-none;
+  }
+
+  .badge-brand {
+    @apply badge bg-brand-muted text-brand;
+  }
+
+  .badge-gray {
+    @apply badge bg-arena-muted text-text-secondary;
+  }
+
+  /* ── Section title ── */
+  .section-title {
+    @apply text-[15px] font-black text-text-primary tracking-[0.1em] uppercase;
+  }
+
+  .section-title-brand {
+    @apply section-title text-brand;
+  }
+
+  /* ── Filter pill ── */
+  .filter-pill {
+    @apply shrink-0 px-4 py-2 rounded-full text-xs font-bold border
+           transition-all duration-150 cursor-pointer;
+  }
+
+  .filter-pill-active {
+    @apply filter-pill bg-brand text-white border-brand shadow-glow-xs;
+  }
+
+  .filter-pill-inactive {
+    @apply filter-pill bg-arena-card text-text-secondary border-arena-border
+           hover:border-brand-border hover:text-white;
+  }
+
+  /* ── Divider ── */
+  .arena-divider {
+    @apply border-t border-arena-border my-4;
+  }
+
+  /* ── Scrollbar hide ── */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* ── Spinner keyframe (dùng inline style animation: 'spin ...') ── */
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  /* ── Line clamp ── */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* ── Stat box ── */
+  .stat-box {
+    @apply flex flex-col items-center justify-center
+           bg-arena-cardHigh rounded-2xl border border-arena-border
+           py-3.5 px-2 shadow-card-sm;
+  }
+
+  .stat-value {
+    @apply font-black text-2xl text-white leading-none;
+  }
+
+  .stat-label {
+    @apply text-[10px] text-text-muted uppercase tracking-widest mt-1.5 text-center leading-tight;
+  }
+}
