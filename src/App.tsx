@@ -24,7 +24,7 @@ export default function App() {
 
   const renderPage = () => {
     switch (activeTab) {
-      case 'home':    return <HomePage />
+      case 'home':    return <HomePage onGoToGames={() => setActiveTab('games')} onGoToHonor={() => setActiveTab('honor')} />
       case 'games':   return <GamesPage />
       case 'rank':    return <RankPage />
       case 'honor':   return <HonorPage />
