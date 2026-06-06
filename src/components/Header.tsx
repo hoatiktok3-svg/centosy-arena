@@ -16,7 +16,10 @@ export default function Header() {
             src="/logo-centosy.png"
             alt="Centosy"
             className="h-10 w-auto object-contain"
-            style={{ filter: 'drop-shadow(0 0 10px rgba(233,78,27,0.55))' }}
+            style={{
+              filter: 'invert(1) hue-rotate(180deg) drop-shadow(0 0 10px rgba(233,78,27,0.7))',
+              mixBlendMode: 'screen',
+            }}
           />
           <div className="flex flex-col justify-center leading-none" style={{ gap: '3px' }}>
             <div className="flex items-baseline gap-[5px] leading-none">

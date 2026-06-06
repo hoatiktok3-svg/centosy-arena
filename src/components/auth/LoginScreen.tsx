@@ -27,6 +27,10 @@ export default function LoginScreen() {
             src="/logo-centosy.png"
             alt="Centosy"
             className="h-14 w-auto object-contain mb-4"
+            style={{
+              filter: 'invert(1) hue-rotate(180deg) drop-shadow(0 0 12px rgba(233,78,27,0.6))',
+              mixBlendMode: 'screen',
+            }}
           />
           <h1 className="text-2xl font-black tracking-widest text-text-primary uppercase">
             CENTOSY ARENA
