@@ -1,10 +1,13 @@
 # CURRENT STEP — CENTOSY ARENA
 
-Current Step:           STEP 37 (chưa bắt đầu)
-Last Completed Step:    STEP 36 — Safe Vercel Internal Test
-Next Recommended Step:  STEP 37 (đọc file centosy-arena-prompts/02_MVP_TESTING/STEP_37_*.md)
-Build Status:           ✅ OK — tsc 0 lỗi, vite build OK (539KB chunk warning — bỏ qua)
-Git Status:             ✅ Đã commit đến STEP 36 (c135f39)
+Current Step:           STEP 38 (chưa bắt đầu)
+Last Completed Step:    STEP 37 — Employee Feedback Form
+Next Recommended Step:  STEP 38 (đọc file centosy-arena-prompts/02_MVP_TESTING/STEP_38_*.md)
+Build Status:           ✅ OK — tsc 0 lỗi, vite build OK (548KB chunk warning — bỏ qua)
+Git Status:             ✅ Đã commit đến STEP 37 (3f449c8)
+
+SQL mới cần chạy:
+  - supabase/feedback.sql (STEP 37)
 
 Do Not Touch:
   - src/context/AuthContext.tsx
