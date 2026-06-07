@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 
 interface Props {
-  onGoToRegister: () => void
+  onGoToRegister:      () => void
+  onGoToForgotPassword: () => void
 }
 
-export default function LoginScreen({ onGoToRegister }: Props) {
+export default function LoginScreen({ onGoToRegister, onGoToForgotPassword }: Props) {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -63,9 +64,19 @@ export default function LoginScreen({ onGoToRegister }: Props) {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">
-              Mật khẩu
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                Mật khẩu
+              </label>
+              <button
+                type="button"
+                onClick={onGoToForgotPassword}
+                className="text-xs font-medium active:opacity-70 transition-opacity"
+                style={{ color: '#E94E1B' }}
+              >
+                Quên mật khẩu?
+              </button>
+            </div>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}

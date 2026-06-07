@@ -9,12 +9,14 @@ import ProfilePage from './pages/ProfilePage'
 import LoginScreen from './components/auth/LoginScreen'
 import RegisterScreen from './components/auth/RegisterScreen'
 import PendingApprovalScreen from './components/auth/PendingApprovalScreen'
+import ForgotPasswordScreen from './components/auth/ForgotPasswordScreen'
+import ResetPasswordScreen from './components/auth/ResetPasswordScreen'
 import NotificationCenter from './components/notifications/NotificationCenter'
 import { useAuth } from './context/AuthContext'
 import { supabase } from './lib/supabaseClient'
 
 type Tab = 'home' | 'games' | 'rank' | 'honor' | 'missions' | 'profile'
-type AuthScreen = 'login' | 'register'
+type AuthScreen = 'login' | 'register' | 'forgot-password' | 'reset-password'
 
 export default function App() {
   const { isAuthenticated, isLoading, currentUser } = useAuth()
@@ -22,6 +24,20 @@ export default function App() {
   const [authScreen,       setAuthScreen]       = useState<AuthScreen>('login')
   const [showNotifications,setShowNotifications] = useState(false)
   const [unreadCount,      setUnreadCount]      = useState(0)
+
+  // ── Lắng nghe PASSWORD_RECOVERY event từ Supabase ───────────
+  // Khi user click link trong email đặt lại mật khẩu, Supabase sẽ:
+  // 1. Parse token từ URL hash (#access_token=...&type=recovery)
+  // 2. Fire onAuthStateChange với event = 'PASSWORD_RECOVERY'
+  // Ta bắt event này và chuyển sang màn hình đặt mật khẩu mới.
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setAuthScreen('reset-password')
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [])
 
   // ── Fetch unread count on mount (khi đã authenticated) ────
   useEffect(() => {
@@ -43,11 +59,22 @@ export default function App() {
     </div>
   )
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || authScreen === 'reset-password') {
+    if (authScreen === 'reset-password') {
+      return <ResetPasswordScreen onDone={() => setAuthScreen('login')} />
+    }
     if (authScreen === 'register') {
       return <RegisterScreen onBackToLogin={() => setAuthScreen('login')} />
     }
-    return <LoginScreen onGoToRegister={() => setAuthScreen('register')} />
+    if (authScreen === 'forgot-password') {
+      return <ForgotPasswordScreen onBackToLogin={() => setAuthScreen('login')} />
+    }
+    return (
+      <LoginScreen
+        onGoToRegister={() => setAuthScreen('register')}
+        onGoToForgotPassword={() => setAuthScreen('forgot-password')}
+      />
+    )
   }
 
   // Gate: tài khoản chưa được duyệt hoặc bị khóa
