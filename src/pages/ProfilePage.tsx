@@ -19,6 +19,7 @@ import SeasonResetPage from './SeasonResetPage'
 import TournamentBracketPage from './TournamentBracketPage'
 import StageRecognitionPage from './StageRecognitionPage'
 import TournamentControlCenterPage from './TournamentControlCenterPage'
+import TVProjectorModePage from './TVProjectorModePage'
 
 // me chỉ dùng cho mock data chưa có API: weeklyRank, game history
 const me = getCurrentUser()
@@ -111,6 +112,7 @@ export default function ProfilePage() {
   const [showBracket,       setShowBracket]       = useState(false)
   const [showStage,         setShowStage]         = useState(false)
   const [showTournamentCC,  setShowTournamentCC]  = useState(false)
+  const [showTVMode,        setShowTVMode]        = useState(false)
   const [myBadgeIds,      setMyBadgeIds]      = useState<string[] | null>(null) // null = loading
   const [recentMissions,  setRecentMissions]  = useState<RecentMission[] | null>(null)
 
@@ -439,6 +441,13 @@ export default function ProfilePage() {
             >
               🎯 Tournament Center →
             </button>
+            <button
+              className="w-full py-3 rounded-xl font-semibold text-left px-4 transition-all active:scale-[0.98]"
+              style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', color: '#3b82f6' }}
+              onClick={() => setShowTVMode(true)}
+            >
+              📺 TV / Projector Mode →
+            </button>
           </div>
         </div>
       )}
@@ -580,6 +589,7 @@ export default function ProfilePage() {
       {showBracket        && <TournamentBracketPage  onClose={() => setShowBracket(false)}      />}
       {showStage          && <StageRecognitionPage         onClose={() => setShowStage(false)}         />}
       {showTournamentCC   && <TournamentControlCenterPage  onClose={() => setShowTournamentCC(false)} />}
+      {showTVMode         && <TVProjectorModePage          onClose={() => setShowTVMode(false)}       />}
 
       {showLogout && (
         <LogoutSheet
