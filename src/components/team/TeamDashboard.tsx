@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 import { canAccessAdminPanel, getRoleLabel, getRoleBadgeStyle } from '../../lib/permissions'
 import DeptHealthScore from './DeptHealthScore'
+import ExecutiveSummaryPage from '../../pages/ExecutiveSummaryPage'
 
 // ── Types ─────────────────────────────────────────────────────
 interface TeamMember {
@@ -70,7 +71,8 @@ export default function TeamDashboard({ onClose }: Props) {
   const [kpi,           setKpi]            = useState<TeamKPI | null>(null)
   const [loading,       setLoading]        = useState(true)
   const [sortBy,        setSortBy]         = useState<'score' | 'missions' | 'games'>('score')
-  const [alertsOpen,    setAlertsOpen]     = useState(false)
+  const [alertsOpen,      setAlertsOpen]      = useState(false)
+  const [showExecSummary, setShowExecSummary] = useState(false)
 
   // ── Pending missions quá lâu (> 3 ngày) ──────────────────
   interface OldPending {
@@ -219,6 +221,7 @@ export default function TeamDashboard({ onClose }: Props) {
   const groupLabel = selectedGroup ? (ORG_GROUP_LABEL[selectedGroup] ?? selectedGroup) : 'Toàn công ty'
 
   return (
+    <>
     <div className="fixed inset-0 z-[90] flex flex-col items-center justify-end md:justify-center"
          style={{ background: 'rgba(0,0,0,0.88)' }}>
       <div className="w-full max-w-[430px] h-full flex flex-col"
@@ -238,6 +241,14 @@ export default function TeamDashboard({ onClose }: Props) {
             </p>
             <p style={{ fontSize: '11px', color: '#585858' }}>{groupLabel}</p>
           </div>
+          {isAdmin && (
+            <button
+              onClick={() => setShowExecSummary(true)}
+              className="shrink-0 px-2.5 py-1.5 rounded-xl font-bold"
+              style={{ fontSize: '10px', background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.25)', color: '#60a5fa' }}>
+              📋 Tuần
+            </button>
+          )}
           <div className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center"
                style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', fontSize: '16px' }}>
             👥
@@ -498,5 +509,7 @@ export default function TeamDashboard({ onClose }: Props) {
         </div>
       </div>
     </div>
+    {showExecSummary && <ExecutiveSummaryPage onClose={() => setShowExecSummary(false)} />}
+    </>
   )
 }
