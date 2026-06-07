@@ -19,6 +19,11 @@ export interface UserProfile {
   avatarInitials: string
   title: string
   score: number
+  accountStatus: 'pending' | 'approved' | 'rejected' | 'inactive'
+  rejectedReason: string | null
+  isActive: boolean
+  orgGroup: string | null
+  officeDepartment: string | null
 }
 
 interface AuthContextValue {
@@ -51,6 +56,11 @@ function mapProfile(row: Record<string, unknown>, email: string): UserProfile {
     avatarInitials: initials,
     title: String(row.title ?? ''),
     score: Number(row.score ?? 0),
+    accountStatus: (row.account_status as UserProfile['accountStatus']) ?? 'approved',
+    rejectedReason: (row.rejected_reason as string | null) ?? null,
+    isActive: row.is_active !== false,
+    orgGroup: (row.org_group as string | null) ?? null,
+    officeDepartment: (row.office_department as string | null) ?? null,
   }
 }
 
@@ -68,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (error || !data) {
       // Profile chưa tồn tại (chưa chạy schema) — tạo UserProfile tối thiểu
-      setCurrentUser({ id: userId, name: email, email, role: 'staff', department: 'van-phong', avatarInitials: email[0]?.toUpperCase() ?? '?', title: '', score: 0 })
+      setCurrentUser({ id: userId, name: email, email, role: 'staff', department: 'van-phong', avatarInitials: email[0]?.toUpperCase() ?? '?', title: '', score: 0, accountStatus: 'approved', rejectedReason: null, isActive: true, orgGroup: null, officeDepartment: null })
     } else {
       setCurrentUser(mapProfile(data as Record<string, unknown>, email))
     }

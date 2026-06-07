@@ -17,6 +17,17 @@ interface ProfileRow {
   title:      string | null
 }
 
+interface PendingRow {
+  id:                string
+  full_name:         string
+  email:             string
+  phone:             string | null
+  org_group:         string | null
+  office_department: string | null
+  registration_note: string | null
+  created_at:        string
+}
+
 // Per-user game aggregate fetched from game_results
 interface GameStat {
   totalScore: number
@@ -31,6 +42,22 @@ const DEPT_LABEL: Record<string, string> = {
   'kdtt':      'KDTT',
 }
 const DEPT_KEYS = Object.keys(DEPT_LABEL)
+
+const ORG_GROUP_LABEL: Record<string, string> = {
+  'cua-hang':  'Cửa hàng',
+  'kho':       'Kho',
+  'van-phong': 'Văn phòng',
+}
+
+const OFFICE_DEPT_LABEL: Record<string, string> = {
+  'tmdt':               'TMĐT',
+  'kdtt':               'KDTT',
+  'mua-hang':           'Mua hàng',
+  'ke-toan':            'Kế toán',
+  'hanh-chinh-nhan-su': 'HC nhân sự',
+  'marketing':          'Marketing',
+  'giam-doc':           'Giám đốc',
+}
 
 const POINT_RULES = [
   { action: 'Hoàn thành game',      points: '+25 – 125 đ' },
@@ -50,6 +77,12 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
   const [gameStatsNote,  setGameStatsNote]  = useState<string | null>(null)
   const [loading,        setLoading]        = useState(true)
   const [filterDept,     setFilterDept]     = useState<string>('all')
+
+  // Pending approval queue
+  const [pendingList,    setPendingList]    = useState<PendingRow[]>([])
+  const [actionLoading,  setActionLoading]  = useState<string | null>(null)  // id đang xử lý
+  const [rejectTarget,   setRejectTarget]   = useState<string | null>(null)  // id đang mở reject form
+  const [rejectReason,   setRejectReason]   = useState('')
 
   useEffect(() => {
     if (!isAdmin) { setLoading(false); return }
@@ -72,7 +105,16 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
       }
       setProfiles((pData ?? []) as ProfileRow[])
 
-      // ── 2. Game results (admin có policy xem all) ────────
+      // ── 2. Pending accounts ───────────────────────────────
+      const { data: pendData } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, phone, org_group, office_department, registration_note, created_at')
+        .eq('account_status', 'pending')
+        .order('created_at', { ascending: true })
+
+      setPendingList((pendData ?? []) as PendingRow[])
+
+      // ── 3. Game results (admin có policy xem all) ────────
       const { data: gData, error: gErr } = await supabase
         .from('game_results')
         .select('user_id, score')
@@ -96,6 +138,39 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
 
     fetchAll()
   }, [isAdmin])
+
+  // ── Approve / Reject ──────────────────────────────────
+  async function handleApprove(id: string) {
+    setActionLoading(id)
+    await supabase
+      .from('profiles')
+      .update({
+        account_status: 'approved',
+        is_active:      true,
+        approved_by:    currentUser?.id ?? null,
+        approved_at:    new Date().toISOString(),
+      })
+      .eq('id', id)
+    setPendingList(prev => prev.filter(p => p.id !== id))
+    setActionLoading(null)
+  }
+
+  async function handleReject(id: string) {
+    if (!rejectReason.trim()) return
+    setActionLoading(id)
+    await supabase
+      .from('profiles')
+      .update({
+        account_status:  'rejected',
+        is_active:       false,
+        rejected_reason: rejectReason.trim(),
+      })
+      .eq('id', id)
+    setPendingList(prev => prev.filter(p => p.id !== id))
+    setActionLoading(null)
+    setRejectTarget(null)
+    setRejectReason('')
+  }
 
   // ── Guard ──────────────────────────────────────────────
   if (!isAdmin) {
@@ -176,6 +251,117 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
             </div>
           ))}
         </div>
+
+        {/* ── Tài khoản chờ duyệt ──────────────────────── */}
+        {!loading && pendingList.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <p className="section-title">Tài khoản chờ duyệt</p>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: '#E9A21B', background: 'rgba(233,162,27,0.15)', padding: '2px 8px', borderRadius: 99 }}>
+                {pendingList.length} đang chờ
+              </span>
+            </div>
+
+            <div className="rounded-2xl overflow-hidden" style={{ background: '#0E0E0E', border: '1px solid #2a1f00' }}>
+              {pendingList.map((p, i) => {
+                const isProcessing = actionLoading === p.id
+                const isRejectOpen = rejectTarget === p.id
+                const deptLabel = p.org_group === 'van-phong' && p.office_department
+                  ? `${ORG_GROUP_LABEL[p.org_group] ?? p.org_group} · ${OFFICE_DEPT_LABEL[p.office_department] ?? p.office_department}`
+                  : (ORG_GROUP_LABEL[p.org_group ?? ''] ?? p.org_group ?? '—')
+                const dateStr = p.created_at
+                  ? new Date(p.created_at).toLocaleDateString('vi-VN')
+                  : ''
+
+                return (
+                  <div key={p.id} style={{ borderBottom: i < pendingList.length - 1 ? '1px solid #1a1a1a' : 'none' }}>
+                    <div className="flex items-start gap-3 px-4 py-3">
+                      {/* Avatar */}
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-black"
+                           style={{ background: 'rgba(233,162,27,0.1)', border: '1px solid rgba(233,162,27,0.25)', fontSize: '13px', color: '#E9A21B' }}>
+                        {p.full_name.split(' ').slice(-2).map(w => w[0]?.toUpperCase() ?? '').join('')}
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <p style={{ fontSize: '13px', color: '#f0f0f0', fontWeight: 700 }} className="truncate">{p.full_name}</p>
+                        <p style={{ fontSize: '11px', color: '#555' }} className="truncate">{p.email}</p>
+                        {p.phone && (
+                          <p style={{ fontSize: '11px', color: '#555' }}>{p.phone}</p>
+                        )}
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          <span style={{ fontSize: '10px', color: '#E9A21B', background: 'rgba(233,162,27,0.1)', padding: '1px 7px', borderRadius: 99 }}>
+                            {deptLabel}
+                          </span>
+                          {dateStr && (
+                            <span style={{ fontSize: '10px', color: '#444' }}>{dateStr}</span>
+                          )}
+                        </div>
+                        {p.registration_note && (
+                          <p style={{ fontSize: '11px', color: '#666', marginTop: 3, fontStyle: 'italic' }}>
+                            "{p.registration_note}"
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Reject reason input */}
+                    {isRejectOpen && (
+                      <div className="px-4 pb-3">
+                        <input
+                          type="text"
+                          value={rejectReason}
+                          onChange={e => setRejectReason(e.target.value)}
+                          placeholder="Lý do từ chối (bắt buộc)"
+                          className="w-full bg-arena-bg border border-red-700/40 rounded-xl px-3 py-2 text-text-primary placeholder-text-muted text-xs focus:outline-none focus:border-red-500 mb-2"
+                          autoFocus
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleReject(p.id)}
+                            disabled={isProcessing || !rejectReason.trim()}
+                            className="flex-1 py-2 rounded-xl text-xs font-bold uppercase disabled:opacity-40 active:scale-95 transition-transform"
+                            style={{ background: '#E94E1B', color: '#fff' }}
+                          >
+                            {isProcessing ? '...' : 'Xác nhận từ chối'}
+                          </button>
+                          <button
+                            onClick={() => { setRejectTarget(null); setRejectReason('') }}
+                            className="px-4 py-2 rounded-xl text-xs font-bold uppercase border border-arena-border text-text-secondary active:scale-95 transition-transform"
+                          >
+                            Huỷ
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Action buttons */}
+                    {!isRejectOpen && (
+                      <div className="flex gap-2 px-4 pb-3">
+                        <button
+                          onClick={() => handleApprove(p.id)}
+                          disabled={isProcessing}
+                          className="flex-1 py-2.5 rounded-xl text-xs font-bold uppercase disabled:opacity-40 active:scale-95 transition-transform"
+                          style={{ background: 'rgba(74,222,128,0.15)', border: '1px solid rgba(74,222,128,0.3)', color: '#4ade80' }}
+                        >
+                          {isProcessing ? '...' : '✓ Duyệt'}
+                        </button>
+                        <button
+                          onClick={() => { setRejectTarget(p.id); setRejectReason('') }}
+                          disabled={isProcessing}
+                          className="flex-1 py-2.5 rounded-xl text-xs font-bold uppercase disabled:opacity-40 active:scale-95 transition-transform"
+                          style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: '#ef4444' }}
+                        >
+                          ✕ Từ chối
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ── Danh sách nhân sự ─────────────────────────── */}
         <div className="mb-6">

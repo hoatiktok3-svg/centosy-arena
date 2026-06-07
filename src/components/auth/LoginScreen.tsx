@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 
-export default function LoginScreen() {
+interface Props {
+  onGoToRegister: () => void
+}
+
+export default function LoginScreen({ onGoToRegister }: Props) {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -112,12 +116,23 @@ export default function LoginScreen() {
           </button>
         </form>
 
+        {/* Register link */}
+        <div className="mt-6">
+          <button
+            type="button"
+            onClick={onGoToRegister}
+            className="w-full border border-arena-border text-text-secondary font-semibold py-3 rounded-xl text-sm tracking-wide active:scale-95 transition-transform"
+          >
+            Đăng ký tài khoản nhân viên
+          </button>
+        </div>
+
         {/* Note */}
-        <div className="mt-8 border border-arena-border rounded-xl p-4 text-center">
+        <div className="mt-4 border border-arena-border rounded-xl p-4 text-center">
           <p className="text-text-muted text-xs leading-relaxed">
             Dùng tài khoản nội bộ do Admin Centosy cấp.
             <br />
-            Liên hệ quản trị viên nếu chưa có tài khoản.
+            Chưa có tài khoản? Bấm đăng ký để gửi yêu cầu.
           </p>
         </div>
 

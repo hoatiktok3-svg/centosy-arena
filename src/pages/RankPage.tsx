@@ -15,23 +15,29 @@ interface LeaderboardEntry {
 }
 
 // ── Helpers ───────────────────────────────────────────────────
+// Map mọi giá trị department/org_group → label tiếng Việt
 const DEPT_LABEL: Record<string, string> = {
-  'van-phong': 'Văn phòng',
-  'cua-hang':  'Cửa hàng',
-  'kho':       'Kho',
-  'tmdt':      'TMĐT',
-  'kdtt':      'KDTT',
+  'van-phong':           'Văn phòng',
+  'cua-hang':            'Cửa hàng',
+  'kho':                 'Kho',
+  'tmdt':                'TMĐT',
+  'kdtt':                'KDTT',
+  'mua-hang':            'Mua hàng',
+  'ke-toan':             'Kế toán',
+  'hanh-chinh-nhan-su':  'HC Nhân sự',
+  'marketing':           'Marketing',
+  'giam-doc':            'Giám đốc',
 }
 
-const FILTER_TO_DEPT: Record<string, string> = {
-  'Văn phòng': 'van-phong',
-  'Cửa hàng':  'cua-hang',
-  'Kho':       'kho',
-  'TMĐT':      'tmdt',
-  'KDTT':      'kdtt',
+// Mỗi filter → danh sách giá trị department được tính vào
+const FILTER_DEPT_VALUES: Record<string, string[]> = {
+  'Toàn công ty': [],  // empty = không lọc
+  'Văn phòng':    ['van-phong', 'tmdt', 'kdtt', 'mua-hang', 'ke-toan', 'hanh-chinh-nhan-su', 'marketing', 'giam-doc'],
+  'Cửa hàng':     ['cua-hang'],
+  'Kho':          ['kho'],
 }
 
-const FILTERS = ['Toàn công ty', 'Văn phòng', 'Cửa hàng', 'Kho', 'TMĐT', 'KDTT']
+const FILTERS = ['Toàn công ty', 'Cửa hàng', 'Kho', 'Văn phòng']
 
 const RANK_CONFIG = {
   1: { ring: '#facc15', glow: 'rgba(250,204,21,0.35)', ped: 64, pedBg: 'rgba(250,204,21,0.12)', pedBorder: 'rgba(250,204,21,0.35)', medal: '🥇', scoreColor: '#facc15', size: 76, radius: '20px' },
@@ -210,10 +216,12 @@ export default function RankPage() {
     fetchLeaderboard()
   }, [])
 
-  // ── Filter theo phòng ban ──────────────────────────────────
-  const filtered = filter === 'Toàn công ty'
-    ? allEntries
-    : allEntries.filter(e => e.department === FILTER_TO_DEPT[filter])
+  // ── Filter theo khối ──────────────────────────────────────
+  const filtered = (() => {
+    const vals = FILTER_DEPT_VALUES[filter]
+    if (!vals || vals.length === 0) return allEntries
+    return allEntries.filter(e => vals.includes(e.department))
+  })()
 
   const top3 = filtered.slice(0, 3)
   const rest = filtered.slice(3)

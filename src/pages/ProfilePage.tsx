@@ -7,6 +7,23 @@ import AdminPanel from '../components/admin/AdminPanel'
 // me chỉ dùng cho mock data chưa có API: badges, weeklyRank, game history
 const me = getCurrentUser()
 
+const ORG_GROUP_LABEL: Record<string, string> = {
+  'cua-hang':  'Cửa hàng',
+  'kho':       'Kho',
+  'van-phong': 'Văn phòng',
+}
+
+const OFFICE_DEPT_LABEL: Record<string, string> = {
+  'tmdt':               'TMĐT',
+  'kdtt':               'KDTT',
+  'mua-hang':           'Mua hàng',
+  'ke-toan':            'Kế toán',
+  'hanh-chinh-nhan-su': 'HC Nhân sự',
+  'marketing':          'Marketing',
+  'giam-doc':           'Giám đốc',
+}
+
+// Fallback cho tài khoản cũ dùng trường department
 const DEPT_LABEL: Record<string, string> = {
   'van-phong': 'Văn phòng',
   'cua-hang':  'Cửa hàng',
@@ -69,9 +86,19 @@ export default function ProfilePage() {
   const isProfileIncomplete = !currentUser?.title
 
   const isAdmin = currentUser?.role === 'admin'
-  const deptLabel = currentUser
+
+  // Ưu tiên org_group mới; fallback về department cũ cho account trước STEP 26A
+  const orgGroupLabel = currentUser?.orgGroup
+    ? (ORG_GROUP_LABEL[currentUser.orgGroup] ?? currentUser.orgGroup)
+    : null
+  const officeDeptLabel = currentUser?.officeDepartment
+    ? (OFFICE_DEPT_LABEL[currentUser.officeDepartment] ?? currentUser.officeDepartment)
+    : null
+  const legacyDeptLabel = currentUser
     ? (DEPT_LABEL[currentUser.department] ?? currentUser.department)
     : ''
+  // Nhãn hiển thị chính
+  const deptLabel = orgGroupLabel ?? legacyDeptLabel
 
   return (
     <div className="flex flex-col gap-4 py-4">
@@ -122,6 +149,13 @@ export default function ProfilePage() {
               </span>
             )}
             {deptLabel && <span className="badge-gray">{deptLabel}</span>}
+            {/* Bộ phận văn phòng — chỉ hiện khi thuộc Văn phòng */}
+            {officeDeptLabel && (
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
+                    style={{ background: 'rgba(233,78,27,0.1)', border: '1px solid rgba(233,78,27,0.25)', color: '#E94E1B' }}>
+                {officeDeptLabel}
+              </span>
+            )}
           </div>
         </div>
 
