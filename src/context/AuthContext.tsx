@@ -20,7 +20,7 @@ export interface UserProfile {
   avatarInitials: string
   title: string
   score: number
-  accountStatus: 'pending' | 'approved' | 'rejected' | 'inactive'
+  accountStatus: 'pending' | 'approved' | 'rejected' | 'inactive' | 'resigned'
   rejectedReason: string | null
   isActive: boolean
   orgGroup: string | null
