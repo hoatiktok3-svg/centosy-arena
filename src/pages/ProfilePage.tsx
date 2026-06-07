@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getCurrentUser } from '../data/mockUsers'
-import { mockGameHistory, mockRecentAchievements } from '../data/mockProfile'
+import { mockGameHistory } from '../data/mockProfile'
 import { useAuth } from '../context/AuthContext'
 import AdminPanel from '../components/admin/AdminPanel'
 import TeamDashboard from '../components/team/TeamDashboard'
@@ -12,6 +12,22 @@ import { getBadge, PROFILE_BADGE_KEYS } from '../lib/badges'
 
 // me chỉ dùng cho mock data chưa có API: weeklyRank, game history
 const me = getCurrentUser()
+
+// ── Types cho nhiệm vụ gần đây ────────────────────────────────
+interface RecentMission {
+  id:        string
+  title:     string
+  points:    number
+  status:    string
+  createdAt: string
+}
+// Raw shape từ Supabase join
+interface MissionSubmissionRow {
+  id:        string
+  status:    string
+  created_at:string
+  missions:  { title: string; points: number } | null
+}
 
 const ORG_GROUP_LABEL: Record<string, string> = {
   'cua-hang':  'Cửa hàng',
@@ -76,7 +92,8 @@ export default function ProfilePage() {
   const [showTeam,      setShowTeam]      = useState(false)
   const [showDirector,  setShowDirector]  = useState(false)
   const [showFeedback,  setShowFeedback]  = useState(false)
-  const [myBadgeIds,    setMyBadgeIds]    = useState<string[] | null>(null) // null = loading
+  const [myBadgeIds,      setMyBadgeIds]      = useState<string[] | null>(null) // null = loading
+  const [recentMissions,  setRecentMissions]  = useState<RecentMission[] | null>(null)
 
   // Fetch real badges từ Supabase
   useEffect(() => {
@@ -89,6 +106,29 @@ export default function ProfilePage() {
       setMyBadgeIds(data ? data.map((r: { badge_id: string }) => r.badge_id) : [])
     }
     void fetchBadges()
+  }, [currentUser?.id])
+
+  // Fetch nhiệm vụ gần đây từ Supabase (real data)
+  useEffect(() => {
+    if (!currentUser?.id) return
+    async function fetchMissions() {
+      const { data } = await supabase
+        .from('mission_submissions')
+        .select('id, status, created_at, missions(title, points)')
+        .eq('user_id', currentUser!.id)
+        .order('created_at', { ascending: false })
+        .limit(5)
+      setRecentMissions(
+        (data ?? []).map((r: MissionSubmissionRow) => ({
+          id:        r.id,
+          title:     r.missions?.title ?? 'Nhiệm vụ',
+          points:    r.missions?.points ?? 0,
+          status:    r.status,
+          createdAt: r.created_at,
+        }))
+      )
+    }
+    void fetchMissions()
   }, [currentUser?.id])
 
   const winGames = mockGameHistory.filter(g => g.rank === 1).length
@@ -292,30 +332,54 @@ export default function ProfilePage() {
         )}
       </div>
 
-      {/* ── Thành tích gần đây ── */}
+      {/* ── Nhiệm vụ gần đây (real data) ── */}
       <div>
-        <p className="section-title mb-2">⚡ Thành tích gần đây</p>
-        <div className="flex flex-col gap-2">
-          {mockRecentAchievements.map(a => (
-            <div key={a.id} className="arena-card flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-arena-bg border border-arena-border flex items-center justify-center text-xl shrink-0">
-                {a.icon}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className={`text-sm font-bold ${a.color}`}>{a.title}</p>
-                <p className="text-text-secondary text-xs">{a.description}</p>
-                <p className="text-text-muted text-[10px] mt-0.5">{a.earnedAt}</p>
-              </div>
-              <div className="text-right shrink-0">
-                <p className="text-green-400 font-bold text-xs">+{a.pointBonus}</p>
-                <p className="text-text-muted text-[10px]">điểm</p>
-              </div>
-            </div>
-          ))}
-        </div>
+        <p className="section-title mb-2">📋 Nhiệm vụ gần đây</p>
+        {recentMissions === null ? (
+          <p className="text-text-muted text-xs text-center py-4">Đang tải...</p>
+        ) : recentMissions.length === 0 ? (
+          <div className="arena-card text-center py-6">
+            <p className="text-2xl mb-1">📭</p>
+            <p className="text-text-muted text-sm">Chưa có nhiệm vụ nào.</p>
+            <p className="text-text-muted text-xs mt-1">Vào tab Nhiệm vụ để bắt đầu!</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {recentMissions.map(m => {
+              const statusStyle = m.status === 'approved'
+                ? { icon: '✅', color: '#34d399', label: 'Đã duyệt' }
+                : m.status === 'rejected'
+                ? { icon: '❌', color: '#f87171', label: 'Từ chối' }
+                : { icon: '⏳', color: '#fbbf24', label: 'Chờ duyệt' }
+              const date = new Date(m.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })
+              return (
+                <div key={m.id} className="arena-card flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-arena-bg border border-arena-border flex items-center justify-center text-lg shrink-0">
+                    {statusStyle.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-sm font-semibold truncate">{m.title}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[10px] font-bold" style={{ color: statusStyle.color }}>
+                        {statusStyle.label}
+                      </span>
+                      <span className="text-text-muted text-[10px]">{date}</span>
+                    </div>
+                  </div>
+                  {m.status === 'approved' && (
+                    <div className="text-right shrink-0">
+                      <p className="text-green-400 font-bold text-xs">+{m.points}</p>
+                      <p className="text-text-muted text-[10px]">điểm</p>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
-      {/* ── Lịch sử game ── */}
+      {/* ── Lịch sử game (mock — sẽ thay bằng real data ở step sau) ── */}
       <div>
         <div className="flex items-center justify-between mb-2">
           <p className="section-title">🎮 Lịch sử game</p>
