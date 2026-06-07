@@ -7,6 +7,7 @@ import {
   canAccessAdminPanel,
   canAccessTeamDashboard,
 } from '../lib/permissions'
+import DirectoryPage from './DirectoryPage'
 
 // ── Props ─────────────────────────────────────────────────────
 interface Props {
@@ -74,10 +75,11 @@ export default function HomePage({
 }: Props) {
   const { currentUser } = useAuth()
 
-  const [myStats,      setMyStats]      = useState<MyStats | null>(null)
-  const [statsLoading, setStatsLoading] = useState(true)
-  const [myRank,       setMyRank]       = useState<number | null>(null)
-  const [rankLoading,  setRankLoading]  = useState(true)
+  const [myStats,        setMyStats]        = useState<MyStats | null>(null)
+  const [statsLoading,   setStatsLoading]   = useState(true)
+  const [myRank,         setMyRank]         = useState<number | null>(null)
+  const [rankLoading,    setRankLoading]    = useState(true)
+  const [showDirectory,  setShowDirectory]  = useState(false)
 
   // ── Fetch game stats ──────────────────────────────────────
   useEffect(() => {
@@ -166,6 +168,13 @@ export default function HomePage({
       sub:     'Tường thành tích',
       color:   '#a78bfa',
       onClick: onGoToHonor,
+    },
+    {
+      icon:    '📋',
+      label:   'Danh bạ',
+      sub:     'Nhân viên nội bộ',
+      color:   '#60a5fa',
+      onClick: () => setShowDirectory(true),
     },
     ...(isAdmin || isManager ? [{
       icon:    '⚙️',
@@ -481,6 +490,10 @@ export default function HomePage({
       </div>
 
       <div className="h-1" />
+
+      {showDirectory && (
+        <DirectoryPage onClose={() => setShowDirectory(false)} />
+      )}
     </div>
   )
 }
