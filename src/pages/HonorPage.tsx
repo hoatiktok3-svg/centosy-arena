@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabaseClient'
 import { canAccessAdminPanel } from '../lib/permissions'
 import { BADGE_CONFIG, getBadge } from '../lib/badges'
 import PeerPraiseSheet from '../components/praise/PeerPraiseSheet'
+import StoriesPage from './StoriesPage'
 
 // ── Types ─────────────────────────────────────────────────────
 interface RawUserBadge {
@@ -386,6 +387,7 @@ export default function HonorPage() {
   const [showAll,      setShowAll]       = useState(false)
   const [showAward,    setShowAward]     = useState(false)
   const [showPraise,   setShowPraise]    = useState(false)
+  const [showStories,  setShowStories]   = useState(false)
   const [recentPraises,setRecentPraises] = useState<PraiseRow[] | null>(null)
 
   // ── Fetch real data ──────────────────────────────────────
@@ -451,15 +453,24 @@ export default function HonorPage() {
             Centosy Arena · Ghi nhận những đóng góp xuất sắc
           </p>
         </div>
-        {isAdmin && (
+        <div className="flex gap-2 shrink-0 mt-0.5">
+          <button
+            onClick={() => setShowStories(true)}
+            className="py-2 px-3 rounded-xl font-bold text-xs active:scale-95 transition-transform"
+            style={{ background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.28)', color: '#a78bfa' }}
+          >
+            📖 Stories
+          </button>
+          {isAdmin && (
           <button
             onClick={() => setShowAward(true)}
             className="shrink-0 py-2 px-3.5 rounded-xl font-bold text-xs active:scale-95 transition-transform"
             style={{ background: 'rgba(233,78,27,0.1)', border: '1px solid rgba(233,78,27,0.25)', color: '#E94E1B', marginTop: 2 }}
           >
-            + Trao huy hiệu
+              + Trao huy hiệu
           </button>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Mock data notice */}
@@ -603,6 +614,8 @@ export default function HonorPage() {
           onAwarded={() => { setShowAward(false); void fetchHonors() }}
         />
       )}
+
+      {showStories && <StoriesPage onClose={() => setShowStories(false)} />}
 
       {showPraise && (
         <PeerPraiseSheet
