@@ -13,6 +13,7 @@ import { getLevelInfo } from '../lib/levelSystem'
 import RewardShopPage from './RewardShopPage'
 import AdminSettingsPage from './AdminSettingsPage'
 import ExportDataPage from './ExportDataPage'
+import QuizGeneratorPage from './QuizGeneratorPage'
 
 // me chỉ dùng cho mock data chưa có API: weeklyRank, game history
 const me = getCurrentUser()
@@ -99,6 +100,7 @@ export default function ProfilePage() {
   const [showRewardShop,   setShowRewardShop]   = useState(false)
   const [showAdminSettings, setShowAdminSettings] = useState(false)
   const [showExportData,    setShowExportData]    = useState(false)
+  const [showQuizGen,       setShowQuizGen]       = useState(false)
   const [myBadgeIds,      setMyBadgeIds]      = useState<string[] | null>(null) // null = loading
   const [recentMissions,  setRecentMissions]  = useState<RecentMission[] | null>(null)
 
@@ -385,6 +387,13 @@ export default function ProfilePage() {
             >
               📊 Export dữ liệu CSV →
             </button>
+            <button
+              className="w-full py-2.5 rounded-lg text-sm font-semibold transition-colors active:scale-95"
+              style={{ background: 'rgba(192,132,252,0.08)', border: '1px solid rgba(192,132,252,0.2)', color: '#c084fc' }}
+              onClick={() => setShowQuizGen(true)}
+            >
+              🤖 AI Quiz Generator →
+            </button>
           </div>
         </div>
       )}
@@ -520,6 +529,7 @@ export default function ProfilePage() {
       {showRewardShop     && <RewardShopPage    onClose={() => setShowRewardShop(false)}    />}
       {showAdminSettings  && <AdminSettingsPage onClose={() => setShowAdminSettings(false)} />}
       {showExportData     && <ExportDataPage    onClose={() => setShowExportData(false)}    />}
+      {showQuizGen        && <QuizGeneratorPage onClose={() => setShowQuizGen(false)}       />}
 
       {showLogout && (
         <LogoutSheet
