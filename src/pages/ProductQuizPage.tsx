@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { saveGameResultSafe } from '../lib/gameService'
+import { saveGameResultSafe, checkDailyPlayLimit } from '../lib/gameService'
 import { useGameRecognition } from '../lib/useGameRecognition'
 import GameScoreToast from '../components/games/GameScoreToast'
 import { calcSpeedScore, analyzeSessionAntiCheat, getSpeedLabel } from '../lib/speedScoring'
@@ -144,7 +144,17 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
 ]
 
 // ── Intro Screen ──────────────────────────────────────────────
-function IntroScreen({ onStart, onClose }: { onStart: () => void; onClose: () => void }) {
+function IntroScreen({
+  onStart, onClose, playsUsed, maxPlays,
+}: {
+  onStart: () => void
+  onClose: () => void
+  playsUsed: number
+  maxPlays: number
+}) {
+  const playsLeft = Math.max(0, maxPlays - playsUsed)
+  const canPlay   = playsLeft > 0
+
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center">
       <div className="absolute inset-0 bg-black/80" onClick={onClose} />
@@ -204,11 +214,39 @@ function IntroScreen({ onStart, onClose }: { onStart: () => void; onClose: () =>
             ))}
           </div>
 
+          {/* Play limit indicator */}
+          <div className="rounded-xl px-4 py-3 mb-4 flex items-center gap-3"
+               style={{
+                 background: canPlay ? 'rgba(74,222,128,0.07)' : 'rgba(239,68,68,0.07)',
+                 border:     `1px solid ${canPlay ? 'rgba(74,222,128,0.2)' : 'rgba(239,68,68,0.2)'}`,
+               }}>
+            <span style={{ fontSize: '16px' }}>{canPlay ? '🎮' : '🚫'}</span>
+            <div className="flex-1">
+              <p style={{ fontSize: '12px', color: canPlay ? '#4ade80' : '#f87171', fontWeight: 700 }}>
+                {canPlay
+                  ? `Còn ${playsLeft}/${maxPlays} lượt tính điểm hôm nay`
+                  : `Đã hết lượt tính điểm hôm nay (${maxPlays}/${maxPlays})`}
+              </p>
+              {!canPlay && (
+                <p style={{ fontSize: '10px', color: '#585858', marginTop: 2 }}>
+                  Vẫn có thể chơi luyện tập, nhưng không cộng điểm
+                </p>
+              )}
+            </div>
+            {/* Dots */}
+            <div className="flex gap-1 shrink-0">
+              {Array.from({ length: maxPlays }).map((_, i) => (
+                <div key={i} className="w-2.5 h-2.5 rounded-full"
+                     style={{ background: i < playsUsed ? (canPlay ? '#4ade80' : '#ef4444') : '#2c2c2c' }} />
+              ))}
+            </div>
+          </div>
+
           <button
             className="btn-primary w-full py-3.5 font-black"
-            style={{ fontSize: '15px' }}
+            style={{ fontSize: '15px', opacity: 1 }}
             onClick={onStart}>
-            Bắt đầu quiz →
+            {canPlay ? 'Bắt đầu quiz →' : 'Chơi luyện tập (0đ) →'}
           </button>
         </div>
       </div>
@@ -544,10 +582,19 @@ export default function ProductQuizPage({ onClose }: Props) {
   const [score, setScore] = useState(0)
   const [answers, setAnswers] = useState<QuizAnswer[]>([])
   const [showToast, setShowToast] = useState(false)
+  const [playsUsed, setPlaysUsed] = useState(0)
+  const MAX_PLAYS = 3
   const hasSaved = useRef(false)
   const startTime = useRef<number>(0)
   const questionStartTime = useRef<number>(0)
   const MAX_SCORE = QUIZ_QUESTIONS.reduce((s, q) => s + q.points, 0)
+
+  useEffect(() => {
+    if (!currentUser?.id) return
+    void checkDailyPlayLimit(currentUser.id, 'product_quiz', MAX_PLAYS).then(res => {
+      setPlaysUsed(res.todayPlayCount)
+    })
+  }, [currentUser?.id])
 
   const handleStart = () => {
     setPhase('playing')
@@ -635,7 +682,7 @@ export default function ProductQuizPage({ onClose }: Props) {
   }
 
   if (phase === 'intro') {
-    return <IntroScreen onStart={handleStart} onClose={onClose} />
+    return <IntroScreen onStart={handleStart} onClose={onClose} playsUsed={playsUsed} maxPlays={MAX_PLAYS} />
   }
 
   if (phase === 'playing') {
