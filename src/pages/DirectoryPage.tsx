@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { getRoleLabel, getRoleBadgeStyle } from '../lib/permissions'
+import OrgChartPage from './OrgChartPage'
 
 // ── Types ─────────────────────────────────────────────────────
 interface DirectoryEntry {
@@ -44,11 +45,12 @@ interface Props {
 
 // ── Component ─────────────────────────────────────────────────
 export default function DirectoryPage({ onClose }: Props) {
-  const [entries,  setEntries]  = useState<DirectoryEntry[]>([])
-  const [loading,  setLoading]  = useState(true)
-  const [error,    setError]    = useState<string | null>(null)
-  const [search,   setSearch]   = useState('')
+  const [entries,     setEntries]     = useState<DirectoryEntry[]>([])
+  const [loading,     setLoading]     = useState(true)
+  const [error,       setError]       = useState<string | null>(null)
+  const [search,      setSearch]      = useState('')
   const [groupFilter, setGroupFilter] = useState('')
+  const [showOrgChart,setShowOrgChart]= useState(false)
 
   useEffect(() => { void load() }, [])
 
@@ -108,8 +110,16 @@ export default function DirectoryPage({ onClose }: Props) {
           <p className="text-white font-black text-base">Danh bạ nội bộ</p>
           <p className="text-text-muted text-xs">{loading ? '...' : `${filtered.length} nhân viên`}</p>
         </div>
-        <span className="text-xl">📋</span>
+        <button
+          onClick={() => setShowOrgChart(true)}
+          className="w-9 h-9 rounded-xl bg-arena-card border border-arena-border flex items-center justify-center active:scale-95"
+          title="Sơ đồ tổ chức"
+        >
+          <span className="text-base">🏗️</span>
+        </button>
       </div>
+
+      {showOrgChart && <OrgChartPage onClose={() => setShowOrgChart(false)} />}
 
       {/* Search + filter */}
       <div className="px-4 py-3 flex flex-col gap-2 border-b border-arena-border">
