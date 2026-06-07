@@ -4,6 +4,7 @@ import { saveGameResultSafe, checkDailyPlayLimit } from '../lib/gameService'
 import { useGameRecognition } from '../lib/useGameRecognition'
 import GameScoreToast from '../components/games/GameScoreToast'
 import { calcSpeedScore, analyzeSessionAntiCheat, getSpeedLabel } from '../lib/speedScoring'
+import { hapticLight, hapticSuccess, hapticError, hapticCelebration } from '../lib/mobileUtils'
 
 // ── Types ─────────────────────────────────────────────────────
 interface QuizQuestion {
@@ -275,17 +276,23 @@ function QuestionScreen({
 
   const handleSelect = (i: number) => {
     if (confirmed) return
+    hapticLight()
     setSelected(i)
   }
 
   const handleConfirm = () => {
     if (selected === null) return
-    setQuestionMs(Date.now() - questionStart.current)
+    const ms = Date.now() - questionStart.current
+    setQuestionMs(ms)
+    const correct = selected === question.correctIndex
+    if (correct) hapticSuccess()
+    else hapticError()
     setConfirmed(true)
   }
 
   const handleNext = () => {
     if (selected === null) return
+    hapticLight()
     onAnswer(selected)
     setSelected(null)
     setConfirmed(false)
@@ -632,6 +639,7 @@ export default function ProductQuizPage({ onClose }: Props) {
 
     if (currentIndex + 1 >= QUIZ_QUESTIONS.length) {
       setPhase('result')
+      hapticCelebration()
       // Anti-cheat session check
       const antiCheat = analyzeSessionAntiCheat(newAnswers.map(a => ({
         isCorrect: a.isCorrect,
