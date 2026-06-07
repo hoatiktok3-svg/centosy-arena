@@ -15,6 +15,7 @@ import AdminSettingsPage from './AdminSettingsPage'
 import ExportDataPage from './ExportDataPage'
 import QuizGeneratorPage from './QuizGeneratorPage'
 import AdminGameMonitorPage from './AdminGameMonitorPage'
+import SeasonResetPage from './SeasonResetPage'
 
 // me chỉ dùng cho mock data chưa có API: weeklyRank, game history
 const me = getCurrentUser()
@@ -103,6 +104,7 @@ export default function ProfilePage() {
   const [showExportData,    setShowExportData]    = useState(false)
   const [showQuizGen,       setShowQuizGen]       = useState(false)
   const [showGameMonitor,   setShowGameMonitor]   = useState(false)
+  const [showSeasonReset,   setShowSeasonReset]   = useState(false)
   const [myBadgeIds,      setMyBadgeIds]      = useState<string[] | null>(null) // null = loading
   const [recentMissions,  setRecentMissions]  = useState<RecentMission[] | null>(null)
 
@@ -403,6 +405,13 @@ export default function ProfilePage() {
             >
               🎮 Game Monitor →
             </button>
+            <button
+              className="w-full py-3 rounded-xl font-semibold text-left px-4 transition-all active:scale-[0.98]"
+              style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171' }}
+              onClick={() => setShowSeasonReset(true)}
+            >
+              🗂️ Season Reset →
+            </button>
           </div>
         </div>
       )}
@@ -540,6 +549,7 @@ export default function ProfilePage() {
       {showExportData     && <ExportDataPage    onClose={() => setShowExportData(false)}    />}
       {showQuizGen        && <QuizGeneratorPage    onClose={() => setShowQuizGen(false)}       />}
       {showGameMonitor    && <AdminGameMonitorPage onClose={() => setShowGameMonitor(false)}  />}
+      {showSeasonReset    && <SeasonResetPage      onClose={() => setShowSeasonReset(false)}  />}
 
       {showLogout && (
         <LogoutSheet
