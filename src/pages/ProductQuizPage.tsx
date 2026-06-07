@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+import { useAuth } from '../context/AuthContext'
+import { saveGameResult } from '../lib/gameService'
 
 // ── Types ─────────────────────────────────────────────────────
 interface QuizQuestion {
@@ -516,22 +518,33 @@ function ResultScreen({
 
 // ── Main Component ────────────────────────────────────────────
 export default function ProductQuizPage({ onClose }: Props) {
+  const { currentUser } = useAuth()
   const [phase, setPhase] = useState<'intro' | 'playing' | 'result'>('intro')
   const [currentIndex, setCurrentIndex] = useState(0)
   const [score, setScore] = useState(0)
   const [answers, setAnswers] = useState<QuizAnswer[]>([])
+  const hasSaved = useRef(false)
+  const startTime = useRef<number>(0)
+  const questionStartTime = useRef<number>(0)
 
   const handleStart = () => {
     setPhase('playing')
     setCurrentIndex(0)
     setScore(0)
     setAnswers([])
+    hasSaved.current = false
+    startTime.current = Date.now()
+    questionStartTime.current = Date.now()
   }
 
   const handleAnswer = (selectedIndex: number) => {
+    const now = Date.now()
     const q = QUIZ_QUESTIONS[currentIndex]
     const isCorrect = selectedIndex === q.correctIndex
     const pts = isCorrect ? q.points : 0
+    const timeTakenMs = now - questionStartTime.current
+    questionStartTime.current = now
+
     const newAnswer: QuizAnswer = {
       questionId: q.id,
       selectedIndex,
@@ -545,6 +558,30 @@ export default function ProductQuizPage({ onClose }: Props) {
 
     if (currentIndex + 1 >= QUIZ_QUESTIONS.length) {
       setPhase('result')
+      // Lưu session sau khi hoàn thành
+      if (!hasSaved.current && currentUser?.id) {
+        hasSaved.current = true
+        const durationMs = Date.now() - startTime.current
+        void saveGameResult({
+          userId:         currentUser.id,
+          gameKey:        'product_quiz',
+          gameTitle:      'Quiz Kiến Thức Sản Phẩm',
+          score:          newScore,
+          maxScore:       QUIZ_QUESTIONS.reduce((s, q) => s + q.points, 0),
+          correctCount:   newAnswers.filter(a => a.isCorrect).length,
+          totalQuestions: QUIZ_QUESTIONS.length,
+          durationMs,
+          answers: newAnswers.map((a, i) => ({
+            questionIndex:  i,
+            questionText:   QUIZ_QUESTIONS[i]?.question,
+            chosenOption:   a.selectedIndex,
+            correctOption:  QUIZ_QUESTIONS[i]?.correctIndex ?? 0,
+            isCorrect:      a.isCorrect,
+            pointsEarned:   a.points,
+            timeTakenMs,
+          })),
+        })
+      }
     } else {
       setCurrentIndex(currentIndex + 1)
     }
