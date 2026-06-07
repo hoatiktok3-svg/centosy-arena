@@ -14,6 +14,7 @@ import RewardShopPage from './RewardShopPage'
 import AdminSettingsPage from './AdminSettingsPage'
 import ExportDataPage from './ExportDataPage'
 import QuizGeneratorPage from './QuizGeneratorPage'
+import AdminGameMonitorPage from './AdminGameMonitorPage'
 
 // me chỉ dùng cho mock data chưa có API: weeklyRank, game history
 const me = getCurrentUser()
@@ -101,6 +102,7 @@ export default function ProfilePage() {
   const [showAdminSettings, setShowAdminSettings] = useState(false)
   const [showExportData,    setShowExportData]    = useState(false)
   const [showQuizGen,       setShowQuizGen]       = useState(false)
+  const [showGameMonitor,   setShowGameMonitor]   = useState(false)
   const [myBadgeIds,      setMyBadgeIds]      = useState<string[] | null>(null) // null = loading
   const [recentMissions,  setRecentMissions]  = useState<RecentMission[] | null>(null)
 
@@ -394,6 +396,13 @@ export default function ProfilePage() {
             >
               🤖 AI Quiz Generator →
             </button>
+            <button
+              className="w-full py-3 rounded-xl font-semibold text-left px-4 transition-all active:scale-[0.98]"
+              style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)', color: '#34d399' }}
+              onClick={() => setShowGameMonitor(true)}
+            >
+              🎮 Game Monitor →
+            </button>
           </div>
         </div>
       )}
@@ -529,7 +538,8 @@ export default function ProfilePage() {
       {showRewardShop     && <RewardShopPage    onClose={() => setShowRewardShop(false)}    />}
       {showAdminSettings  && <AdminSettingsPage onClose={() => setShowAdminSettings(false)} />}
       {showExportData     && <ExportDataPage    onClose={() => setShowExportData(false)}    />}
-      {showQuizGen        && <QuizGeneratorPage onClose={() => setShowQuizGen(false)}       />}
+      {showQuizGen        && <QuizGeneratorPage    onClose={() => setShowQuizGen(false)}       />}
+      {showGameMonitor    && <AdminGameMonitorPage onClose={() => setShowGameMonitor(false)}  />}
 
       {showLogout && (
         <LogoutSheet
