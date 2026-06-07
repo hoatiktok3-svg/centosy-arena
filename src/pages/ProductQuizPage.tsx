@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { saveGameResult } from '../lib/gameService'
+import { saveGameResultSafe } from '../lib/gameService'
 
 // ── Types ─────────────────────────────────────────────────────
 interface QuizQuestion {
@@ -562,7 +562,7 @@ export default function ProductQuizPage({ onClose }: Props) {
       if (!hasSaved.current && currentUser?.id) {
         hasSaved.current = true
         const durationMs = Date.now() - startTime.current
-        void saveGameResult({
+        void saveGameResultSafe({
           userId:         currentUser.id,
           gameKey:        'product_quiz',
           gameTitle:      'Quiz Kiến Thức Sản Phẩm',
