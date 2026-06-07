@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { canAccessAdminPanel, getRoleLabel, getRoleBadgeStyle } from '../../lib/permissions'
 import DeptHealthScore from './DeptHealthScore'
 import ExecutiveSummaryPage from '../../pages/ExecutiveSummaryPage'
+import ActivityLogPage from '../../pages/ActivityLogPage'
 
 // ── Types ─────────────────────────────────────────────────────
 interface TeamMember {
@@ -73,6 +74,7 @@ export default function TeamDashboard({ onClose }: Props) {
   const [sortBy,        setSortBy]         = useState<'score' | 'missions' | 'games'>('score')
   const [alertsOpen,      setAlertsOpen]      = useState(false)
   const [showExecSummary, setShowExecSummary] = useState(false)
+  const [showActivityLog, setShowActivityLog] = useState(false)
 
   // ── Pending missions quá lâu (> 3 ngày) ──────────────────
   interface OldPending {
@@ -242,12 +244,20 @@ export default function TeamDashboard({ onClose }: Props) {
             <p style={{ fontSize: '11px', color: '#585858' }}>{groupLabel}</p>
           </div>
           {isAdmin && (
-            <button
-              onClick={() => setShowExecSummary(true)}
-              className="shrink-0 px-2.5 py-1.5 rounded-xl font-bold"
-              style={{ fontSize: '10px', background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.25)', color: '#60a5fa' }}>
-              📋 Tuần
-            </button>
+            <div className="flex gap-1.5">
+              <button
+                onClick={() => setShowExecSummary(true)}
+                className="shrink-0 px-2.5 py-1.5 rounded-xl font-bold"
+                style={{ fontSize: '10px', background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.25)', color: '#60a5fa' }}>
+                📋 Tuần
+              </button>
+              <button
+                onClick={() => setShowActivityLog(true)}
+                className="shrink-0 px-2.5 py-1.5 rounded-xl font-bold"
+                style={{ fontSize: '10px', background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)', color: '#34d399' }}>
+                📜 Log
+              </button>
+            </div>
           )}
           <div className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center"
                style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', fontSize: '16px' }}>
@@ -510,6 +520,7 @@ export default function TeamDashboard({ onClose }: Props) {
       </div>
     </div>
     {showExecSummary && <ExecutiveSummaryPage onClose={() => setShowExecSummary(false)} />}
+    {showActivityLog  && <ActivityLogPage      onClose={() => setShowActivityLog(false)}  />}
     </>
   )
 }
