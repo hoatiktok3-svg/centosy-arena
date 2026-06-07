@@ -3,6 +3,7 @@ import { mockGames, gameCategories, GameCategory, Game } from '../data/mockGames
 import DifficultCustomerIntro from '../components/games/DifficultCustomerIntro'
 import DifficultCustomerGame, { GameAnswer } from '../components/games/DifficultCustomerGame'
 import DifficultCustomerResult from '../components/games/DifficultCustomerResult'
+import ProductQuizPage from './ProductQuizPage'
 
 /* ── Rule Modal ──────────────────────────────────────────── */
 function RuleModal({ game, onClose }: { game: Game; onClose: () => void }) {
@@ -179,6 +180,7 @@ export default function GamesPage() {
   const [activeGame, setActiveGame] = useState<Game | null>(null)
   const [gamePhase, setGamePhase] = useState<'list' | 'intro' | 'playing' | 'result'>('list')
   const [lastAnswers, setLastAnswers] = useState<GameAnswer[]>([])
+  const [showProductQuiz, setShowProductQuiz] = useState(false)
 
   const filtered = activeCategory === 'Tất cả'
     ? mockGames
@@ -188,6 +190,8 @@ export default function GamesPage() {
     if (game.id === 'g05') {
       setActiveGame(game)
       setGamePhase('intro')
+    } else if (game.id === 'g08') {
+      setShowProductQuiz(true)
     }
   }
 
@@ -283,6 +287,7 @@ export default function GamesPage() {
 
       <div className="h-2" />
       {ruleGame && <RuleModal game={ruleGame} onClose={() => setRuleGame(null)} />}
+      {showProductQuiz && <ProductQuizPage onClose={() => setShowProductQuiz(false)} />}
     </div>
   )
 }

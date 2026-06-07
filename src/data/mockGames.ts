@@ -107,6 +107,19 @@ export const mockGames: Game[] = [
     status: 'coming_soon',
     gradient: 'from-amber-900/60 to-arena-card',
   },
+  {
+    id: 'g08',
+    title: 'Quiz Kiến Thức Sản Phẩm',
+    description: 'Kiểm tra hiểu biết về sản phẩm Centosy — giày patin, bảo hộ, tư vấn khách hàng. 10 câu, mỗi câu 10 điểm.',
+    icon: '📚',
+    category: 'Bán hàng',
+    suitableFor: ['Cửa hàng', 'KDTT', 'TMĐT', 'Văn phòng'],
+    duration: '5 phút',
+    maxScore: 100,
+    aiHard: false,
+    status: 'active',
+    gradient: 'from-teal-900/60 to-arena-card',
+  },
 ]
 
 export const gameCategories: GameCategory[] = [
