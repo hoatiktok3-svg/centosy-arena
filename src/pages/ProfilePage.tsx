@@ -12,6 +12,7 @@ import { getBadge, PROFILE_BADGE_KEYS } from '../lib/badges'
 import { getLevelInfo } from '../lib/levelSystem'
 import RewardShopPage from './RewardShopPage'
 import AdminSettingsPage from './AdminSettingsPage'
+import ExportDataPage from './ExportDataPage'
 
 // me chỉ dùng cho mock data chưa có API: weeklyRank, game history
 const me = getCurrentUser()
@@ -97,6 +98,7 @@ export default function ProfilePage() {
   const [showFeedback,  setShowFeedback]  = useState(false)
   const [showRewardShop,   setShowRewardShop]   = useState(false)
   const [showAdminSettings, setShowAdminSettings] = useState(false)
+  const [showExportData,    setShowExportData]    = useState(false)
   const [myBadgeIds,      setMyBadgeIds]      = useState<string[] | null>(null) // null = loading
   const [recentMissions,  setRecentMissions]  = useState<RecentMission[] | null>(null)
 
@@ -376,6 +378,13 @@ export default function ProfilePage() {
             >
               ⚙️ Cài đặt hệ thống →
             </button>
+            <button
+              className="w-full py-2.5 rounded-lg text-sm font-semibold transition-colors active:scale-95"
+              style={{ background: 'rgba(96,165,250,0.08)', border: '1px solid rgba(96,165,250,0.2)', color: '#60a5fa' }}
+              onClick={() => setShowExportData(true)}
+            >
+              📊 Export dữ liệu CSV →
+            </button>
           </div>
         </div>
       )}
@@ -510,6 +519,7 @@ export default function ProfilePage() {
       {showFeedback && <FeedbackForm    onClose={() => setShowFeedback(false)} />}
       {showRewardShop     && <RewardShopPage    onClose={() => setShowRewardShop(false)}    />}
       {showAdminSettings  && <AdminSettingsPage onClose={() => setShowAdminSettings(false)} />}
+      {showExportData     && <ExportDataPage    onClose={() => setShowExportData(false)}    />}
 
       {showLogout && (
         <LogoutSheet
