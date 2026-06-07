@@ -1,6 +1,6 @@
 /**
- * SeasonLeaderboardPage — STEP 73
- * Bảng xếp hạng theo mùa (tháng hiện tại).
+ * SeasonLeaderboardPage — STEP 73 + STEP 74
+ * Bảng xếp hạng theo mùa (tháng hiện tại) + phần thưởng mùa.
  * Aggregates game_sessions.score for score_credited=true trong tháng.
  */
 import { useEffect, useState, useCallback } from 'react'
@@ -18,6 +18,61 @@ interface SeasonRow {
   totalScore: number
   playCount:  number
   gameCount:  number   // số game khác nhau đã chơi
+}
+
+// ── Season Reward Tiers ────────────────────────────────────────
+interface RewardTier {
+  rank:        string     // display label, e.g. "Hạng 1"
+  rankRange:   [number, number]  // [min, max] 1-indexed
+  icon:        string
+  title:       string
+  description: string
+  color:       string
+  bonus:       string     // e.g. "+500 điểm thưởng"
+}
+
+const SEASON_REWARDS: RewardTier[] = [
+  {
+    rank: 'Hạng 1',
+    rankRange: [1, 1],
+    icon: '🥇',
+    title: 'Quán quân mùa',
+    description: 'Badge Quán quân độc quyền + điểm thưởng đặc biệt',
+    color: '#facc15',
+    bonus: '+500 điểm thưởng',
+  },
+  {
+    rank: 'Hạng 2–3',
+    rankRange: [2, 3],
+    icon: '🥈',
+    title: 'Top 3 xuất sắc',
+    description: 'Badge Top 3 + điểm thưởng',
+    color: '#9ca3af',
+    bonus: '+200 điểm thưởng',
+  },
+  {
+    rank: 'Hạng 4–10',
+    rankRange: [4, 10],
+    icon: '🏅',
+    title: 'Top 10',
+    description: 'Badge Top 10 mùa + điểm thưởng nhỏ',
+    color: '#d97706',
+    bonus: '+100 điểm thưởng',
+  },
+  {
+    rank: 'Tham gia',
+    rankRange: [11, 9999],
+    icon: '🎖️',
+    title: 'Người tham gia',
+    description: 'Badge tham gia mùa (yêu cầu ≥ 1 lượt chơi)',
+    color: '#585858',
+    bonus: '+20 điểm thưởng',
+  },
+]
+
+function getMyReward(rank: number | null): RewardTier | null {
+  if (rank === null) return null
+  return SEASON_REWARDS.find(r => rank >= r.rankRange[0] && rank <= r.rankRange[1]) ?? null
 }
 
 function getSeasonLabel(): string {
@@ -52,6 +107,7 @@ export default function SeasonLeaderboardPage({ onClose }: Props) {
   const { currentUser } = useAuth()
   const [rows, setRows]       = useState<SeasonRow[]>([])
   const [loading, setLoading] = useState(true)
+  const [tab, setTab]         = useState<'rank' | 'rewards'>('rank')
   const seasonLabel = getSeasonLabel()
 
   const fetchData = useCallback(async () => {
@@ -101,8 +157,9 @@ export default function SeasonLeaderboardPage({ onClose }: Props) {
 
   useEffect(() => { void fetchData() }, [fetchData])
 
-  const myRank = rows.findIndex(r => r.user_id === currentUser?.id)
-  const myRow  = myRank >= 0 ? rows[myRank] : null
+  const myRank    = rows.findIndex(r => r.user_id === currentUser?.id)
+  const myRow     = myRank >= 0 ? rows[myRank] : null
+  const myReward  = getMyReward(myRank >= 0 ? myRank + 1 : null)
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col items-center justify-end md:justify-center"
@@ -130,8 +187,25 @@ export default function SeasonLeaderboardPage({ onClose }: Props) {
           </div>
         </div>
 
+        {/* Tabs */}
+        <div className="flex gap-1 px-4 py-2.5 shrink-0" style={{ borderBottom: '1px solid #151515' }}>
+          {(['rank', 'rewards'] as const).map(t => (
+            <button key={t}
+                    onClick={() => setTab(t)}
+                    className="flex-1 py-2 rounded-xl font-bold transition-all"
+                    style={{
+                      fontSize: '12px',
+                      background: tab === t ? 'rgba(233,78,27,0.15)' : 'transparent',
+                      border:     tab === t ? '1px solid rgba(233,78,27,0.3)' : '1px solid transparent',
+                      color:      tab === t ? '#E94E1B' : '#585858',
+                    }}>
+              {t === 'rank' ? '🏆 Xếp hạng' : '🎁 Phần thưởng'}
+            </button>
+          ))}
+        </div>
+
         {/* My rank banner */}
-        {myRow && (
+        {tab === 'rank' && myRow && (
           <div className="mx-4 mt-3 rounded-xl px-4 py-3 shrink-0 flex items-center gap-3"
                style={{ background: 'rgba(233,78,27,0.08)', border: '1px solid rgba(233,78,27,0.25)' }}>
             <p style={{ fontSize: '20px' }}>{rankMedal(myRank)}</p>
@@ -150,7 +224,7 @@ export default function SeasonLeaderboardPage({ onClose }: Props) {
         )}
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-4 pb-10 mt-3">
+        <div className="flex-1 overflow-y-auto px-4 pb-10 mt-3" style={{ display: tab === 'rewards' ? 'none' : undefined }}>
           {loading ? (
             <div className="flex flex-col items-center py-16 gap-3">
               <span style={{ fontSize: '32px' }}>⏳</span>
@@ -203,6 +277,80 @@ export default function SeasonLeaderboardPage({ onClose }: Props) {
             </>
           )}
         </div>
+
+        {/* Rewards tab */}
+        {tab === 'rewards' && (
+          <div className="flex-1 overflow-y-auto px-4 pb-10 mt-3">
+            {/* My current reward */}
+            {myReward && (
+              <>
+                <p className="font-bold text-white mb-2.5" style={{ fontSize: '13px' }}>
+                  Phần thưởng của bạn mùa này
+                </p>
+                <div className="rounded-xl px-4 py-4 mb-4"
+                     style={{ background: `${myReward.color}0f`, border: `1px solid ${myReward.color}30` }}>
+                  <div className="flex items-center gap-3 mb-2">
+                    <span style={{ fontSize: '28px' }}>{myReward.icon}</span>
+                    <div className="flex-1">
+                      <p className="font-black text-white" style={{ fontSize: '15px' }}>{myReward.title}</p>
+                      <p style={{ fontSize: '11px', color: '#888' }}>Hạng #{myRank + 1} · {seasonLabel}</p>
+                    </div>
+                    <span className="font-bold shrink-0 px-2 py-1 rounded-lg"
+                          style={{ fontSize: '11px', background: `${myReward.color}18`, color: myReward.color }}>
+                      {myReward.bonus}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '12px', color: '#888' }}>{myReward.description}</p>
+                </div>
+              </>
+            )}
+
+            {/* All tiers */}
+            <p className="font-bold text-white mb-2.5" style={{ fontSize: '13px' }}>
+              Tất cả phần thưởng mùa
+            </p>
+            <div className="flex flex-col gap-2.5">
+              {SEASON_REWARDS.map((tier) => {
+                const isMyTier = myReward?.rank === tier.rank
+                return (
+                  <div key={tier.rank}
+                       className="rounded-xl px-4 py-3.5"
+                       style={{
+                         background: isMyTier ? `${tier.color}10` : '#111',
+                         border:     isMyTier ? `1px solid ${tier.color}35` : '1px solid #1f1f1f',
+                       }}>
+                    <div className="flex items-start gap-3">
+                      <span style={{ fontSize: '24px', flexShrink: 0 }}>{tier.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <p className="font-black text-white" style={{ fontSize: '13px' }}>{tier.title}</p>
+                          {isMyTier && (
+                            <span className="px-1.5 py-0.5 rounded font-bold"
+                                  style={{ fontSize: '8px', background: 'rgba(233,78,27,0.15)', color: '#E94E1B' }}>
+                              BẠN
+                            </span>
+                          )}
+                        </div>
+                        <p style={{ fontSize: '11px', color: '#888', marginBottom: 6 }}>{tier.description}</p>
+                        <div className="flex items-center justify-between">
+                          <span style={{ fontSize: '11px', color: '#585858' }}>{tier.rank}</span>
+                          <span className="font-bold px-2 py-0.5 rounded-lg"
+                                style={{ fontSize: '10px', background: `${tier.color}15`, color: tier.color }}>
+                            {tier.bonus}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            <p className="text-center mt-4" style={{ fontSize: '11px', color: '#383838' }}>
+              Phần thưởng được trao vào cuối {seasonLabel}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )
