@@ -8,6 +8,7 @@ import TrainingLibraryPage from './TrainingLibraryPage'
 import OnboardingPage from './OnboardingPage'
 import GameLeaderboardPage from './GameLeaderboardPage'
 import SeasonLeaderboardPage from './SeasonLeaderboardPage'
+import DeptTournamentPage from './DeptTournamentPage'
 
 /* ── Rule Modal ──────────────────────────────────────────── */
 function RuleModal({ game, onClose }: { game: Game; onClose: () => void }) {
@@ -188,7 +189,8 @@ export default function GamesPage() {
   const [showTrainingLibrary, setShowTrainingLibrary] = useState(false)
   const [showOnboarding, setShowOnboarding]           = useState(false)
   const [showGameLeaderboard, setShowGameLeaderboard]   = useState(false)
-  const [showSeasonLeaderboard, setShowSeasonLeaderboard] = useState(false)
+  const [showSeasonLeaderboard, setShowSeasonLeaderboard]   = useState(false)
+  const [showDeptTournament,    setShowDeptTournament]      = useState(false)
 
   const filtered = activeCategory === 'Tất cả'
     ? mockGames
@@ -280,6 +282,12 @@ export default function GamesPage() {
           style={{ fontSize: '11px', background: 'rgba(233,78,27,0.08)', border: '1px solid rgba(233,78,27,0.25)', color: '#E94E1B' }}>
           🏅 Mùa
         </button>
+        <button
+          onClick={() => setShowDeptTournament(true)}
+          className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold"
+          style={{ fontSize: '11px', background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.25)', color: '#8b5cf6' }}>
+          🏢 Phòng ban
+        </button>
       </div>
 
       {/* Academy section */}
@@ -355,6 +363,7 @@ export default function GamesPage() {
       {showOnboarding      && <OnboardingPage        onClose={() => setShowOnboarding(false)}      />}
       {showGameLeaderboard   && <GameLeaderboardPage    onClose={() => setShowGameLeaderboard(false)}   />}
       {showSeasonLeaderboard && <SeasonLeaderboardPage  onClose={() => setShowSeasonLeaderboard(false)} />}
+      {showDeptTournament    && <DeptTournamentPage      onClose={() => setShowDeptTournament(false)}    />}
     </div>
   )
 }
