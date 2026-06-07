@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { saveGameResultSafe } from '../lib/gameService'
 import { useGameRecognition } from '../lib/useGameRecognition'
 import GameScoreToast from '../components/games/GameScoreToast'
+import { calcSpeedScore, analyzeSessionAntiCheat, getSpeedLabel } from '../lib/speedScoring'
 
 // ── Types ─────────────────────────────────────────────────────
 interface QuizQuestion {
@@ -15,10 +16,13 @@ interface QuizQuestion {
 }
 
 interface QuizAnswer {
-  questionId: number
+  questionId:   number
   selectedIndex: number
-  isCorrect: boolean
-  points: number
+  isCorrect:    boolean
+  points:       number    // final points after speed bonus
+  speedBonus:   number
+  timeTakenMs:  number
+  isSuspicious: boolean
 }
 
 interface Props {
@@ -226,8 +230,10 @@ function QuestionScreen({
   score: number
   onAnswer: (selectedIndex: number) => void
 }) {
-  const [selected, setSelected] = useState<number | null>(null)
-  const [confirmed, setConfirmed] = useState(false)
+  const [selected, setSelected]         = useState<number | null>(null)
+  const [confirmed, setConfirmed]       = useState(false)
+  const [questionMs, setQuestionMs]     = useState(0)
+  const questionStart                   = useRef(Date.now())
 
   const handleSelect = (i: number) => {
     if (confirmed) return
@@ -236,6 +242,7 @@ function QuestionScreen({
 
   const handleConfirm = () => {
     if (selected === null) return
+    setQuestionMs(Date.now() - questionStart.current)
     setConfirmed(true)
   }
 
@@ -350,7 +357,17 @@ function QuestionScreen({
               <div>
                 <p className="font-bold mb-1" style={{ fontSize: '12px', color: isCorrect ? '#4ade80' : '#f87171' }}>
                   {isCorrect ? 'Chính xác!' : 'Chưa đúng'}
-                  {isCorrect && <span className="ml-1.5" style={{ color: '#E94E1B' }}>+{question.points}đ</span>}
+                  {isCorrect && (() => {
+                    const spd = getSpeedLabel(questionMs)
+                    const bonus = Math.round(Math.max(0, 1 - questionMs / 15000) * 0.5 * question.points)
+                    return (
+                      <>
+                        <span className="ml-1.5" style={{ color: '#E94E1B' }}>+{question.points + bonus}đ</span>
+                        {bonus > 0 && <span className="ml-1" style={{ color: '#facc15', fontSize: '10px' }}>(+{bonus} speed)</span>}
+                        <span className="ml-1.5" style={{ fontSize: '10px', color: spd.color }}>{spd.label}</span>
+                      </>
+                    )
+                  })()}
                 </p>
                 <p style={{ fontSize: '13px', color: '#b0b0b0', lineHeight: 1.55 }}>{question.explanation}</p>
               </div>
@@ -546,32 +563,48 @@ export default function ProductQuizPage({ onClose }: Props) {
     const now = Date.now()
     const q = QUIZ_QUESTIONS[currentIndex]
     const isCorrect = selectedIndex === q.correctIndex
-    const pts = isCorrect ? q.points : 0
     const timeTakenMs = now - questionStartTime.current
     questionStartTime.current = now
 
+    // Speed scoring + anti-cheat
+    const speedResult = calcSpeedScore({ basePoints: q.points, isCorrect, timeTakenMs })
+
     const newAnswer: QuizAnswer = {
-      questionId: q.id,
+      questionId:    q.id,
       selectedIndex,
       isCorrect,
-      points: pts,
+      points:        speedResult.finalPoints,
+      speedBonus:    speedResult.speedBonus,
+      timeTakenMs,
+      isSuspicious:  speedResult.isSuspicious,
     }
     const newAnswers = [...answers, newAnswer]
-    const newScore   = score + pts
+    const newScore   = score + speedResult.finalPoints
     setAnswers(newAnswers)
     setScore(newScore)
 
     if (currentIndex + 1 >= QUIZ_QUESTIONS.length) {
       setPhase('result')
+      // Anti-cheat session check
+      const antiCheat = analyzeSessionAntiCheat(newAnswers.map(a => ({
+        isCorrect: a.isCorrect,
+        timeTakenMs: a.timeTakenMs,
+      })))
+      if (antiCheat.isFlagged) {
+        console.warn('[speedScoring] suspicious session:', antiCheat.flagReason)
+      }
+
       // Lưu session sau khi hoàn thành
       if (!hasSaved.current && currentUser?.id) {
         hasSaved.current = true
         const durationMs = Date.now() - startTime.current
+        // Nếu bị flag: score = 0 (không thưởng gian lận)
+        const scoreToSave = antiCheat.isFlagged ? 0 : newScore
         void saveGameResultSafe({
           userId:         currentUser.id,
           gameKey:        'product_quiz',
           gameTitle:      'Quiz Kiến Thức Sản Phẩm',
-          score:          newScore,
+          score:          scoreToSave,
           maxScore:       MAX_SCORE,
           correctCount:   newAnswers.filter(a => a.isCorrect).length,
           totalQuestions: QUIZ_QUESTIONS.length,
@@ -583,11 +616,11 @@ export default function ProductQuizPage({ onClose }: Props) {
             correctOption:  QUIZ_QUESTIONS[i]?.correctIndex ?? 0,
             isCorrect:      a.isCorrect,
             pointsEarned:   a.points,
-            timeTakenMs,
+            timeTakenMs:    a.timeTakenMs,
           })),
         }).then(() => {
           if (currentUser?.id) {
-            void checkRecognition(currentUser.id, 'product_quiz', newScore)
+            void checkRecognition(currentUser.id, 'product_quiz', scoreToSave)
               .then(() => setShowToast(true))
           }
         })
