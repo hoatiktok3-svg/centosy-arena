@@ -10,6 +10,7 @@ import GameLeaderboardPage from './GameLeaderboardPage'
 import SeasonLeaderboardPage from './SeasonLeaderboardPage'
 import DeptTournamentPage from './DeptTournamentPage'
 import LiveQuizRoomPage from './LiveQuizRoomPage'
+import TournamentBracketPage from './TournamentBracketPage'
 
 /* ── Rule Modal ──────────────────────────────────────────── */
 function RuleModal({ game, onClose }: { game: Game; onClose: () => void }) {
@@ -193,6 +194,7 @@ export default function GamesPage() {
   const [showSeasonLeaderboard, setShowSeasonLeaderboard]   = useState(false)
   const [showDeptTournament,    setShowDeptTournament]      = useState(false)
   const [showLiveRoom,          setShowLiveRoom]            = useState(false)
+  const [showBracket,           setShowBracket]             = useState(false)
 
   const filtered = activeCategory === 'Tất cả'
     ? mockGames
@@ -372,7 +374,8 @@ export default function GamesPage() {
       {showGameLeaderboard   && <GameLeaderboardPage    onClose={() => setShowGameLeaderboard(false)}   />}
       {showSeasonLeaderboard && <SeasonLeaderboardPage  onClose={() => setShowSeasonLeaderboard(false)} />}
       {showDeptTournament    && <DeptTournamentPage      onClose={() => setShowDeptTournament(false)}    />}
-      {showLiveRoom          && <LiveQuizRoomPage        onClose={() => setShowLiveRoom(false)}           />}
+      {showLiveRoom          && <LiveQuizRoomPage          onClose={() => setShowLiveRoom(false)}         />}
+      {showBracket           && <TournamentBracketPage    onClose={() => setShowBracket(false)}           />}
     </div>
   )
 }

@@ -16,6 +16,7 @@ import ExportDataPage from './ExportDataPage'
 import QuizGeneratorPage from './QuizGeneratorPage'
 import AdminGameMonitorPage from './AdminGameMonitorPage'
 import SeasonResetPage from './SeasonResetPage'
+import TournamentBracketPage from './TournamentBracketPage'
 
 // me chỉ dùng cho mock data chưa có API: weeklyRank, game history
 const me = getCurrentUser()
@@ -105,6 +106,7 @@ export default function ProfilePage() {
   const [showQuizGen,       setShowQuizGen]       = useState(false)
   const [showGameMonitor,   setShowGameMonitor]   = useState(false)
   const [showSeasonReset,   setShowSeasonReset]   = useState(false)
+  const [showBracket,       setShowBracket]       = useState(false)
   const [myBadgeIds,      setMyBadgeIds]      = useState<string[] | null>(null) // null = loading
   const [recentMissions,  setRecentMissions]  = useState<RecentMission[] | null>(null)
 
@@ -412,6 +414,13 @@ export default function ProfilePage() {
             >
               🗂️ Season Reset →
             </button>
+            <button
+              className="w-full py-3 rounded-xl font-semibold text-left px-4 transition-all active:scale-[0.98]"
+              style={{ background: 'rgba(250,204,21,0.08)', border: '1px solid rgba(250,204,21,0.2)', color: '#facc15' }}
+              onClick={() => setShowBracket(true)}
+            >
+              🏆 Tournament Bracket →
+            </button>
           </div>
         </div>
       )}
@@ -549,7 +558,8 @@ export default function ProfilePage() {
       {showExportData     && <ExportDataPage    onClose={() => setShowExportData(false)}    />}
       {showQuizGen        && <QuizGeneratorPage    onClose={() => setShowQuizGen(false)}       />}
       {showGameMonitor    && <AdminGameMonitorPage onClose={() => setShowGameMonitor(false)}  />}
-      {showSeasonReset    && <SeasonResetPage      onClose={() => setShowSeasonReset(false)}  />}
+      {showSeasonReset    && <SeasonResetPage        onClose={() => setShowSeasonReset(false)}   />}
+      {showBracket        && <TournamentBracketPage  onClose={() => setShowBracket(false)}      />}
 
       {showLogout && (
         <LogoutSheet
