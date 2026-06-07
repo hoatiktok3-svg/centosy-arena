@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 import { canAccessAdminPanel, getRoleLabel, getRoleBadgeStyle } from '../../lib/permissions'
+import DeptHealthScore from './DeptHealthScore'
 
 // ── Types ─────────────────────────────────────────────────────
 interface TeamMember {
@@ -301,6 +302,9 @@ export default function TeamDashboard({ onClose }: Props) {
                   </div>
                 ))}
               </div>
+
+              {/* ── Dept Health Score ─────────────────── */}
+              <DeptHealthScore members={members} groupLabel={groupLabel} />
 
               {/* ── Top performer highlight ────────────── */}
               {kpi?.topMember && (
