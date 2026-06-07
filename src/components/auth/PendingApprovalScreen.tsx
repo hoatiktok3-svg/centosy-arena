@@ -1,6 +1,6 @@
 import { useAuth } from '../../context/AuthContext'
 
-type AccountStatus = 'pending' | 'approved' | 'rejected' | 'inactive'
+type AccountStatus = 'pending' | 'approved' | 'rejected' | 'inactive' | 'resigned'
 
 interface Props {
   status: AccountStatus
@@ -28,6 +28,12 @@ const CONFIG: Record<
     title: 'Tài khoản đang tạm khóa',
     subtitle: 'Tài khoản của bạn đã bị tạm khóa. Vui lòng liên hệ quản trị viên để được hỗ trợ.',
     color: '#888',
+  },
+  resigned: {
+    icon: '🚪',
+    title: 'Tài khoản đã nghỉ việc',
+    subtitle: 'Tài khoản của bạn đã được đánh dấu là nghỉ việc. Liên hệ phòng Hành chính nhân sự nếu có nhầm lẫn.',
+    color: '#6b7280',
   },
 }
 

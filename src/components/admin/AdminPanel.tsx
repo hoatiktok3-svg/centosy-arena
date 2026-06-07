@@ -87,6 +87,9 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
   const [rejectTarget,   setRejectTarget]   = useState<string | null>(null)  // id đang mở reject form
   const [rejectReason,   setRejectReason]   = useState('')
   const [approveRole,    setApproveRole]    = useState<Record<string, string>>({})  // id → role được assign
+  const [statusTarget,   setStatusTarget]   = useState<string | null>(null)  // id đang mở status sheet
+  const [statusLoading,  setStatusLoading]  = useState<string | null>(null)
+  const [statusNote,     setStatusNote]     = useState('')
 
   useEffect(() => {
     if (!isAdmin) { setLoading(false); return }
@@ -513,6 +516,81 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
             </p>
           )}
         </div>
+
+        {/* ── Quản lý trạng thái tài khoản ─────────────── */}
+        {isAdmin && (
+          <div className="mb-6">
+            <p className="section-title mb-3">🔧 Trạng thái tài khoản</p>
+            <p className="text-text-muted text-xs mb-3">
+              Đặt tài khoản thành tạm khóa hoặc nghỉ việc. Nhân viên sẽ không thể đăng nhập.
+            </p>
+            {profiles.length === 0 ? (
+              <p className="text-text-muted text-xs text-center py-4">Không có dữ liệu.</p>
+            ) : (
+              <div className="rounded-2xl overflow-hidden" style={{ background: '#0E0E0E', border: '1px solid #1f1f1f' }}>
+                {profiles.slice(0, 15).map((p, i) => {
+                  const isOpen = statusTarget === p.id
+                  return (
+                    <div key={p.id} style={{ borderBottom: i < Math.min(profiles.length, 15) - 1 ? '1px solid #1a1a1a' : 'none' }}>
+                      <div className="flex items-center gap-2 px-4 py-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white text-sm font-semibold truncate">{p.full_name}</p>
+                          <p className="text-text-muted text-[10px]">{p.role} · {p.is_active ? 'Active' : 'Không active'}</p>
+                        </div>
+                        <button
+                          onClick={() => { setStatusTarget(isOpen ? null : p.id); setStatusNote('') }}
+                          className="text-[11px] px-2.5 py-1 rounded-lg border transition-all"
+                          style={{ background: '#111', border: '1px solid #2a2a2a', color: '#888' }}
+                        >
+                          Đổi trạng thái
+                        </button>
+                      </div>
+                      {isOpen && (
+                        <div className="px-4 pb-4 flex flex-col gap-2">
+                          <input
+                            type="text"
+                            placeholder="Ghi chú (tuỳ chọn)"
+                            value={statusNote}
+                            onChange={e => setStatusNote(e.target.value)}
+                            className="w-full bg-arena-bg border border-arena-border rounded-lg px-3 py-2 text-white text-xs"
+                          />
+                          <div className="flex gap-2">
+                            {(['approved','inactive','resigned'] as const).map(s => (
+                              <button
+                                key={s}
+                                disabled={statusLoading === p.id}
+                                onClick={async () => {
+                                  setStatusLoading(p.id)
+                                  await supabase.rpc('admin_set_user_status', {
+                                    p_user_id: p.id,
+                                    p_status:  s,
+                                    p_note:    statusNote || null,
+                                  })
+                                  setStatusLoading(null)
+                                  setStatusTarget(null)
+                                }}
+                                className="flex-1 py-1.5 rounded-lg text-[11px] font-bold transition-all active:scale-95"
+                                style={
+                                  s === 'approved'
+                                    ? { background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.3)', color: '#34d399' }
+                                    : s === 'inactive'
+                                    ? { background: 'rgba(156,163,175,0.1)', border: '1px solid rgba(156,163,175,0.3)', color: '#9ca3af' }
+                                    : { background: 'rgba(107,114,128,0.1)', border: '1px solid rgba(107,114,128,0.3)', color: '#6b7280' }
+                                }
+                              >
+                                {s === 'approved' ? '✓ Active' : s === 'inactive' ? '🔒 Khóa' : '🚪 Nghỉ việc'}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── Phản hồi nhân viên ────────────────────────── */}
         <div className="mb-6">
