@@ -52,10 +52,18 @@ do $$ begin
     'pending',
     'approved',
     'rejected',
-    'inactive'
+    'inactive',
+    'resigned'
   );
 exception
   when duplicate_object then null;
+end $$;
+
+-- Nếu enum đã tồn tại mà thiếu 'resigned', thêm vào:
+do $$ begin
+  alter type account_status_type add value if not exists 'resigned';
+exception
+  when others then null;
 end $$;
 
 

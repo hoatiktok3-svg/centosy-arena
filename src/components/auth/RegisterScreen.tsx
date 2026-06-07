@@ -28,6 +28,18 @@ const OFFICE_DEPT_OPTIONS: { value: OfficeDept; label: string }[] = [
   { value: 'giam-doc',           label: 'Giám đốc' },
 ]
 
+// Vị trí cửa hàng
+const CUAHANG_OPTIONS = [
+  { value: 'nhan-vien-ban-hang', label: 'Nhân viên bán hàng' },
+  { value: 'quan-ly-cua-hang',   label: 'Quản lý cửa hàng' },
+]
+
+// Kho cụ thể
+const KHO_OPTIONS = [
+  { value: 'kho-ha-noi', label: 'Kho Hà Nội' },
+  { value: 'kho-hcm',    label: 'Kho HCM' },
+]
+
 interface Props {
   onBackToLogin: () => void
 }
@@ -36,52 +48,90 @@ export default function RegisterScreen({ onBackToLogin }: Props) {
   const [fullName, setFullName]             = useState('')
   const [email, setEmail]                   = useState('')
   const [password, setPassword]             = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword]     = useState(false)
+  const [showConfirm, setShowConfirm]       = useState(false)
   const [phone, setPhone]                   = useState('')
   const [orgGroup, setOrgGroup]             = useState<OrgGroup | ''>('')
   const [officeDept, setOfficeDept]         = useState<OfficeDept | ''>('')
-  const [registrationNote, setRegistrationNote] = useState('')
-  const [internalCode, setInternalCode]     = useState('')
+  const [cuahangPos, setCuahangPos]         = useState('')
+  const [khoPos, setKhoPos]                 = useState('')
 
   const [loading, setLoading]               = useState(false)
   const [error, setError]                   = useState('')
   const [success, setSuccess]               = useState(false)
 
+  const handleOrgGroupChange = (g: OrgGroup) => {
+    setOrgGroup(g)
+    setOfficeDept('')
+    setCuahangPos('')
+    setKhoPos('')
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
 
-    if (!orgGroup) {
-      setError('Vui lòng chọn khối tổ chức.')
+    if (!fullName.trim()) {
+      setError('Vui lòng nhập họ và tên.')
       return
     }
-    if (orgGroup === 'van-phong' && !officeDept) {
-      setError('Vui lòng chọn bộ phận trong Văn phòng.')
+    if (!phone.trim()) {
+      setError('Vui lòng nhập số điện thoại.')
+      return
+    }
+    if (!password) {
+      setError('Vui lòng nhập mật khẩu.')
       return
     }
     if (password.length < 6) {
       setError('Mật khẩu phải có ít nhất 6 ký tự.')
       return
     }
+    if (!confirmPassword) {
+      setError('Vui lòng nhập lại mật khẩu.')
+      return
+    }
+    if (password !== confirmPassword) {
+      setError('Mật khẩu nhập lại không khớp.')
+      return
+    }
+    if (!orgGroup) {
+      setError('Vui lòng chọn khối làm việc.')
+      return
+    }
+    if (orgGroup === 'van-phong' && !officeDept) {
+      setError('Vui lòng chọn phòng ban.')
+      return
+    }
+    if (orgGroup === 'cua-hang' && !cuahangPos) {
+      setError('Vui lòng chọn vị trí tại cửa hàng.')
+      return
+    }
+    if (orgGroup === 'kho' && !khoPos) {
+      setError('Vui lòng chọn kho làm việc.')
+      return
+    }
 
     setLoading(true)
 
+    // registration_note lưu vị trí cụ thể (cửa hàng / kho)
+    const registrationNote =
+      orgGroup === 'cua-hang' ? cuahangPos :
+      orgGroup === 'kho'      ? khoPos      : ''
+
     const metadata: Record<string, string> = {
-      full_name: fullName.trim(),
-      phone: phone.trim(),
-      org_group: orgGroup,
-      registration_note: registrationNote.trim(),
+      full_name:         fullName.trim(),
+      phone:             phone.trim(),
+      org_group:         orgGroup,
+      registration_note: registrationNote,
     }
     if (orgGroup === 'van-phong' && officeDept) {
       metadata.office_department = officeDept
     }
-    if (internalCode.trim()) {
-      metadata.employee_code = internalCode.trim()
-    }
-    // Ghi chú cửa hàng / kho nằm trong registration_note đã bao gồm
 
     const { error: signUpError } = await supabase.auth.signUp({
-      email: email.trim(),
+      email: email.trim().toLowerCase(),
       password,
       options: { data: metadata },
     })
@@ -172,67 +222,18 @@ export default function RegisterScreen({ onBackToLogin }: Props) {
         <form onSubmit={handleSubmit} className="space-y-4">
 
           {/* Họ tên */}
-          <Field label="Họ và tên">
+          <Field label="Họ và tên *">
             <input
               type="text"
               value={fullName}
               onChange={e => setFullName(e.target.value)}
               placeholder="Nguyễn Văn A"
-              required
               className={inputClass}
             />
-          </Field>
-
-          {/* Email */}
-          <Field label="Email">
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="ten@centosy.vn"
-              required
-              autoComplete="email"
-              className={inputClass}
-            />
-          </Field>
-
-          {/* Mật khẩu */}
-          <Field label="Mật khẩu">
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="Tối thiểu 6 ký tự"
-                required
-                autoComplete="new-password"
-                className={`${inputClass} pr-12`}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(v => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
-                style={{ color: showPassword ? '#E94E1B' : '#585858' }}
-                tabIndex={-1}
-                aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-              >
-                {showPassword ? (
-                  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
-                    <line x1="1" y1="1" x2="23" y2="23" strokeLinecap="round" />
-                  </svg>
-                ) : (
-                  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                    <circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-              </button>
-            </div>
           </Field>
 
           {/* Số điện thoại */}
-          <Field label="Số điện thoại">
+          <Field label="Số điện thoại *">
             <input
               type="tel"
               value={phone}
@@ -242,14 +243,68 @@ export default function RegisterScreen({ onBackToLogin }: Props) {
             />
           </Field>
 
+          {/* Email */}
+          <Field label="Email *">
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="ten@centosy.vn"
+              autoComplete="email"
+              className={inputClass}
+            />
+          </Field>
+
+          {/* Mật khẩu */}
+          <Field label="Mật khẩu *">
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Tối thiểu 6 ký tự"
+                autoComplete="new-password"
+                className={`${inputClass} pr-12`}
+              />
+              <EyeToggle show={showPassword} onToggle={() => setShowPassword(v => !v)} />
+            </div>
+          </Field>
+
+          {/* Nhập lại mật khẩu */}
+          <Field label="Nhập lại mật khẩu *">
+            <div className="relative">
+              <input
+                type={showConfirm ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                placeholder="Nhập lại mật khẩu"
+                autoComplete="new-password"
+                className={`${inputClass} pr-12 ${
+                  confirmPassword && confirmPassword !== password
+                    ? 'border-red-600'
+                    : confirmPassword && confirmPassword === password
+                    ? 'border-green-600'
+                    : ''
+                }`}
+              />
+              <EyeToggle show={showConfirm} onToggle={() => setShowConfirm(v => !v)} />
+            </div>
+            {confirmPassword && confirmPassword !== password && (
+              <p className="text-red-400 text-xs mt-1">Mật khẩu không khớp</p>
+            )}
+            {confirmPassword && confirmPassword === password && (
+              <p className="text-green-400 text-xs mt-1">✓ Mật khẩu khớp</p>
+            )}
+          </Field>
+
           {/* Khối tổ chức */}
-          <Field label="Khối tổ chức *">
+          <Field label="Khối làm việc *">
             <div className="grid grid-cols-3 gap-2">
               {(Object.keys(ORG_GROUP_LABELS) as OrgGroup[]).map(g => (
                 <button
                   key={g}
                   type="button"
-                  onClick={() => { setOrgGroup(g); setOfficeDept(''); setRegistrationNote('') }}
+                  onClick={() => handleOrgGroupChange(g)}
                   className="py-3 rounded-xl text-sm font-semibold transition-all active:scale-95 border"
                   style={
                     orgGroup === g
@@ -263,16 +318,15 @@ export default function RegisterScreen({ onBackToLogin }: Props) {
             </div>
           </Field>
 
-          {/* Văn phòng → chọn bộ phận */}
+          {/* Văn phòng → chọn phòng ban */}
           {orgGroup === 'van-phong' && (
-            <Field label="Bộ phận *">
+            <Field label="Phòng ban *">
               <select
                 value={officeDept}
                 onChange={e => setOfficeDept(e.target.value as OfficeDept)}
-                required
                 className={`${inputClass} appearance-none`}
               >
-                <option value="">-- Chọn bộ phận --</option>
+                <option value="">-- Chọn phòng ban --</option>
                 {OFFICE_DEPT_OPTIONS.map(o => (
                   <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
@@ -280,42 +334,37 @@ export default function RegisterScreen({ onBackToLogin }: Props) {
             </Field>
           )}
 
-          {/* Cửa hàng → ghi chú tên cửa hàng */}
+          {/* Cửa hàng → chọn vị trí */}
           {orgGroup === 'cua-hang' && (
-            <Field label="Tên cửa hàng (ghi chú)">
-              <input
-                type="text"
-                value={registrationNote}
-                onChange={e => setRegistrationNote(e.target.value)}
-                placeholder="Ví dụ: CH Quận 1, CH Bình Dương..."
-                className={inputClass}
-              />
+            <Field label="Vị trí tại cửa hàng *">
+              <select
+                value={cuahangPos}
+                onChange={e => setCuahangPos(e.target.value)}
+                className={`${inputClass} appearance-none`}
+              >
+                <option value="">-- Chọn vị trí --</option>
+                {CUAHANG_OPTIONS.map(o => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
             </Field>
           )}
 
-          {/* Kho → ghi chú kho */}
+          {/* Kho → chọn kho cụ thể */}
           {orgGroup === 'kho' && (
-            <Field label="Tên kho / Chi nhánh (ghi chú)">
-              <input
-                type="text"
-                value={registrationNote}
-                onChange={e => setRegistrationNote(e.target.value)}
-                placeholder="Ví dụ: Kho HCM, Kho Hà Nội..."
-                className={inputClass}
-              />
+            <Field label="Kho làm việc *">
+              <select
+                value={khoPos}
+                onChange={e => setKhoPos(e.target.value)}
+                className={`${inputClass} appearance-none`}
+              >
+                <option value="">-- Chọn kho --</option>
+                {KHO_OPTIONS.map(o => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
             </Field>
           )}
-
-          {/* Mã đăng ký nội bộ */}
-          <Field label="Mã đăng ký nội bộ (nếu có)">
-            <input
-              type="text"
-              value={internalCode}
-              onChange={e => setInternalCode(e.target.value)}
-              placeholder="Do Admin cung cấp"
-              className={inputClass}
-            />
-          </Field>
 
           {/* Error */}
           {error && (
@@ -361,7 +410,7 @@ export default function RegisterScreen({ onBackToLogin }: Props) {
 /* ─── Helpers ─── */
 
 const inputClass =
-  'w-full bg-arena-card border border-arena-border rounded-xl px-4 py-3 text-text-primary placeholder-text-muted text-sm focus:outline-none focus:border-brand'
+  'w-full bg-arena-card border border-arena-border rounded-xl px-4 py-3 text-text-primary placeholder-text-muted text-sm focus:outline-none focus:border-brand transition-colors'
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -371,5 +420,30 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       </label>
       {children}
     </div>
+  )
+}
+
+function EyeToggle({ show, onToggle }: { show: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
+      style={{ color: show ? '#E94E1B' : '#585858' }}
+      tabIndex={-1}
+      aria-label={show ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+    >
+      {show ? (
+        <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
+          <line x1="1" y1="1" x2="23" y2="23" strokeLinecap="round" />
+        </svg>
+      ) : (
+        <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+          <circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+    </button>
   )
 }
