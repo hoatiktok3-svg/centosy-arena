@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { GameAnswer } from './DifficultCustomerGame'
-import { supabase } from '../../lib/supabaseClient'
+import { saveGameResultSafe, AnswerLog } from '../../lib/gameService'
 import { useAuth } from '../../context/AuthContext'
 
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
   onBack: () => void
 }
 
-type SaveStatus = 'saving' | 'saved' | 'error' | 'no-profile'
+type SaveStatus = 'saving' | 'saved' | 'saved-no-credit' | 'error' | 'no-profile'
 
 interface TitleConfig {
   title: string
@@ -83,27 +83,37 @@ export default function DifficultCustomerResult({ answers, onReplay, onBack }: P
     async function saveResult() {
       if (!currentUser?.id) {
         setSaveStatus('no-profile')
-        console.warn('[game_results] Không tìm thấy user — bỏ qua lưu điểm.')
+        console.warn('[DifficultCustomer] Không tìm thấy user — bỏ qua lưu điểm.')
         return
       }
 
-      const titleEarned = getTitle(totalScore).title
+      // Map option letter A/B/C/D → index 0/1/2/3
+      const OPTION_INDEX: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 }
 
-      const { error } = await supabase.from('game_results').insert({
-        user_id:          currentUser.id,
-        game_key:         'difficult_customer',
-        game_title:       'Khách hàng khó tính',
-        score:            totalScore,
-        max_score:        MAX_SCORE,
-        correct_count:    correctCount,
-        total_questions:  answers.length,
-        duration_seconds: null,       // chưa track tổng thời gian
-        title_earned:     titleEarned,
+      const answerLogs: AnswerLog[] = answers.map((a, i) => ({
+        questionIndex: i,
+        chosenOption:  a.chosen !== null ? (OPTION_INDEX[a.chosen] ?? -1) : -1,
+        correctOption: -1,          // game này không có đáp án đúng duy nhất
+        isCorrect:     a.score >= 15,
+        pointsEarned:  a.score,
+      }))
+
+      const { error, scoreCredited } = await saveGameResultSafe({
+        userId:         currentUser.id,
+        gameKey:        'difficult_customer',
+        gameTitle:      'Khách hàng khó tính',
+        score:          totalScore,
+        maxScore:       MAX_SCORE,
+        correctCount:   correctCount,
+        totalQuestions: answers.length,
+        answers:        answerLogs,
       })
 
       if (error) {
         setSaveStatus('error')
-        console.error('[game_results] Lỗi khi lưu điểm:', error.message)
+        console.error('[DifficultCustomer] Lỗi khi lưu điểm:', error)
+      } else if (!scoreCredited) {
+        setSaveStatus('saved-no-credit')
       } else {
         setSaveStatus('saved')
       }
@@ -271,6 +281,11 @@ export default function DifficultCustomerResult({ answers, onReplay, onBack }: P
         {saveStatus === 'saved' && (
           <div className="flex items-center justify-center gap-2 py-2">
             <span style={{ fontSize: '12px', color: '#4ade80', fontWeight: 600 }}>✅ Đã lưu điểm vào BXH</span>
+          </div>
+        )}
+        {saveStatus === 'saved-no-credit' && (
+          <div className="flex items-center justify-center gap-2 py-2">
+            <span style={{ fontSize: '12px', color: '#facc15' }}>⭐ Đã lưu — điểm chỉ tính lần đầu mỗi ngày</span>
           </div>
         )}
         {saveStatus === 'error' && (
