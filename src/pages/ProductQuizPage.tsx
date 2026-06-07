@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { saveGameResultSafe } from '../lib/gameService'
+import { useGameRecognition } from '../lib/useGameRecognition'
+import GameScoreToast from '../components/games/GameScoreToast'
 
 // ── Types ─────────────────────────────────────────────────────
 interface QuizQuestion {
@@ -519,13 +521,16 @@ function ResultScreen({
 // ── Main Component ────────────────────────────────────────────
 export default function ProductQuizPage({ onClose }: Props) {
   const { currentUser } = useAuth()
+  const { checkRecognition, result: recognitionResult, clear: clearRecognition } = useGameRecognition()
   const [phase, setPhase] = useState<'intro' | 'playing' | 'result'>('intro')
   const [currentIndex, setCurrentIndex] = useState(0)
   const [score, setScore] = useState(0)
   const [answers, setAnswers] = useState<QuizAnswer[]>([])
+  const [showToast, setShowToast] = useState(false)
   const hasSaved = useRef(false)
   const startTime = useRef<number>(0)
   const questionStartTime = useRef<number>(0)
+  const MAX_SCORE = QUIZ_QUESTIONS.reduce((s, q) => s + q.points, 0)
 
   const handleStart = () => {
     setPhase('playing')
@@ -567,7 +572,7 @@ export default function ProductQuizPage({ onClose }: Props) {
           gameKey:        'product_quiz',
           gameTitle:      'Quiz Kiến Thức Sản Phẩm',
           score:          newScore,
-          maxScore:       QUIZ_QUESTIONS.reduce((s, q) => s + q.points, 0),
+          maxScore:       MAX_SCORE,
           correctCount:   newAnswers.filter(a => a.isCorrect).length,
           totalQuestions: QUIZ_QUESTIONS.length,
           durationMs,
@@ -580,6 +585,11 @@ export default function ProductQuizPage({ onClose }: Props) {
             pointsEarned:   a.points,
             timeTakenMs,
           })),
+        }).then(() => {
+          if (currentUser?.id) {
+            void checkRecognition(currentUser.id, 'product_quiz', newScore)
+              .then(() => setShowToast(true))
+          }
         })
       }
     } else {
@@ -608,10 +618,23 @@ export default function ProductQuizPage({ onClose }: Props) {
   }
 
   return (
-    <ResultScreen
-      answers={answers}
-      onReplay={handleReplay}
-      onClose={onClose}
-    />
+    <>
+      <ResultScreen
+        answers={answers}
+        onReplay={handleReplay}
+        onClose={onClose}
+      />
+      {showToast && recognitionResult && (
+        <GameScoreToast
+          score={score}
+          maxScore={MAX_SCORE}
+          isNewRecord={recognitionResult.isNewRecord}
+          isTopThree={recognitionResult.isTopThree}
+          rank={recognitionResult.rank ?? undefined}
+          gameTitle="Quiz Kiến Thức Sản Phẩm"
+          onDismiss={() => { setShowToast(false); clearRecognition() }}
+        />
+      )}
+    </>
   )
 }
