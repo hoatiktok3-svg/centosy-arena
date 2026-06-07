@@ -10,6 +10,7 @@ import { canAccessAdminPanel, canAccessTeamDashboard, canAccessDirectorDashboard
 import { supabase } from '../lib/supabaseClient'
 import { getBadge, PROFILE_BADGE_KEYS } from '../lib/badges'
 import { getLevelInfo } from '../lib/levelSystem'
+import RewardShopPage from './RewardShopPage'
 
 // me chỉ dùng cho mock data chưa có API: weeklyRank, game history
 const me = getCurrentUser()
@@ -93,6 +94,7 @@ export default function ProfilePage() {
   const [showTeam,      setShowTeam]      = useState(false)
   const [showDirector,  setShowDirector]  = useState(false)
   const [showFeedback,  setShowFeedback]  = useState(false)
+  const [showRewardShop, setShowRewardShop] = useState(false)
   const [myBadgeIds,      setMyBadgeIds]      = useState<string[] | null>(null) // null = loading
   const [recentMissions,  setRecentMissions]  = useState<RecentMission[] | null>(null)
 
@@ -279,6 +281,26 @@ export default function ProfilePage() {
           </div>
         )
       })()}
+
+      {/* ── Reward Shop card ── */}
+      <div className="arena-card" style={{ border: '1px solid rgba(233,78,27,0.25)', background: 'rgba(233,78,27,0.04)' }}>
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+               style={{ background: 'rgba(233,78,27,0.12)', border: '1px solid rgba(233,78,27,0.28)' }}>
+            <span className="text-lg">🎁</span>
+          </div>
+          <div>
+            <p className="font-bold text-sm" style={{ color: '#E94E1B' }}>Reward Shop</p>
+            <p className="text-text-muted text-xs">Đổi điểm lấy phần thưởng hấp dẫn</p>
+          </div>
+        </div>
+        <button
+          className="w-full py-2.5 rounded-lg font-semibold text-sm active:scale-95 transition-all"
+          style={{ background: 'rgba(233,78,27,0.1)', border: '1px solid rgba(233,78,27,0.28)', color: '#E94E1B' }}
+          onClick={() => setShowRewardShop(true)}>
+          Vào cửa hàng →
+        </button>
+      </div>
 
       {/* ── Director Dashboard card (director+) ── */}
       {isDirector && (
@@ -475,6 +497,7 @@ export default function ProfilePage() {
       {showTeam     && <TeamDashboard   onClose={() => setShowTeam(false)}     />}
       {showDirector && <DirectorDashboard onClose={() => setShowDirector(false)} />}
       {showFeedback && <FeedbackForm    onClose={() => setShowFeedback(false)} />}
+      {showRewardShop && <RewardShopPage onClose={() => setShowRewardShop(false)} />}
 
       {showLogout && (
         <LogoutSheet
