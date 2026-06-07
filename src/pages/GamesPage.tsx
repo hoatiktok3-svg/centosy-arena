@@ -9,6 +9,7 @@ import OnboardingPage from './OnboardingPage'
 import GameLeaderboardPage from './GameLeaderboardPage'
 import SeasonLeaderboardPage from './SeasonLeaderboardPage'
 import DeptTournamentPage from './DeptTournamentPage'
+import LiveQuizRoomPage from './LiveQuizRoomPage'
 
 /* ── Rule Modal ──────────────────────────────────────────── */
 function RuleModal({ game, onClose }: { game: Game; onClose: () => void }) {
@@ -191,6 +192,7 @@ export default function GamesPage() {
   const [showGameLeaderboard, setShowGameLeaderboard]   = useState(false)
   const [showSeasonLeaderboard, setShowSeasonLeaderboard]   = useState(false)
   const [showDeptTournament,    setShowDeptTournament]      = useState(false)
+  const [showLiveRoom,          setShowLiveRoom]            = useState(false)
 
   const filtered = activeCategory === 'Tất cả'
     ? mockGames
@@ -288,6 +290,12 @@ export default function GamesPage() {
           style={{ fontSize: '11px', background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.25)', color: '#8b5cf6' }}>
           🏢 Phòng ban
         </button>
+        <button
+          onClick={() => setShowLiveRoom(true)}
+          className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold"
+          style={{ fontSize: '11px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', color: '#10b981' }}>
+          🎯 Live
+        </button>
       </div>
 
       {/* Academy section */}
@@ -364,6 +372,7 @@ export default function GamesPage() {
       {showGameLeaderboard   && <GameLeaderboardPage    onClose={() => setShowGameLeaderboard(false)}   />}
       {showSeasonLeaderboard && <SeasonLeaderboardPage  onClose={() => setShowSeasonLeaderboard(false)} />}
       {showDeptTournament    && <DeptTournamentPage      onClose={() => setShowDeptTournament(false)}    />}
+      {showLiveRoom          && <LiveQuizRoomPage        onClose={() => setShowLiveRoom(false)}           />}
     </div>
   )
 }
