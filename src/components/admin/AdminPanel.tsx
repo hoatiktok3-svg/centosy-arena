@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
 import { canAccessAdminPanel, canApproveAccounts, getRoleLabel, getRoleBadgeStyle } from '../../lib/permissions'
+import FeedbackList from '../feedback/FeedbackList'
 
 interface AdminPanelProps {
   onClose: () => void
@@ -511,6 +512,11 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
               ⚠️ {gameStatsNote}
             </p>
           )}
+        </div>
+
+        {/* ── Phản hồi nhân viên ────────────────────────── */}
+        <div className="mb-6">
+          <FeedbackList />
         </div>
 
         {/* ── Cài đặt điểm thưởng ───────────────────────── */}

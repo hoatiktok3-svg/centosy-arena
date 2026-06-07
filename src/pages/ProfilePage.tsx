@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import AdminPanel from '../components/admin/AdminPanel'
 import TeamDashboard from '../components/team/TeamDashboard'
 import DirectorDashboard from '../components/director/DirectorDashboard'
+import FeedbackForm from '../components/feedback/FeedbackForm'
 import { canAccessAdminPanel, canAccessTeamDashboard, canAccessDirectorDashboard, getRoleLabel, getRoleBadgeStyle } from '../lib/permissions'
 import { supabase } from '../lib/supabaseClient'
 import { getBadge, PROFILE_BADGE_KEYS } from '../lib/badges'
@@ -74,6 +75,7 @@ export default function ProfilePage() {
   const [showAdmin,     setShowAdmin]     = useState(false)
   const [showTeam,      setShowTeam]      = useState(false)
   const [showDirector,  setShowDirector]  = useState(false)
+  const [showFeedback,  setShowFeedback]  = useState(false)
   const [myBadgeIds,    setMyBadgeIds]    = useState<string[] | null>(null) // null = loading
 
   // Fetch real badges từ Supabase
@@ -339,6 +341,14 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {/* ── Báo lỗi / Góp ý ── */}
+      <button
+        onClick={() => setShowFeedback(true)}
+        className="w-full py-3 rounded-xl border border-arena-border text-text-secondary text-sm font-semibold hover:bg-arena-card transition-all active:scale-95"
+      >
+        💬 Báo lỗi / Góp ý
+      </button>
+
       {/* ── Đăng xuất ── */}
       <button
         onClick={() => setShowLogout(true)}
@@ -349,9 +359,10 @@ export default function ProfilePage() {
 
       <div className="h-2" />
 
-      {showAdmin && <AdminPanel onClose={() => setShowAdmin(false)} />}
-      {showTeam     && <TeamDashboard     onClose={() => setShowTeam(false)}     />}
+      {showAdmin    && <AdminPanel      onClose={() => setShowAdmin(false)}    />}
+      {showTeam     && <TeamDashboard   onClose={() => setShowTeam(false)}     />}
       {showDirector && <DirectorDashboard onClose={() => setShowDirector(false)} />}
+      {showFeedback && <FeedbackForm    onClose={() => setShowFeedback(false)} />}
 
       {showLogout && (
         <LogoutSheet

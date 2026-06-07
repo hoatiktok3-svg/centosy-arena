@@ -1,10 +1,10 @@
 # CURRENT STEP — CENTOSY ARENA
 
-Current Step:           STEP 36 (chưa bắt đầu)
-Last Completed Step:    STEP 35 — MVP Test Package
-Next Recommended Step:  STEP 36 (đọc file centosy-arena-prompts/02_MVP_TESTING/STEP_36_*.md)
-Build Status:           ✅ OK — tsc 0 lỗi, vite build OK (538KB chunk warning — bỏ qua)
-Git Status:             ✅ Đã commit đến STEP 35 (588dbdd)
+Current Step:           STEP 37 (chưa bắt đầu)
+Last Completed Step:    STEP 36 — Safe Vercel Internal Test
+Next Recommended Step:  STEP 37 (đọc file centosy-arena-prompts/02_MVP_TESTING/STEP_37_*.md)
+Build Status:           ✅ OK — tsc 0 lỗi, vite build OK (539KB chunk warning — bỏ qua)
+Git Status:             ✅ Đã commit đến STEP 36 (c135f39)
 
 Do Not Touch:
   - src/context/AuthContext.tsx
