@@ -1,6 +1,6 @@
 # SESSION HANDOFF — CENTOSY ARENA
 **Cập nhật:** 2026-06-07  
-**Trạng thái:** ✅ TOÀN BỘ ROADMAP STEP 27–64 HOÀN THÀNH
+**Trạng thái:** ✅ TOÀN BỘ ROADMAP STEP 27–85 HOÀN THÀNH
 
 ---
 
@@ -12,83 +12,98 @@ Branch: `master` (main chưa dùng)
 
 ---
 
-## STEPS ĐÃ HOÀN THÀNH TRONG SESSION NÀY
+## STEPS ĐÃ HOÀN THÀNH TRONG SESSION NÀY (STEP 69–85)
 
 | Step | Tên | File chính |
 |------|-----|------------|
-| 56 | Manager Alerts | `src/components/team/TeamDashboard.tsx` |
-| 57 | Department Health Score | `src/components/team/DeptHealthScore.tsx` |
-| 58 | Executive Weekly Summary | `src/pages/ExecutiveSummaryPage.tsx` |
-| 59 | Activity Log | `src/pages/ActivityLogPage.tsx` |
-| 60 | Admin System Settings | `src/pages/AdminSettingsPage.tsx` |
-| 61 | Google Sheet Sync / CSV Export | `src/pages/ExportDataPage.tsx` |
-| 62 | AI Quiz Mission Generator (mock) | `src/pages/QuizGeneratorPage.tsx` |
-| 63 | Activity Log Advanced | `src/pages/ActivityLogPage.tsx` (nâng cấp) |
-| 64 | Admin Settings Advanced | `src/pages/AdminSettingsPage.tsx` (nâng cấp) |
-
----
-
-## TOÀN BỘ MODULES ĐÃ HOÀN THÀNH (STEP 27–64)
-
-### Module 01 — Auth & Onboarding (STEP 27–30) ✅
-- Login, Register, Profile Setup, Role Assignment
-
-### Module 02 — Score & Gamification (STEP 31–34) ✅
-- Score Display, Rankings, Badges, Achievements
-
-### Module 03 — Missions (STEP 35–38) ✅
-- Mission List, Submit, Admin Review, Notifications
-
-### Module 04 — Games (STEP 39–42) ✅
-- Games Page, Spin Wheel, Memory Game, Trivia Quiz
-
-### Module 05 — Culture & Recognition (STEP 43–47) ✅
-- Culture Feed, Peer Praise, Centosy Stories, Voting, Recognition Report
-
-### Module 06 — Learning (STEP 48–52) ✅
-- Product Quiz, Training Library, Training Tests, Onboarding 7 ngày, Level System
-
-### Module 07 — Management Intelligence (STEP 53–60) ✅
-- Daily Check-in, Leaderboard Advanced, Reward Shop, Manager Alerts, Dept Health, Executive Summary, Activity Log, Admin Settings
-
-### Module 08 — Automation & AI (STEP 61–64) ✅
-- CSV Export, AI Quiz Generator, Activity Log Advanced, Admin Settings Advanced (tabs)
-
----
-
-## FILE STRUCTURE QUAN TRỌNG
-
-```
-src/
-├── context/AuthContext.tsx          — KHÔNG TOUCH
-├── lib/supabaseClient.ts            — KHÔNG TOUCH
-├── lib/permissions.ts               — Role helper
-├── lib/levelSystem.ts               — Level 1-20
-├── data/
-│   ├── mockGames.ts                 — 8 games (g01–g08)
-│   ├── mockTraining.ts              — 6 lessons, lessonTests
-│   └── mockRewardShop.ts            — 8 shop items
-├── pages/
-│   ├── ProfilePage.tsx              — Level card + Reward Shop + Admin buttons
-│   ├── ActivityLogPage.tsx          — Activity timeline (admin+manager)
-│   ├── AdminSettingsPage.tsx        — System settings (5 tabs, admin only)
-│   ├── ExportDataPage.tsx           — CSV export
-│   └── QuizGeneratorPage.tsx        — AI Quiz Generator mock
-└── components/
-    ├── team/TeamDashboard.tsx       — Team + Alerts + Health + ExecSummary + Log
-    └── team/DeptHealthScore.tsx     — Health score widget
-```
+| 69 | Live Recognition Events | `src/components/games/GameScoreToast.tsx`, `src/lib/useGameRecognition.ts` |
+| 70 | Admin Game Monitor | `src/pages/AdminGameMonitorPage.tsx` |
+| 71 | Speed-based Scoring + Anti-Cheat | `src/lib/speedScoring.ts` |
+| 72 | Play Limits | `src/pages/ProductQuizPage.tsx` (daily limit UI) |
+| 73 | Season Leaderboard | `src/pages/SeasonLeaderboardPage.tsx` |
+| 74 | Season Rewards | `src/pages/SeasonLeaderboardPage.tsx` (tab) |
+| 75 | Season Reset & Archive | `src/pages/SeasonResetPage.tsx` |
+| 76 | Department Tournament Mode | `src/pages/DeptTournamentPage.tsx` |
+| 77 | Live Quiz Room | `src/pages/LiveQuizRoomPage.tsx` |
+| 78 | Qualifier & Final Rounds | `src/pages/TournamentBracketPage.tsx` |
+| 79 | Stage Recognition Screen | `src/pages/StageRecognitionPage.tsx` |
+| 80 | Tournament Control Center | `src/pages/TournamentControlCenterPage.tsx` |
+| 81 | Mobile Game Polish | `src/lib/mobileUtils.ts` |
+| 82 | Game Sound Effects | `src/lib/gameSounds.ts` |
+| 83 | TV/Projector Mode | `src/pages/TVProjectorModePage.tsx` |
+| 84 | Public Event Mode | `src/pages/PublicEventModePage.tsx` |
+| 85 | Export Tournament Results | `src/pages/TournamentExportPage.tsx` |
 
 ---
 
 ## TRẠNG THÁI HIỆN TẠI
 
-✅ **ROADMAP STEP 27–64 HOÀN TOÀN HOÀN THÀNH**
+### ✅ ROADMAP HOÀN THÀNH TOÀN BỘ (STEP 27–85)
 
-Tất cả 38 steps đã implement, TypeScript 0 errors, build OK.
+**Module 09 — Game Score & Realtime (STEP 65–70):** DONE  
+**Module 10 — Game Competition Advanced (STEP 71–75):** DONE  
+**Module 11 — Tournament System (STEP 76–80):** DONE  
+**Module 12 — Event Experience Polish (STEP 81–85):** DONE
 
-Việc tiếp theo có thể là:
-1. Deploy lên Vercel
-2. Setup Supabase tables còn thiếu (daily_checkins, reward_redemptions)
-3. Polish/refinement UI
-4. Thêm features mới ngoài roadmap
+---
+
+## KIẾN TRÚC KỸ THUẬT QUAN TRỌNG
+
+### Database (Supabase)
+- `game_sessions` — lưu mỗi lượt chơi (score, max_score, status, score_credited, duration_ms)
+- `game_answers` — log từng câu trả lời (chosen/correct option, is_correct, time_taken_ms)
+- `profiles` — score tổng cộng dồn (cộng bởi RPC `add_game_score_safe`)
+- RPC `add_game_score_safe(p_user_id, p_session_id, p_points)` — SECURITY DEFINER, idempotent
+
+### Lib helpers
+- `src/lib/gameService.ts` — saveGameSession, addGameScore, checkDailyPlayLimit, shouldCreditScore, saveGameResultSafe
+- `src/lib/speedScoring.ts` — calcSpeedScore, analyzeSessionAntiCheat, getSpeedLabel
+- `src/lib/mobileUtils.ts` — hapticLight/Success/Error/Celebration, lockBodyScroll, swipeStart/swipeEnd
+- `src/lib/gameSounds.ts` — Web Audio API sounds (soundSelect/Correct/Wrong/Complete), isMuted/toggleMute
+- `src/lib/useGameRecognition.ts` — hook check personal best + leaderboard rank
+
+### Realtime
+- `game_sessions_live` channel — GameLeaderboardPage, AdminGameMonitorPage, TVProjectorModePage
+- `quiz_room_<code>` channel — LiveQuizRoomPage (Presence + Broadcast)
+- `dept_tournament_live` channel — DeptTournamentPage
+- `public_event_live` channel — PublicEventModePage
+
+### Admin Tools (ProfilePage)
+- AdminSettingsPage (tabs: General/Điểm/Modules/Cảnh báo/Reward)
+- ExportDataPage (CSV 4 datasets)
+- QuizGeneratorPage (AI mock)
+- AdminGameMonitorPage (live feed)
+- SeasonResetPage (archive + localStorage)
+- TournamentBracketPage (qualifier + bracket + winner)
+- StageRecognitionPage (podium animation)
+- TournamentControlCenterPage (hub)
+- TVProjectorModePage (fullscreen leaderboard)
+- PublicEventModePage (read-only event display)
+- TournamentExportPage (4 CSV exports)
+
+### GamesPage buttons
+- 🏆 Xếp hạng → GameLeaderboardPage
+- 🏅 Mùa → SeasonLeaderboardPage + Rewards tab
+- 🏢 Phòng ban → DeptTournamentPage
+- 🎯 Live → LiveQuizRoomPage
+
+---
+
+## QUY TẮC KHÔNG ĐỔI
+
+- KHÔNG touch: `src/context/AuthContext.tsx`, `src/lib/supabaseClient.ts`, `supabase/schema.sql`, `centosy-arena-prompts/00_PROJECT_RULES/`, `public/`
+- KHÔNG hardcode secrets/API keys
+- Chạy `npx tsc --noEmit` + `npx vite build` sau mỗi step
+- Commit sau mỗi step
+- Full-screen overlay: `fixed inset-0`, max-w-430px, z-index 90/95/100/110
+- Brand color: `#E94E1B`
+- Role permissions: `src/lib/permissions.ts`
+- Build warning ~700KB bundle là bình thường, chấp nhận được
+
+---
+
+## KHÔNG CÒN PENDING TASK
+
+**TOÀN BỘ ROADMAP STEP 27–85 ĐÃ HOÀN THÀNH.**
+
+Nếu có session mới, cần thêm tính năng ngoài roadmap hiện tại — hãy lập kế hoạch từ đầu.
