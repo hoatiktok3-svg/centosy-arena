@@ -1,4 +1,9 @@
-export default function Header() {
+interface Props {
+  unreadCount?:  number
+  onBellClick?:  () => void
+}
+
+export default function Header({ unreadCount = 0, onBellClick }: Props) {
   return (
     <header
       className="absolute top-0 left-0 right-0 z-50 h-[64px]"
@@ -47,21 +52,40 @@ export default function Header() {
 
         {/* Bell notification */}
         <button
+          onClick={onBellClick}
           className="relative w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90"
           style={{
-            background: 'rgba(233,78,27,0.07)',
-            border: '1px solid rgba(233,78,27,0.18)',
+            background: unreadCount > 0 ? 'rgba(233,78,27,0.12)' : 'rgba(233,78,27,0.07)',
+            border: unreadCount > 0 ? '1px solid rgba(233,78,27,0.35)' : '1px solid rgba(233,78,27,0.18)',
           }}
         >
           <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={1.8}
-               viewBox="0 0 24 24" style={{ color: '#777' }}>
+               viewBox="0 0 24 24"
+               style={{ color: unreadCount > 0 ? '#E94E1B' : '#777' }}>
             <path strokeLinecap="round" strokeLinejoin="round"
               d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
-          <span
-            className="absolute top-[9px] right-[9px] w-[6px] h-[6px] rounded-full"
-            style={{ background: '#E94E1B', boxShadow: '0 0 7px rgba(233,78,27,0.9)' }}
-          />
+
+          {/* Unread badge */}
+          {unreadCount > 0 ? (
+            <span
+              className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full flex items-center justify-center font-black"
+              style={{
+                background: '#E94E1B',
+                fontSize: '9px',
+                color: '#fff',
+                paddingInline: '4px',
+                boxShadow: '0 0 8px rgba(233,78,27,0.8)',
+              }}
+            >
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          ) : (
+            <span
+              className="absolute top-[9px] right-[9px] w-[6px] h-[6px] rounded-full"
+              style={{ background: '#333' }}
+            />
+          )}
         </button>
 
       </div>

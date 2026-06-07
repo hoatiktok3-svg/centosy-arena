@@ -1,11 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { getCurrentUser } from '../data/mockUsers'
 import { mockGameHistory, mockRecentAchievements } from '../data/mockProfile'
 import { useAuth } from '../context/AuthContext'
 import AdminPanel from '../components/admin/AdminPanel'
-import { canAccessAdminPanel, getRoleLabel, getRoleBadgeStyle } from '../lib/permissions'
+import TeamDashboard from '../components/team/TeamDashboard'
+import { canAccessAdminPanel, canAccessTeamDashboard, getRoleLabel, getRoleBadgeStyle } from '../lib/permissions'
+import { supabase } from '../lib/supabaseClient'
+import { getBadge, PROFILE_BADGE_KEYS } from '../lib/badges'
 
-// me chỉ dùng cho mock data chưa có API: badges, weeklyRank, game history
+// me chỉ dùng cho mock data chưa có API: weeklyRank, game history
 const me = getCurrentUser()
 
 const ORG_GROUP_LABEL: Record<string, string> = {
@@ -33,16 +36,6 @@ const DEPT_LABEL: Record<string, string> = {
   'kdtt':      'KDTT',
 }
 
-const BADGE_META: Record<string, { icon: string; label: string; color: string; bg: string }> = {
-  MVP:        { icon: '👑', label: 'MVP',          color: 'text-yellow-400', bg: 'bg-yellow-900/30 border-yellow-700/40' },
-  Streak:     { icon: '🔥', label: 'Streak',       color: 'text-brand',      bg: 'bg-orange-900/30 border-brand/30' },
-  TopSales:   { icon: '💰', label: 'Top Sales',    color: 'text-green-400',  bg: 'bg-green-900/30 border-green-700/40' },
-  QuizMaster: { icon: '🎯', label: 'Quiz Master',  color: 'text-blue-400',   bg: 'bg-blue-900/30 border-blue-700/40' },
-  TeamPlayer: { icon: '🤝', label: 'Team Player',  color: 'text-purple-400', bg: 'bg-purple-900/30 border-purple-700/40' },
-  FastHand:   { icon: '⚡', label: 'Fast Hand',    color: 'text-cyan-400',   bg: 'bg-cyan-900/30 border-cyan-700/40' },
-  Rookie:     { icon: '🌱', label: 'Rookie',       color: 'text-emerald-400',bg: 'bg-emerald-900/30 border-emerald-700/40' },
-  IronWill:   { icon: '🛡️', label: 'Iron Will',   color: 'text-gray-300',   bg: 'bg-gray-800/60 border-gray-600/40' },
-}
 
 function rankLabel(rank: number) {
   if (rank === 1) return { text: '#1', color: 'text-yellow-400' }
@@ -76,8 +69,23 @@ function LogoutSheet({ onClose, onConfirm }: { onClose: () => void; onConfirm: (
 
 export default function ProfilePage() {
   const { currentUser, logout } = useAuth()
-  const [showLogout, setShowLogout] = useState(false)
-  const [showAdmin, setShowAdmin] = useState(false)
+  const [showLogout,  setShowLogout]  = useState(false)
+  const [showAdmin,   setShowAdmin]   = useState(false)
+  const [showTeam,    setShowTeam]    = useState(false)
+  const [myBadgeIds,  setMyBadgeIds]  = useState<string[] | null>(null) // null = loading
+
+  // Fetch real badges từ Supabase
+  useEffect(() => {
+    if (!currentUser?.id) return
+    async function fetchBadges() {
+      const { data } = await supabase
+        .from('user_badges')
+        .select('badge_id')
+        .eq('user_id', currentUser!.id)
+      setMyBadgeIds(data ? data.map((r: { badge_id: string }) => r.badge_id) : [])
+    }
+    void fetchBadges()
+  }, [currentUser?.id])
 
   const winGames = mockGameHistory.filter(g => g.rank === 1).length
   const totalGames = mockGameHistory.length
@@ -86,7 +94,8 @@ export default function ProfilePage() {
   // Nếu title rỗng → profile chưa được Admin tạo đầy đủ trong Supabase
   const isProfileIncomplete = !currentUser?.title
 
-  const isAdmin = canAccessAdminPanel(currentUser?.role)
+  const isAdmin   = canAccessAdminPanel(currentUser?.role)
+  const isManager = canAccessTeamDashboard(currentUser?.role)
   const roleLabel = getRoleLabel(currentUser?.role)
   const roleBadge = getRoleBadgeStyle(currentUser?.role)
 
@@ -178,6 +187,29 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {/* ── Team Dashboard card (manager+) ── */}
+      {isManager && (
+        <div className="arena-card" style={{ border: '1px solid rgba(52,211,153,0.25)', background: 'rgba(52,211,153,0.04)' }}>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                 style={{ background: 'rgba(52,211,153,0.12)', border: '1px solid rgba(52,211,153,0.28)' }}>
+              <span className="text-lg">👥</span>
+            </div>
+            <div>
+              <p className="font-bold text-sm" style={{ color: '#34d399' }}>Team Dashboard</p>
+              <p className="text-text-muted text-xs">KPI đội nhóm · top nhân viên</p>
+            </div>
+          </div>
+          <button
+            className="w-full py-2.5 rounded-lg font-semibold text-sm active:scale-95 transition-all"
+            style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.28)', color: '#34d399' }}
+            onClick={() => setShowTeam(true)}
+          >
+            Xem Team Dashboard →
+          </button>
+        </div>
+      )}
+
       {/* ── Admin Panel card (chỉ admin thấy) ── */}
       {isAdmin && (
         <div className="arena-card border border-yellow-700/30 bg-yellow-900/10">
@@ -201,26 +233,35 @@ export default function ProfilePage() {
 
       {/* ── Huy hiệu ── */}
       <div>
-        <p className="section-title mb-3">🏅 Huy hiệu đã đạt</p>
-        <div className="grid grid-cols-4 gap-2">
-          {me.badges.map(b => {
-            const meta = BADGE_META[b]
-            return (
-              <div key={b} className={`flex flex-col items-center gap-1 rounded-xl border p-2 ${meta.bg}`}>
-                <span className="text-2xl">{meta.icon}</span>
-                <span className={`text-[10px] font-bold text-center leading-tight ${meta.color}`}>
-                  {meta.label}
-                </span>
-              </div>
-            )
-          })}
-          {Array.from({ length: Math.max(0, 8 - me.badges.length) }).map((_, i) => (
-            <div key={`lock-${i}`} className="flex flex-col items-center gap-1 rounded-xl border border-arena-border p-2 opacity-30">
-              <span className="text-2xl">🔒</span>
-              <span className="text-[10px] text-text-muted text-center">Khoá</span>
-            </div>
-          ))}
+        <div className="flex items-center justify-between mb-3">
+          <p className="section-title">🏅 Huy hiệu đã đạt</p>
+          {myBadgeIds !== null && myBadgeIds.length > 0 && (
+            <span style={{ fontSize: '10px', color: '#E94E1B', fontWeight: 700 }}>{myBadgeIds.length} huy hiệu</span>
+          )}
         </div>
+        {myBadgeIds === null ? (
+          <p style={{ fontSize: '12px', color: '#484848' }}>Đang tải huy hiệu...</p>
+        ) : (
+          <div className="grid grid-cols-4 gap-2">
+            {PROFILE_BADGE_KEYS.map(badgeId => {
+              const owned = myBadgeIds.includes(badgeId)
+              const badge = getBadge(badgeId)
+              return (
+                <div key={badgeId}
+                     className="flex flex-col items-center gap-1 rounded-xl border p-2"
+                     style={owned
+                       ? { background: `${badge.color}10`, borderColor: `${badge.color}35` }
+                       : { background: '#111', borderColor: '#1f1f1f', opacity: 0.35 }}>
+                  <span className="text-2xl">{owned ? badge.icon : '🔒'}</span>
+                  <span className="text-[10px] font-bold text-center leading-tight"
+                        style={{ color: owned ? badge.color : '#484848' }}>
+                    {badge.label}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* ── Thành tích gần đây ── */}
@@ -283,6 +324,7 @@ export default function ProfilePage() {
       <div className="h-2" />
 
       {showAdmin && <AdminPanel onClose={() => setShowAdmin(false)} />}
+      {showTeam  && <TeamDashboard onClose={() => setShowTeam(false)} />}
 
       {showLogout && (
         <LogoutSheet
