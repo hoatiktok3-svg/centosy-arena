@@ -20,6 +20,7 @@ import TournamentBracketPage from './TournamentBracketPage'
 import StageRecognitionPage from './StageRecognitionPage'
 import TournamentControlCenterPage from './TournamentControlCenterPage'
 import TVProjectorModePage from './TVProjectorModePage'
+import PublicEventModePage from './PublicEventModePage'
 
 // me chỉ dùng cho mock data chưa có API: weeklyRank, game history
 const me = getCurrentUser()
@@ -113,6 +114,7 @@ export default function ProfilePage() {
   const [showStage,         setShowStage]         = useState(false)
   const [showTournamentCC,  setShowTournamentCC]  = useState(false)
   const [showTVMode,        setShowTVMode]        = useState(false)
+  const [showPublicEvent,   setShowPublicEvent]   = useState(false)
   const [myBadgeIds,      setMyBadgeIds]      = useState<string[] | null>(null) // null = loading
   const [recentMissions,  setRecentMissions]  = useState<RecentMission[] | null>(null)
 
@@ -448,6 +450,13 @@ export default function ProfilePage() {
             >
               📺 TV / Projector Mode →
             </button>
+            <button
+              className="w-full py-3 rounded-xl font-semibold text-left px-4 transition-all active:scale-[0.98]"
+              style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', color: '#10b981' }}
+              onClick={() => setShowPublicEvent(true)}
+            >
+              🌐 Public Event Mode →
+            </button>
           </div>
         </div>
       )}
@@ -589,7 +598,8 @@ export default function ProfilePage() {
       {showBracket        && <TournamentBracketPage  onClose={() => setShowBracket(false)}      />}
       {showStage          && <StageRecognitionPage         onClose={() => setShowStage(false)}         />}
       {showTournamentCC   && <TournamentControlCenterPage  onClose={() => setShowTournamentCC(false)} />}
-      {showTVMode         && <TVProjectorModePage          onClose={() => setShowTVMode(false)}       />}
+      {showTVMode         && <TVProjectorModePage     onClose={() => setShowTVMode(false)}      />}
+      {showPublicEvent    && <PublicEventModePage     onClose={() => setShowPublicEvent(false)} />}
 
       {showLogout && (
         <LogoutSheet
