@@ -161,10 +161,20 @@ function RankRow({ entry, rank, isMe }: { entry: LeaderboardEntry; rank: number;
   )
 }
 
+// ── Office dept sub-filters ────────────────────────────────────
+const OFFICE_SUB_FILTERS: Record<string, string[]> = {
+  'Tất cả VP': ['van-phong', 'tmdt', 'kdtt', 'mua-hang', 'ke-toan', 'hanh-chinh-nhan-su', 'marketing', 'giam-doc'],
+  'TMĐT':      ['tmdt'],
+  'KDTT':      ['kdtt'],
+  'Marketing': ['marketing'],
+  'Khác':      ['mua-hang', 'ke-toan', 'hanh-chinh-nhan-su', 'giam-doc'],
+}
+
 // ── Main Page ─────────────────────────────────────────────────
 export default function RankPage() {
   const { currentUser } = useAuth()
   const [filter, setFilter]           = useState('Toàn công ty')
+  const [subFilter, setSubFilter]     = useState('Tất cả VP')
   const [allEntries, setAllEntries]   = useState<LeaderboardEntry[]>([])
   const [loading, setLoading]         = useState(true)
   const [fetchError, setFetchError]   = useState<string | null>(null)
@@ -216,15 +226,26 @@ export default function RankPage() {
     fetchLeaderboard()
   }, [])
 
-  // ── Filter theo khối ──────────────────────────────────────
+  // ── Filter theo khối + sub-filter phòng ban ──────────────
   const filtered = (() => {
-    const vals = FILTER_DEPT_VALUES[filter]
+    let vals = FILTER_DEPT_VALUES[filter]
+    // If Văn phòng + sub-filter applied, narrow further
+    if (filter === 'Văn phòng') {
+      vals = OFFICE_SUB_FILTERS[subFilter] ?? OFFICE_SUB_FILTERS['Tất cả VP']
+    }
     if (!vals || vals.length === 0) return allEntries
-    return allEntries.filter(e => vals.includes(e.department))
+    return allEntries.filter(e => vals!.includes(e.department))
   })()
 
   const top3 = filtered.slice(0, 3)
   const rest = filtered.slice(3)
+
+  // My rank in the CURRENT filtered list
+  const myRankInFilter = filtered.findIndex(e => e.userId === currentUser?.id)
+  const myEntry        = myRankInFilter >= 0 ? filtered[myRankInFilter] : null
+  const myRankNumber   = myRankInFilter >= 0 ? myRankInFilter + 1 : null
+  // Show sticky "my rank" row only if I'm outside top 20 display
+  const showMyRankBanner = myEntry !== null && myRankNumber !== null && myRankNumber > 20
 
   // ── Render ────────────────────────────────────────────────
   return (
@@ -238,15 +259,30 @@ export default function RankPage() {
         </p>
       </div>
 
-      {/* Filter tabs */}
+      {/* Filter tabs — khối */}
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 no-scrollbar">
         {FILTERS.map(f => (
-          <button key={f} onClick={() => setFilter(f)}
+          <button key={f}
+            onClick={() => { setFilter(f); setSubFilter('Tất cả VP') }}
             className={filter === f ? 'filter-pill-active' : 'filter-pill-inactive'}>
             {f}
           </button>
         ))}
       </div>
+
+      {/* Sub-filter — chỉ hiện khi chọn Văn phòng */}
+      {filter === 'Văn phòng' && (
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 no-scrollbar">
+          {Object.keys(OFFICE_SUB_FILTERS).map(sf => (
+            <button key={sf}
+              onClick={() => setSubFilter(sf)}
+              className={subFilter === sf ? 'filter-pill-active' : 'filter-pill-inactive'}
+              style={{ fontSize: '11px', whiteSpace: 'nowrap' }}>
+              {sf}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Loading skeleton */}
       {loading && (
@@ -319,6 +355,30 @@ export default function RankPage() {
               isMe={entry.userId === currentUser?.id}
             />
           ))}
+        </div>
+      )}
+
+      {/* My rank banner — nếu user ngoài top 20 */}
+      {!loading && !fetchError && showMyRankBanner && myEntry && myRankNumber && (
+        <div className="rounded-2xl overflow-hidden"
+             style={{ border: '1.5px solid rgba(233,78,27,0.45)', background: 'rgba(233,78,27,0.05)' }}>
+          <div className="px-4 py-2.5" style={{ borderBottom: '1px solid rgba(233,78,27,0.2)', background: 'rgba(233,78,27,0.08)' }}>
+            <p style={{ fontSize: '10px', color: '#E94E1B', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+              Thứ hạng của bạn
+            </p>
+          </div>
+          <RankRow entry={myEntry} rank={myRankNumber} isMe={true} />
+        </div>
+      )}
+
+      {/* My rank inline highlight — visible in list but not top 3 */}
+      {!loading && !fetchError && myRankNumber !== null && myRankNumber > 3 && myRankNumber <= 20 && myEntry && (
+        <div className="rounded-2xl px-4 py-2.5 flex items-center gap-2"
+             style={{ background: 'rgba(233,78,27,0.07)', border: '1px solid rgba(233,78,27,0.25)' }}>
+          <span style={{ fontSize: '14px' }}>📍</span>
+          <p style={{ fontSize: '12px', color: '#E94E1B', fontWeight: 600 }}>
+            Bạn đang xếp hạng #{myRankNumber} trong bảng này — {myEntry.totalScore.toLocaleString('vi-VN')} điểm
+          </p>
         </div>
       )}
 
