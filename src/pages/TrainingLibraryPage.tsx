@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { mockLessons, lessonCategories, Lesson, LessonCategory } from '../data/mockTraining'
+import { mockLessons, lessonCategories, lessonTests, Lesson, LessonCategory } from '../data/mockTraining'
+import TrainingTestPage, { loadTestResults, TestResult } from './TrainingTestPage'
 
 // ── Local storage key ─────────────────────────────────────────
 const LS_KEY = 'centosy_completed_lessons'
@@ -31,12 +32,16 @@ const CAT_COLOR: Record<LessonCategory, { bg: string; color: string; border: str
 function LessonDetail({
   lesson,
   isCompleted,
+  testResult,
   onComplete,
+  onStartTest,
   onBack,
 }: {
   lesson: Lesson
   isCompleted: boolean
+  testResult: TestResult | null
   onComplete: () => void
+  onStartTest: () => void
   onBack: () => void
 }) {
   const catStyle = CAT_COLOR[lesson.category]
@@ -119,13 +124,13 @@ function LessonDetail({
       </div>
 
       {/* Bottom */}
-      <div className="shrink-0 px-4 pb-8 pt-3 max-w-[430px] mx-auto w-full"
+      <div className="shrink-0 px-4 pb-8 pt-3 max-w-[430px] mx-auto w-full flex flex-col gap-2.5"
            style={{ borderTop: '1px solid #1e1e1e', background: '#0d0d0d' }}>
         {isCompleted ? (
-          <div className="w-full py-3.5 rounded-2xl flex items-center justify-center gap-2"
+          <div className="w-full py-3 rounded-2xl flex items-center justify-center gap-2"
                style={{ background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)' }}>
-            <span style={{ fontSize: '18px' }}>✅</span>
-            <span className="font-bold" style={{ fontSize: '14px', color: '#4ade80' }}>Bài học đã hoàn thành</span>
+            <span style={{ fontSize: '16px' }}>✅</span>
+            <span className="font-bold" style={{ fontSize: '13px', color: '#4ade80' }}>Bài học đã hoàn thành</span>
           </div>
         ) : (
           <button
@@ -133,6 +138,28 @@ function LessonDetail({
             style={{ fontSize: '15px' }}
             onClick={onComplete}>
             Đánh dấu hoàn thành ✓
+          </button>
+        )}
+
+        {/* Test button */}
+        {lessonTests.some(t => t.lessonId === lesson.id) && (
+          <button
+            className="w-full py-3.5 rounded-2xl font-black transition-all active:scale-[0.97] flex items-center justify-center gap-2"
+            style={{
+              fontSize: '14px',
+              background: testResult?.passed
+                ? 'rgba(74,222,128,0.08)'
+                : 'rgba(233,78,27,0.12)',
+              color: testResult?.passed ? '#4ade80' : '#E94E1B',
+              border: `1.5px solid ${testResult?.passed ? 'rgba(74,222,128,0.35)' : 'rgba(233,78,27,0.4)'}`,
+            }}
+            onClick={onStartTest}>
+            {testResult?.passed
+              ? `🎓 Đã qua kiểm tra (${testResult.correctCount}/${testResult.total})`
+              : testResult
+                ? `📝 Làm lại bài kiểm tra (${testResult.correctCount}/${testResult.total} lần trước)`
+                : '📝 Làm bài kiểm tra'
+            }
           </button>
         )}
       </div>
@@ -198,9 +225,11 @@ interface Props {
 }
 
 export default function TrainingLibraryPage({ onClose }: Props) {
-  const [completed, setCompleted]       = useState<Set<string>>(loadCompleted)
+  const [completed, setCompleted]           = useState<Set<string>>(loadCompleted)
+  const [testResults, setTestResults]       = useState<Record<string, TestResult>>(loadTestResults)
   const [activeCategory, setActiveCategory] = useState<LessonCategory | 'Tất cả'>('Tất cả')
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null)
+  const [showTest, setShowTest]             = useState(false)
 
   const categories: Array<LessonCategory | 'Tất cả'> = ['Tất cả', ...lessonCategories]
 
@@ -222,16 +251,34 @@ export default function TrainingLibraryPage({ onClose }: Props) {
   // Sync on mount in case localStorage was updated elsewhere
   useEffect(() => {
     setCompleted(loadCompleted())
+    setTestResults(loadTestResults())
   }, [])
 
   if (selectedLesson) {
+    const test       = lessonTests.find(t => t.lessonId === selectedLesson.id) ?? null
+    const testResult = testResults[selectedLesson.id] ?? null
+
     return (
-      <LessonDetail
-        lesson={selectedLesson}
-        isCompleted={completed.has(selectedLesson.id)}
-        onComplete={() => handleComplete(selectedLesson.id)}
-        onBack={() => setSelectedLesson(null)}
-      />
+      <>
+        <LessonDetail
+          lesson={selectedLesson}
+          isCompleted={completed.has(selectedLesson.id)}
+          testResult={testResult}
+          onComplete={() => handleComplete(selectedLesson.id)}
+          onStartTest={() => setShowTest(true)}
+          onBack={() => setSelectedLesson(null)}
+        />
+        {showTest && test && (
+          <TrainingTestPage
+            test={test}
+            lessonTitle={selectedLesson.title}
+            onClose={(result) => {
+              setShowTest(false)
+              if (result) setTestResults(loadTestResults())
+            }}
+          />
+        )}
+      </>
     )
   }
 

@@ -1,5 +1,18 @@
 export type LessonCategory = 'Sản phẩm' | 'Kỹ năng bán hàng' | 'Quy trình' | 'Văn hóa'
 
+export interface TestQuestion {
+  id: number
+  question: string
+  options: string[]
+  correctIndex: number
+}
+
+export interface LessonTest {
+  lessonId: string
+  passThreshold: number   // 0–1, e.g. 0.6 = 60%
+  questions: TestQuestion[]
+}
+
 export interface Lesson {
   id: string
   title: string
@@ -134,6 +147,224 @@ export const mockLessons: Lesson[] = [
       'Tận tâm — cam kết đúng hạn hoặc thông báo sớm',
       'Sáng tạo — đề xuất cải tiến nhỏ cũng được trân trọng',
       'Đồng đội — thành công chung quan trọng hơn thành tích cá nhân',
+    ],
+  },
+]
+
+// ── Tests (3 câu mỗi bài, pass 2/3 = 67%) ────────────────────
+export const lessonTests: LessonTest[] = [
+  {
+    lessonId: 'l01',
+    passThreshold: 0.67,
+    questions: [
+      {
+        id: 1,
+        question: 'Giày patin inline khác giày quad ở điểm gì?',
+        options: [
+          'Bánh xe xếp thành 1 hàng dọc',
+          'Bánh xe xếp 4 góc',
+          'Có thêm phanh phía trước',
+          'Dành riêng cho người lớn',
+        ],
+        correctIndex: 0,
+      },
+      {
+        id: 2,
+        question: 'Cấu tạo cơ bản của giày patin gồm những bộ phận nào?',
+        options: [
+          'Đế, quai, mũi, gót',
+          'Boot, frame, wheels, bearings',
+          'Thân, lót, dây buộc',
+          'Vỏ, ruột, van',
+        ],
+        correctIndex: 1,
+      },
+      {
+        id: 3,
+        question: 'Khi tư vấn size giày, thông tin quan trọng nhất cần hỏi là gì?',
+        options: [
+          'Màu sắc yêu thích',
+          'Tuổi và chiều cao',
+          'Cân nặng và số chân',
+          'Trường học của trẻ',
+        ],
+        correctIndex: 2,
+      },
+    ],
+  },
+  {
+    lessonId: 'l02',
+    passThreshold: 0.67,
+    questions: [
+      {
+        id: 1,
+        question: 'Bánh xe patin cao cấp thường làm từ vật liệu nào?',
+        options: ['Nhựa cứng ABS', 'Cao su tự nhiên', 'Polyurethane (PU)', 'Kim loại nhẹ'],
+        correctIndex: 2,
+      },
+      {
+        id: 2,
+        question: 'Shore A 78A so với 85A: loại nào bền hơn trên mặt nhựa đường?',
+        options: ['78A bền hơn', '85A bền hơn', 'Như nhau', 'Phụ thuộc màu sắc'],
+        correctIndex: 1,
+      },
+      {
+        id: 3,
+        question: 'Khi bánh xe kêu cọ cọ, bước xử lý đầu tiên là gì?',
+        options: [
+          'Thay ngay bánh mới',
+          'Tra dầu nhớt ô tô',
+          'Vệ sinh và kiểm tra vòng bi',
+          'Bảo khách về dùng bình thường',
+        ],
+        correctIndex: 2,
+      },
+    ],
+  },
+  {
+    lessonId: 'l03',
+    passThreshold: 0.67,
+    questions: [
+      {
+        id: 1,
+        question: 'Bộ bảo hộ tối thiểu cho trẻ mới học patin gồm những gì?',
+        options: [
+          'Chỉ mũ bảo hiểm',
+          'Mũ + bảo vệ cổ tay + bảo vệ gối',
+          'Bảo vệ gối + bảo vệ khuỷu tay',
+          'Không cần gì',
+        ],
+        correctIndex: 1,
+      },
+      {
+        id: 2,
+        question: 'Tại sao bảo vệ cổ tay thường bị bỏ qua nhất?',
+        options: [
+          'Vì không quan trọng',
+          'Vì đắt tiền',
+          'Vì phụ huynh ít nghĩ đến, dù đây là bộ phận hay bị chấn thương khi ngã',
+          'Vì trẻ không thích đeo',
+        ],
+        correctIndex: 2,
+      },
+      {
+        id: 3,
+        question: 'Cách upsell tự nhiên nhất khi bán giày patin là?',
+        options: [
+          'Ép mua ngay toàn bộ phụ kiện',
+          'Đề xuất combo bảo hộ tiết kiệm + an toàn cho bé',
+          'Giảm giá nếu mua thêm',
+          'Không cần upsell',
+        ],
+        correctIndex: 1,
+      },
+    ],
+  },
+  {
+    lessonId: 'l04',
+    passThreshold: 0.67,
+    questions: [
+      {
+        id: 1,
+        question: 'Thời gian tối đa để chào đón khách sau khi vào cửa hàng là?',
+        options: ['5 giây', '30 giây', '2 phút', '5 phút'],
+        correctIndex: 1,
+      },
+      {
+        id: 2,
+        question: 'Khi khách chê đắt, phản ứng đúng nhất là?',
+        options: [
+          'Giảm giá ngay',
+          'So sánh giá với đối thủ',
+          'Giải thích giá trị: chất lượng, bảo hành, an toàn',
+          'Đề xuất sản phẩm rẻ hơn ngay',
+        ],
+        correctIndex: 2,
+      },
+      {
+        id: 3,
+        question: 'Bước cuối cùng trong quy trình bán hàng là gì?',
+        options: [
+          'Thu tiền và kết thúc',
+          'Chào khách ra về',
+          'Chốt đơn + bàn giao kèm hướng dẫn bảo hành và vệ sinh',
+          'Mời khách mua thêm',
+        ],
+        correctIndex: 2,
+      },
+    ],
+  },
+  {
+    lessonId: 'l05',
+    passThreshold: 0.67,
+    questions: [
+      {
+        id: 1,
+        question: 'Nguyên tắc vàng khi xử lý khiếu nại là?',
+        options: [
+          'Chứng minh khách sai',
+          'Không tranh cãi — mục tiêu là giải quyết vấn đề',
+          'Từ chối nhận khiếu nại',
+          'Chuyển cho quản lý ngay',
+        ],
+        correctIndex: 1,
+      },
+      {
+        id: 2,
+        question: 'Khi khách đang nói về vấn đề, bạn nên làm gì?',
+        options: [
+          'Ngắt lời và giải thích ngay',
+          'Để khách nói hết, lắng nghe, ghi chép nếu cần',
+          'Xin lỗi ngay khi khách vừa bắt đầu',
+          'Hỏi ngay về chính sách',
+        ],
+        correctIndex: 1,
+      },
+      {
+        id: 3,
+        question: 'Sau khi lắng nghe và xác nhận vấn đề, bước tiếp theo là?',
+        options: [
+          'Từ chối bảo hành',
+          'Kiểm tra nguyên nhân trước khi đề xuất giải pháp',
+          'Đề xuất giải pháp ngay mà không cần hỏi thêm',
+          'Chuyển khách sang bộ phận khác',
+        ],
+        correctIndex: 1,
+      },
+    ],
+  },
+  {
+    lessonId: 'l06',
+    passThreshold: 0.67,
+    questions: [
+      {
+        id: 1,
+        question: 'Centosy có bao nhiêu giá trị cốt lõi?',
+        options: ['2', '3', '4', '5'],
+        correctIndex: 2,
+      },
+      {
+        id: 2,
+        question: 'Giá trị "Tận tâm" thể hiện qua hành động nào?',
+        options: [
+          'Im lặng khi không hoàn thành đúng hạn',
+          'Thông báo trước khi không thể hoàn thành đúng cam kết',
+          'Làm thêm giờ mà không báo',
+          'Chỉ làm việc được giao, không hơn',
+        ],
+        correctIndex: 1,
+      },
+      {
+        id: 3,
+        question: 'Giá trị "Đồng đội" nghĩa là?',
+        options: [
+          'Thành công cá nhân quan trọng hơn',
+          'Không giúp đỡ đồng nghiệp để họ tự tiến bộ',
+          'Thành công chung quan trọng hơn thành tích cá nhân',
+          'Chỉ làm đúng việc của mình',
+        ],
+        correctIndex: 2,
+      },
     ],
   },
 ]
