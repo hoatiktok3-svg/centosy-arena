@@ -69,6 +69,13 @@ export default function TeamDashboard({ onClose }: Props) {
   const [kpi,           setKpi]            = useState<TeamKPI | null>(null)
   const [loading,       setLoading]        = useState(true)
   const [sortBy,        setSortBy]         = useState<'score' | 'missions' | 'games'>('score')
+  const [alertsOpen,    setAlertsOpen]     = useState(false)
+
+  // ── Pending missions quá lâu (> 3 ngày) ──────────────────
+  interface OldPending {
+    id: string; user_name: string; title: string; created_at: string; days: number
+  }
+  const [oldPendings, setOldPendings] = useState<OldPending[]>([])
 
   // ── Fetch team data ─────────────────────────────────────────
   async function fetchTeam() {
@@ -152,6 +159,31 @@ export default function TeamDashboard({ onClose }: Props) {
   }
 
   useEffect(() => { void fetchTeam() }, [selectedGroup])
+
+  // ── Fetch old pending missions ──────────────────────────────
+  useEffect(() => {
+    if (!isAdmin && !currentUser?.role?.includes('manager')) return
+    const cutoff = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+    supabase
+      .from('mission_submissions')
+      .select('id, title, created_at, profiles:user_id(full_name)')
+      .eq('status', 'pending')
+      .lt('created_at', cutoff)
+      .limit(30)
+      .then(({ data }) => {
+        if (!data) return
+        const now = Date.now()
+        setOldPendings(
+          data.map((r: { id: string; title: string; created_at: string; profiles: { full_name: string | null } | null }) => ({
+            id:         r.id,
+            user_name:  r.profiles?.full_name ?? 'Không rõ',
+            title:      r.title,
+            created_at: r.created_at,
+            days:       Math.floor((now - new Date(r.created_at).getTime()) / 86_400_000),
+          }))
+        )
+      })
+  }, [selectedGroup])
 
   // ── Sort members ────────────────────────────────────────────
   const sortedMembers = [...members].sort((a, b) => {
@@ -368,6 +400,78 @@ export default function TeamDashboard({ onClose }: Props) {
                   )
                 })}
               </div>
+
+              {/* ── Manager Alerts ───────────────────── */}
+              {(() => {
+                const zeroScore    = members.filter(m => m.score === 0)
+                const inactive     = members.filter(m => m.gamePlays === 0 && m.missionsDone === 0)
+                const totalAlerts  = zeroScore.length + inactive.length + oldPendings.length
+                if (totalAlerts === 0) return null
+
+                const SECTION: Array<{ icon: string; color: string; label: string; items: Array<{ id: string; name: string; detail: string }> }> = [
+                  {
+                    icon: '⚠️', color: '#facc15', label: `0 điểm (${zeroScore.length})`,
+                    items: zeroScore.map(m => ({ id: m.id, name: m.full_name ?? '—', detail: deptLabel(m) })),
+                  },
+                  {
+                    icon: '😴', color: '#fb923c', label: `Chưa hoạt động (${inactive.length})`,
+                    items: inactive.map(m => ({ id: m.id, name: m.full_name ?? '—', detail: deptLabel(m) })),
+                  },
+                  {
+                    icon: '⏰', color: '#f87171', label: `Nhiệm vụ chờ lâu (${oldPendings.length})`,
+                    items: oldPendings.map(p => ({ id: p.id, name: p.user_name, detail: `${p.title} · ${p.days}d` })),
+                  },
+                ].filter(s => s.items.length > 0)
+
+                return (
+                  <div className="mt-4 rounded-2xl overflow-hidden"
+                       style={{ border: '1px solid rgba(250,204,21,0.2)', background: '#0f0c00' }}>
+                    <button
+                      className="w-full flex items-center gap-3 px-4 py-3"
+                      onClick={() => setAlertsOpen(v => !v)}>
+                      <span style={{ fontSize: '16px' }}>🔔</span>
+                      <p className="flex-1 text-left font-bold" style={{ fontSize: '13px', color: '#facc15' }}>
+                        Cảnh báo quản lý
+                      </p>
+                      <span className="rounded-full px-2 py-0.5 font-black"
+                            style={{ fontSize: '10px', background: 'rgba(250,204,21,0.15)', color: '#facc15' }}>
+                        {totalAlerts}
+                      </span>
+                      <span style={{ fontSize: '12px', color: '#585858', marginLeft: 4 }}>
+                        {alertsOpen ? '▲' : '▼'}
+                      </span>
+                    </button>
+
+                    {alertsOpen && (
+                      <div style={{ borderTop: '1px solid rgba(250,204,21,0.12)' }}>
+                        {SECTION.map(sec => (
+                          <div key={sec.label} className="px-4 py-3">
+                            <p className="font-bold mb-2" style={{ fontSize: '11px', color: sec.color }}>
+                              {sec.icon} {sec.label}
+                            </p>
+                            <div className="flex flex-col gap-1.5">
+                              {sec.items.map(item => (
+                                <div key={item.id}
+                                     className="flex items-center gap-2.5 rounded-xl px-3 py-2"
+                                     style={{ background: '#111', border: '1px solid #1f1f1f' }}>
+                                  <div className="w-6 h-6 rounded-lg flex items-center justify-center font-black shrink-0"
+                                       style={{ background: `${sec.color}22`, color: sec.color, fontSize: '10px' }}>
+                                    {item.name.trim().split(' ').slice(-1)[0].charAt(0).toUpperCase()}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-white font-semibold truncate" style={{ fontSize: '12px' }}>{item.name}</p>
+                                    <p className="truncate" style={{ fontSize: '10px', color: '#585858' }}>{item.detail}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
 
               {/* ── Game stats footer ─────────────────── */}
               <div className="mt-4 rounded-2xl px-4 py-3.5 grid grid-cols-2 gap-3"
