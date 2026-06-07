@@ -50,6 +50,8 @@ export default function ActivityLogPage({ onClose }: Props) {
   const [items,    setItems]    = useState<ActivityItem[]>([])
   const [loading,  setLoading]  = useState(true)
   const [filter,   setFilter]   = useState<ActivityType | 'all'>('all')
+  const [search,   setSearch]   = useState('')
+  const [dateRange, setDateRange] = useState<'all' | '7d' | '30d'>('all')
   const [page,     setPage]     = useState(0)
   const PAGE_SIZE = 30
 
@@ -143,9 +145,21 @@ export default function ActivityLogPage({ onClose }: Props) {
     setLoading(false)
   }
 
-  const filtered  = filter === 'all' ? items : items.filter(i => i.type === filter)
+  const cutoff = dateRange === '7d'  ? Date.now() - 7  * 86_400_000
+               : dateRange === '30d' ? Date.now() - 30 * 86_400_000
+               : 0
+
+  const filtered  = items
+    .filter(i => filter === 'all' || i.type === filter)
+    .filter(i => dateRange === 'all' || new Date(i.created_at).getTime() >= cutoff)
+    .filter(i => search === '' || i.user_name.toLowerCase().includes(search.toLowerCase()))
+
   const displayed = filtered.slice(0, (page + 1) * PAGE_SIZE)
   const hasMore   = displayed.length < filtered.length
+
+  // Summary counts per type
+  const summary: Record<ActivityType, number> = { mission: 0, game: 0, checkin: 0, praise: 0 }
+  for (const i of filtered) summary[i.type]++
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col items-center justify-end md:justify-center"
@@ -192,6 +206,30 @@ export default function ActivityLogPage({ onClose }: Props) {
           ))}
         </div>
 
+        {/* Search + date range ── STEP 63 advanced controls */}
+        <div className="px-4 py-2.5 flex gap-2 shrink-0" style={{ borderBottom: '1px solid #151515' }}>
+          <input
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(0) }}
+            placeholder="Tìm theo tên..."
+            className="flex-1 rounded-lg px-3 py-1.5 text-white placeholder-gray-600 outline-none"
+            style={{ background: '#111', border: '1px solid #222', fontSize: '11px' }}
+          />
+          {(['all', '7d', '30d'] as const).map(d => (
+            <button key={d}
+              onClick={() => { setDateRange(d); setPage(0) }}
+              className="shrink-0 px-2.5 py-1.5 rounded-lg font-bold"
+              style={{
+                fontSize: '10px',
+                background: dateRange === d ? 'rgba(96,165,250,0.12)' : '#111',
+                border:     dateRange === d ? '1px solid rgba(96,165,250,0.3)' : '1px solid #222',
+                color:      dateRange === d ? '#60a5fa' : '#585858',
+              }}>
+              {d === 'all' ? 'Tất cả' : d}
+            </button>
+          ))}
+        </div>
+
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-4 pb-10">
 
@@ -205,7 +243,25 @@ export default function ActivityLogPage({ onClose }: Props) {
               <span style={{ fontSize: '32px' }}>⏳</span>
               <p style={{ fontSize: '13px', color: '#484848' }}>Đang tải nhật ký...</p>
             </div>
-          ) : displayed.length === 0 ? (
+          ) : filtered.length > 0 && (
+            /* ── Summary bar ── */
+            <div className="mt-3 grid grid-cols-4 gap-1.5 mb-1">
+              {([
+                { key: 'mission', icon: '✅', count: summary.mission,  color: '#34d399' },
+                { key: 'game',    icon: '🎮', count: summary.game,     color: '#60a5fa' },
+                { key: 'checkin', icon: '📅', count: summary.checkin,  color: '#facc15' },
+                { key: 'praise',  icon: '🌟', count: summary.praise,   color: '#c084fc' },
+              ] as const).map(s => (
+                <div key={s.key} className="rounded-lg py-2 flex flex-col items-center"
+                     style={{ background: `${s.color}0f`, border: `1px solid ${s.color}22` }}>
+                  <span style={{ fontSize: '12px' }}>{s.icon}</span>
+                  <p className="font-black" style={{ fontSize: '13px', color: s.color, lineHeight: 1.2 }}>{s.count}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!canView ? null : loading ? null : displayed.length === 0 ? (
             <div className="flex flex-col items-center py-16 gap-3">
               <span style={{ fontSize: '40px' }}>🗒️</span>
               <p className="font-bold text-white" style={{ fontSize: '14px' }}>Chưa có hoạt động</p>
