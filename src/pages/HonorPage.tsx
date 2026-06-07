@@ -6,6 +6,7 @@ import { canAccessAdminPanel } from '../lib/permissions'
 import { BADGE_CONFIG, getBadge } from '../lib/badges'
 import PeerPraiseSheet from '../components/praise/PeerPraiseSheet'
 import StoriesPage from './StoriesPage'
+import InspirationVotePage from './InspirationVotePage'
 
 // ── Types ─────────────────────────────────────────────────────
 interface RawUserBadge {
@@ -388,6 +389,7 @@ export default function HonorPage() {
   const [showAward,    setShowAward]     = useState(false)
   const [showPraise,   setShowPraise]    = useState(false)
   const [showStories,  setShowStories]   = useState(false)
+  const [showVote,     setShowVote]      = useState(false)
   const [recentPraises,setRecentPraises] = useState<PraiseRow[] | null>(null)
 
   // ── Fetch real data ──────────────────────────────────────
@@ -454,6 +456,13 @@ export default function HonorPage() {
           </p>
         </div>
         <div className="flex gap-2 shrink-0 mt-0.5">
+          <button
+            onClick={() => setShowVote(true)}
+            className="py-2 px-3 rounded-xl font-bold text-xs active:scale-95 transition-transform"
+            style={{ background: 'rgba(250,204,21,0.1)', border: '1px solid rgba(250,204,21,0.28)', color: '#fbbf24' }}
+          >
+            ⭐ Bình chọn
+          </button>
           <button
             onClick={() => setShowStories(true)}
             className="py-2 px-3 rounded-xl font-bold text-xs active:scale-95 transition-transform"
@@ -615,6 +624,7 @@ export default function HonorPage() {
         />
       )}
 
+      {showVote    && <InspirationVotePage onClose={() => setShowVote(false)} />}
       {showStories && <StoriesPage onClose={() => setShowStories(false)} />}
 
       {showPraise && (

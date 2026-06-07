@@ -1,8 +1,8 @@
 # CURRENT STEP — CENTOSY ARENA
 
-Current Step:           STEP 42 (chưa bắt đầu)
-Last Completed Step:    STEP 37 — Employee Feedback Form
-Next Recommended Step:  STEP 38 (đọc file centosy-arena-prompts/02_MVP_TESTING/STEP_38_*.md)
+Current Step:           STEP 46 (đang chạy)
+Last Completed Step:    STEP 45 — Centosy Stories
+Next Recommended Step:  STEP 47
 Build Status:           ✅ OK — tsc 0 lỗi, vite build OK (548KB chunk warning — bỏ qua)
 Git Status:             ✅ Đã commit đến STEP 37 (3f449c8)
 
