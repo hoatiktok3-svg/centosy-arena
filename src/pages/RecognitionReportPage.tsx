@@ -70,7 +70,7 @@ export default function RecognitionReportPage({ onClose }: Props) {
     // Top voted
     const voteCounts: Record<string, { name: string; count: number }> = {}
     for (const v of votes ?? []) {
-      const name = (v.profiles as { full_name: string | null } | null)?.full_name ?? '—'
+      const name = (v.profiles as unknown as { full_name: string | null } | null)?.full_name ?? '—'
       if (!voteCounts[v.nominee_id]) {
         voteCounts[v.nominee_id] = { name, count: 0 }
       }
@@ -82,7 +82,7 @@ export default function RecognitionReportPage({ onClose }: Props) {
     // Group stats for praises
     const groupMap: Record<string, number> = {}
     for (const p of praises ?? []) {
-      const g = (p.profiles as { org_group: string | null } | null)?.org_group ?? 'other'
+      const g = (p.profiles as unknown as { org_group: string | null } | null)?.org_group ?? 'other'
       groupMap[g] = (groupMap[g] ?? 0) + 1
     }
 

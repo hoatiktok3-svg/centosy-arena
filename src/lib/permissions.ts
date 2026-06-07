@@ -74,12 +74,12 @@ export function canApproveMissions(role?: string | null): boolean {
 }
 
 /** Chơi game và nộp nhiệm vụ */
-export function canPlayGames(role?: string | null): boolean {
+export function canPlayGames(_role?: string | null): boolean {
   return true // mọi role đều được chơi
 }
 
 /** Xem leaderboard */
-export function canViewLeaderboard(role?: string | null): boolean {
+export function canViewLeaderboard(_role?: string | null): boolean {
   return true // mọi role đều thấy
 }
 

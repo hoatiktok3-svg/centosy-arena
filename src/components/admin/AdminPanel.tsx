@@ -198,9 +198,9 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
   // ── KPI aggregates ─────────────────────────────────────
   const totalProfiles  = profiles.length
   const totalAdmin     = profiles.filter(p => p.role === 'admin').length
-  const totalDirector  = profiles.filter(p => p.role === 'director').length
-  const totalManager   = profiles.filter(p => p.role === 'manager').length
-  const totalStaff     = profiles.filter(p => p.role === 'staff' || p.role === 'employee').length
+  const totalDirector  = profiles.filter(p => (p.role as string) === 'director').length
+  const totalManager   = profiles.filter(p => (p.role as string) === 'manager').length
+  const totalStaff     = profiles.filter(p => p.role === 'staff' || (p.role as string) === 'employee').length
   const totalActive    = profiles.filter(p => p.is_active !== false).length
   const hasPlayedIds   = new Set(Object.keys(gameStats))
   const totalPlayers   = hasPlayedIds.size
@@ -464,7 +464,7 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
                              className="truncate">
                             {p.full_name}
                           </p>
-                          {p.role !== 'employee' && p.role !== 'staff' && (() => {
+                          {(p.role as string) !== 'employee' && p.role !== 'staff' && (() => {
                             const s = getRoleBadgeStyle(p.role)
                             return (
                               <span style={{ fontSize: '9px', fontWeight: 900, color: s.color, background: s.bg, border: `1px solid ${s.border}`, padding: '2px 6px', borderRadius: 99 }}>

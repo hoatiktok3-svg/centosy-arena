@@ -77,7 +77,7 @@ export default function SeasonResetPage({ onClose }: Props) {
       const userScore: Record<string, { name: string | null; score: number }> = {}
       for (const s of sessions) {
         const uid  = s.user_id
-        const name = (s.profiles as { full_name: string | null } | null)?.full_name ?? null
+        const name = (s.profiles as unknown as { full_name: string | null } | null)?.full_name ?? null
         if (!userScore[uid]) userScore[uid] = { name, score: 0 }
         userScore[uid].score += s.score
       }

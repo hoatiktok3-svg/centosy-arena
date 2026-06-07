@@ -119,8 +119,6 @@ export default function InspirationVotePage({ onClose }: Props) {
   }
 
   const top3 = nominees.slice(0, 3).filter(n => n.vote_count > 0)
-  const rest  = nominees.slice(top3.length)
-
   const MEDAL = ['🥇', '🥈', '🥉']
 
   return (

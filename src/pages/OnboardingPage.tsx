@@ -86,13 +86,13 @@ interface Props {
 
 export default function OnboardingPage({ onClose }: Props) {
   const { currentUser }   = useAuth()
-  const userGroup         = (currentUser?.org_group ?? '') as OrgGroup
+  const userGroup         = ((currentUser?.orgGroup ?? '') as string) as OrgGroup
   const [done, setDone]   = useState<Set<string>>(loadDone)
   const [filter, setFilter] = useState<OrgGroup | 'all'>('all')
 
   // Init filter to user's group if available
   useEffect(() => {
-    if (userGroup && userGroup !== '') setFilter(userGroup)
+    if (userGroup && (userGroup as string) !== '') setFilter(userGroup)
     setDone(loadDone())
   }, [userGroup])
 

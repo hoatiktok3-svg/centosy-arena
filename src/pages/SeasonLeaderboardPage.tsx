@@ -124,7 +124,7 @@ export default function SeasonLeaderboardPage({ onClose }: Props) {
       const map: Record<string, SeasonRow> = {}
       for (const s of sessions) {
         const uid  = s.user_id
-        const prof = s.profiles as { full_name: string | null; org_group: string | null } | null
+        const prof = s.profiles as unknown as { full_name: string | null; org_group: string | null } | null
         if (!map[uid]) {
           map[uid] = {
             user_id:    uid,

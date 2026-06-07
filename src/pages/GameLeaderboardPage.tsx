@@ -66,7 +66,7 @@ export default function GameLeaderboardPage({ gameKey, gameTitle, onClose }: Pro
       const map: Record<string, LeaderRow> = {}
       for (const s of sessions) {
         const uid = s.user_id
-        const prof = s.profiles as { full_name: string | null; org_group: string | null } | null
+        const prof = s.profiles as unknown as { full_name: string | null; org_group: string | null } | null
         if (!map[uid]) {
           map[uid] = {
             user_id:    uid,
@@ -100,7 +100,7 @@ export default function GameLeaderboardPage({ gameKey, gameTitle, onClose }: Pro
       setRecentSessions(recent.map(r => ({
         id:           r.id,
         user_id:      r.user_id,
-        full_name:    (r.profiles as { full_name: string | null } | null)?.full_name ?? null,
+        full_name:    (r.profiles as unknown as { full_name: string | null } | null)?.full_name ?? null,
         score:        r.score,
         game_title:   r.game_title,
         completed_at: r.completed_at,

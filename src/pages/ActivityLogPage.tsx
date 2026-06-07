@@ -76,7 +76,7 @@ export default function ActivityLogPage({ onClose }: Props) {
       collected.push({
         id:         m.id,
         type:       'mission',
-        user_name:  (m.profiles as { full_name: string | null } | null)?.full_name ?? 'Không rõ',
+        user_name:  (m.profiles as unknown as { full_name: string | null } | null)?.full_name ?? 'Không rõ',
         detail:     `${statusLabel} nhiệm vụ "${m.title}"`,
         created_at: m.created_at,
         ...TYPE_META.mission,
@@ -94,7 +94,7 @@ export default function ActivityLogPage({ onClose }: Props) {
       collected.push({
         id:         g.id,
         type:       'game',
-        user_name:  (g.profiles as { full_name: string | null } | null)?.full_name ?? 'Không rõ',
+        user_name:  (g.profiles as unknown as { full_name: string | null } | null)?.full_name ?? 'Không rõ',
         detail:     `chơi game và đạt ${g.score} điểm`,
         created_at: g.created_at,
         ...TYPE_META.game,
@@ -112,7 +112,7 @@ export default function ActivityLogPage({ onClose }: Props) {
       collected.push({
         id:         c.id,
         type:       'checkin',
-        user_name:  (c.profiles as { full_name: string | null } | null)?.full_name ?? 'Không rõ',
+        user_name:  (c.profiles as unknown as { full_name: string | null } | null)?.full_name ?? 'Không rõ',
         detail:     `check-in ngày hôm nay${c.streak > 1 ? ` (streak ${c.streak} ngày)` : ''}`,
         created_at: c.created_at,
         ...TYPE_META.checkin,
@@ -127,8 +127,8 @@ export default function ActivityLogPage({ onClose }: Props) {
       .limit(30)
 
     for (const p of praisesRaw ?? []) {
-      const from = (p.from_profile as { full_name: string | null } | null)?.full_name ?? '?'
-      const to   = (p.to_profile   as { full_name: string | null } | null)?.full_name ?? '?'
+      const from = (p.from_profile as unknown as { full_name: string | null } | null)?.full_name ?? '?'
+      const to   = (p.to_profile   as unknown as { full_name: string | null } | null)?.full_name ?? '?'
       collected.push({
         id:         p.id,
         type:       'praise',

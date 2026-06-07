@@ -243,7 +243,7 @@ export default function AdminSettingsPage({ onClose }: Props) {
                     <div key={f.key}>
                       <p className="text-white font-semibold mb-1.5" style={{ fontSize: '12px' }}>{f.label}</p>
                       <input
-                        value={(general as Record<string, string | number>)[f.key] as string}
+                        value={(general as unknown as Record<string, string | number>)[f.key] as string}
                         onChange={e => setGeneral(prev => ({ ...prev, [f.key]: e.target.value }))}
                         placeholder={f.placeholder}
                         className="w-full rounded-xl px-3.5 py-2.5 text-white placeholder-gray-600 outline-none"

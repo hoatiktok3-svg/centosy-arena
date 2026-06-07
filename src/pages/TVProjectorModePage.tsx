@@ -58,7 +58,7 @@ export default function TVProjectorModePage({ onClose }: Props) {
       const userScore: Record<string, { name: string | null; org: string | null; score: number }> = {}
       for (const s of sessions) {
         const uid  = s.user_id
-        const prof = s.profiles as { full_name: string | null; org_group: string | null } | null
+        const prof = s.profiles as unknown as { full_name: string | null; org_group: string | null } | null
         if (!userScore[uid]) userScore[uid] = { name: prof?.full_name ?? null, org: prof?.org_group ?? null, score: 0 }
         userScore[uid].score += s.score
       }

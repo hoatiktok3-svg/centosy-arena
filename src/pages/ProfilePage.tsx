@@ -144,7 +144,7 @@ export default function ProfilePage() {
         .order('created_at', { ascending: false })
         .limit(5)
       setRecentMissions(
-        (data ?? []).map((r: MissionSubmissionRow) => ({
+        (data as unknown as MissionSubmissionRow[] ?? []).map((r: MissionSubmissionRow) => ({
           id:        r.id,
           title:     r.missions?.title ?? 'Nhiệm vụ',
           points:    r.missions?.points ?? 0,

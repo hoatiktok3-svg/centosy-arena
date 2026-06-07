@@ -44,7 +44,7 @@ export default function FeedbackList() {
       .select('id, type, severity, screen, message, is_resolved, created_at, profiles(full_name, email)')
       .order('created_at', { ascending: false })
       .limit(100)
-    setFeedbacks((data ?? []) as FeedbackRow[])
+    setFeedbacks((data ?? []) as unknown as FeedbackRow[])
     setLoading(false)
   }
 

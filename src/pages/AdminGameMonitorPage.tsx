@@ -80,8 +80,8 @@ export default function AdminGameMonitorPage({ onClose }: Props) {
       setSessions(raw.map(r => ({
         id:              r.id,
         user_id:         r.user_id,
-        full_name:       (r.profiles as { full_name: string | null } | null)?.full_name ?? null,
-        org_group:       (r.profiles as { org_group: string | null } | null)?.org_group ?? null,
+        full_name:       (r.profiles as unknown as { full_name: string | null } | null)?.full_name ?? null,
+        org_group:       (r.profiles as unknown as { org_group: string | null } | null)?.org_group ?? null,
         game_key:        r.game_key,
         game_title:      r.game_title,
         score:           r.score,

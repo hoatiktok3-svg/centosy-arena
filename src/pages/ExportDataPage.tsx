@@ -100,7 +100,7 @@ export default function ExportDataPage({ onClose }: Props) {
           .order('created_at', { ascending: false })
         const rows = (data ?? []).map(r => ({
           'Tên nhiệm vụ': r.title ?? '',
-          'Người nộp':    (r.profiles as { full_name: string | null } | null)?.full_name ?? '',
+          'Người nộp':    (r.profiles as unknown as { full_name: string | null } | null)?.full_name ?? '',
           'Trạng thái':   r.status ?? '',
           'Thời gian':    r.created_at ? formatDate(r.created_at) : '',
         }))
@@ -114,7 +114,7 @@ export default function ExportDataPage({ onClose }: Props) {
           .order('created_at', { ascending: false })
         const rows = (data ?? []).map(r => ({
           'Game ID':   r.game_id ?? '',
-          'Người chơi': (r.profiles as { full_name: string | null } | null)?.full_name ?? '',
+          'Người chơi': (r.profiles as unknown as { full_name: string | null } | null)?.full_name ?? '',
           'Điểm':      r.score ?? 0,
           'Thời gian': r.created_at ? formatDate(r.created_at) : '',
         }))
@@ -127,7 +127,7 @@ export default function ExportDataPage({ onClose }: Props) {
           .select('checkin_date, streak, points_earned, created_at, profiles:user_id(full_name)')
           .order('created_at', { ascending: false })
         const rows = (data ?? []).map(r => ({
-          'Người dùng':   (r.profiles as { full_name: string | null } | null)?.full_name ?? '',
+          'Người dùng':   (r.profiles as unknown as { full_name: string | null } | null)?.full_name ?? '',
           'Ngày check-in': r.checkin_date ?? '',
           'Streak':        r.streak ?? 0,
           'Điểm nhận':     r.points_earned ?? 0,

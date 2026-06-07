@@ -70,7 +70,7 @@ export default function TournamentExportPage({ onClose }: Props) {
     const userScore: Record<string, { name: string | null; org: string | null; score: number; plays: number }> = {}
     for (const s of sessions ?? []) {
       const uid  = s.user_id
-      const prof = s.profiles as { full_name: string | null; org_group: string | null } | null
+      const prof = s.profiles as unknown as { full_name: string | null; org_group: string | null } | null
       if (!userScore[uid]) userScore[uid] = { name: prof?.full_name ?? null, org: prof?.org_group ?? null, score: 0, plays: 0 }
       userScore[uid].score += s.score
       userScore[uid].plays += 1
@@ -98,7 +98,7 @@ export default function TournamentExportPage({ onClose }: Props) {
 
     const deptMap: Record<string, { totalScore: number; members: Set<string>; plays: number }> = {}
     for (const s of sessions ?? []) {
-      const dept = (s.profiles as { org_group: string | null } | null)?.org_group ?? 'Không rõ'
+      const dept = (s.profiles as unknown as { org_group: string | null } | null)?.org_group ?? 'Không rõ'
       if (!deptMap[dept]) deptMap[dept] = { totalScore: 0, members: new Set(), plays: 0 }
       deptMap[dept].totalScore += s.score
       deptMap[dept].members.add(s.user_id)
@@ -131,7 +131,7 @@ export default function TournamentExportPage({ onClose }: Props) {
     const csvData: (string | number | null)[][] = [
       ['Họ tên', 'Phòng ban', 'Game', 'Điểm', 'Điểm tối đa', 'Đúng', 'Tổng câu', 'Tính điểm', 'Thời gian (ms)', 'Hoàn thành lúc'],
       ...(sessions ?? []).map(s => {
-        const prof = s.profiles as { full_name: string | null; org_group: string | null } | null
+        const prof = s.profiles as unknown as { full_name: string | null; org_group: string | null } | null
         return [
           prof?.full_name ?? '—',
           prof?.org_group ?? '—',

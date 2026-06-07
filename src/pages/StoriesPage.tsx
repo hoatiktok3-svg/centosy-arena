@@ -43,7 +43,7 @@ export default function StoriesPage({ onClose }: Props) {
       .order('is_featured', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(20)
-    setStories((approved ?? []) as Story[])
+    setStories((approved ?? []) as unknown as Story[])
 
     if (isAdmin) {
       const { data: pend } = await supabase
@@ -51,7 +51,7 @@ export default function StoriesPage({ onClose }: Props) {
         .select('id, title, content, is_featured, status, created_at, profiles(full_name, avatar_initials)')
         .eq('status', 'pending')
         .order('created_at', { ascending: false })
-      setPending((pend ?? []) as Story[])
+      setPending((pend ?? []) as unknown as Story[])
     }
     setLoading(false)
   }

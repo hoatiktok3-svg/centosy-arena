@@ -63,7 +63,7 @@ export default function DeptTournamentPage({ onClose }: Props) {
       const deptMap: Record<string, { totalScore: number; playCount: number; members: Set<string> }> = {}
 
       for (const s of sessions) {
-        const dept = (s.profiles as { org_group: string | null } | null)?.org_group ?? 'Không rõ'
+        const dept = (s.profiles as unknown as { org_group: string | null } | null)?.org_group ?? 'Không rõ'
         if (!deptMap[dept]) deptMap[dept] = { totalScore: 0, playCount: 0, members: new Set() }
         deptMap[dept].totalScore += s.score
         deptMap[dept].playCount  += 1

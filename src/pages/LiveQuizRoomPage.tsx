@@ -245,7 +245,7 @@ function PlayerWaiting({
 export default function LiveQuizRoomPage({ onClose }: Props) {
   const { currentUser } = useAuth()
   const isAdmin   = currentUser ? canAccessAdminPanel(currentUser.role) : false
-  const myName    = currentUser?.user_metadata?.full_name ?? currentUser?.email ?? 'Ẩn danh'
+  const myName    = (currentUser as unknown as { user_metadata?: { full_name?: string } } | null)?.user_metadata?.full_name ?? currentUser?.email ?? 'Ẩn danh'
 
   const [view, setView]           = useState<'choose' | 'host' | 'join' | 'waiting'>('choose')
   const [roomCode, setRoomCode]   = useState('')

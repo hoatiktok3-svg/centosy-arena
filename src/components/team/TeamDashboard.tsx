@@ -179,7 +179,7 @@ export default function TeamDashboard({ onClose }: Props) {
         if (!data) return
         const now = Date.now()
         setOldPendings(
-          data.map((r: { id: string; title: string; created_at: string; profiles: { full_name: string | null } | null }) => ({
+          (data as unknown as { id: string; title: string; created_at: string; profiles: { full_name: string | null } | null }[]).map((r) => ({
             id:         r.id,
             user_name:  r.profiles?.full_name ?? 'Không rõ',
             title:      r.title,

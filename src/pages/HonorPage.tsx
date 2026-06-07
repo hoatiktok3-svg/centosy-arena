@@ -3,7 +3,7 @@ import { mockHonors, honorFilters, HonorFilter, Honor } from '../data/mockHonors
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabaseClient'
 import { canAccessAdminPanel } from '../lib/permissions'
-import { BADGE_CONFIG, getBadge } from '../lib/badges'
+import { BADGE_CONFIG } from '../lib/badges'
 import PeerPraiseSheet from '../components/praise/PeerPraiseSheet'
 import StoriesPage from './StoriesPage'
 import InspirationVotePage from './InspirationVotePage'
@@ -158,7 +158,7 @@ function AwardSheet({ onClose, onAwarded }: AwardSheetProps) {
               {badgeList.map(b => (
                 <button
                   key={b.id}
-                  onClick={() => { setSelectedBadge(b.id); setPoints(p => p === 0 ? (BADGE_CONFIG[b.id]?.points_bonus ?? 0) : p) }}
+                  onClick={() => { setSelectedBadge(b.id); setPoints(p => p === 0 ? ((BADGE_CONFIG[b.id] as unknown as { points_bonus?: number })?.points_bonus ?? 0) : p) }}
                   className="flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl transition-all"
                   style={{
                     background: selectedBadge === b.id ? `${b.color}18` : '#161616',
@@ -408,7 +408,7 @@ export default function HonorPage() {
       .limit(50)
 
     if (!error && data && data.length > 0) {
-      setHonors((data as RawUserBadge[]).map(toHonor))
+      setHonors((data as unknown as RawUserBadge[]).map(toHonor))
       setUseMock(false)
     } else {
       // Fallback to mock data while table is empty / not yet set up
@@ -428,7 +428,7 @@ export default function HonorPage() {
         .eq('is_public', true)
         .order('created_at', { ascending: false })
         .limit(10)
-      setRecentPraises((data ?? []) as PraiseRow[])
+      setRecentPraises((data ?? []) as unknown as PraiseRow[])
     }
     void fetchPraises()
   }, [])
@@ -651,7 +651,7 @@ export default function HonorPage() {
               .eq('is_public', true)
               .order('created_at', { ascending: false })
               .limit(10)
-              .then(({ data }) => setRecentPraises((data ?? []) as PraiseRow[]))
+              .then(({ data }) => setRecentPraises((data ?? []) as unknown as PraiseRow[]))
           }}
         />
       )}
