@@ -9,6 +9,7 @@ import FeedbackForm from '../components/feedback/FeedbackForm'
 import { canAccessAdminPanel, canAccessTeamDashboard, canAccessDirectorDashboard, getRoleLabel, getRoleBadgeStyle } from '../lib/permissions'
 import { supabase } from '../lib/supabaseClient'
 import { getBadge, PROFILE_BADGE_KEYS } from '../lib/badges'
+import { getLevelInfo } from '../lib/levelSystem'
 
 // me chỉ dùng cho mock data chưa có API: weeklyRank, game history
 const me = getCurrentUser()
@@ -231,6 +232,53 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* ── Level Card ── */}
+      {(() => {
+        const lvl = getLevelInfo(currentUser?.score ?? 0)
+        const isMax = lvl.level === 20
+        return (
+          <div className="arena-card" style={{ border: `1px solid ${lvl.color}33`, background: `${lvl.color}08` }}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0"
+                   style={{ background: `${lvl.color}15`, border: `1px solid ${lvl.color}40` }}>
+                {lvl.icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="font-black" style={{ fontSize: '15px', color: lvl.color }}>
+                    Level {lvl.level}
+                  </p>
+                  <span className="rounded-full px-2 py-0.5 font-semibold"
+                        style={{ fontSize: '10px', background: `${lvl.color}18`, color: lvl.color, border: `1px solid ${lvl.color}35` }}>
+                    {lvl.title}
+                  </span>
+                </div>
+                <p className="text-text-muted" style={{ fontSize: '11px', marginTop: 2 }}>
+                  {isMax
+                    ? 'Level tối đa — Centosy Legend! 🏯'
+                    : `Cần thêm ${lvl.pointsForNext.toLocaleString('vi-VN')}đ để lên Level ${lvl.level + 1}`
+                  }
+                </p>
+              </div>
+            </div>
+
+            {/* Progress bar */}
+            <div className="h-2 rounded-full mb-1.5" style={{ background: '#1e1e1e' }}>
+              <div className="h-full rounded-full transition-all duration-700"
+                   style={{ width: `${lvl.progress * 100}%`, background: lvl.color }} />
+            </div>
+            <div className="flex justify-between">
+              <p style={{ fontSize: '10px', color: '#585858' }}>
+                {lvl.pointsInLevel.toLocaleString('vi-VN')}đ
+              </p>
+              <p style={{ fontSize: '10px', color: '#585858' }}>
+                {isMax ? '∞' : `${(lvl.maxPoints - lvl.minPoints).toLocaleString('vi-VN')}đ`}
+              </p>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* ── Director Dashboard card (director+) ── */}
       {isDirector && (
