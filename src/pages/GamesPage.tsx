@@ -5,6 +5,7 @@ import DifficultCustomerGame, { GameAnswer } from '../components/games/Difficult
 import DifficultCustomerResult from '../components/games/DifficultCustomerResult'
 import ProductQuizPage from './ProductQuizPage'
 import TrainingLibraryPage from './TrainingLibraryPage'
+import OnboardingPage from './OnboardingPage'
 
 /* ── Rule Modal ──────────────────────────────────────────── */
 function RuleModal({ game, onClose }: { game: Game; onClose: () => void }) {
@@ -183,6 +184,7 @@ export default function GamesPage() {
   const [lastAnswers, setLastAnswers] = useState<GameAnswer[]>([])
   const [showProductQuiz, setShowProductQuiz]       = useState(false)
   const [showTrainingLibrary, setShowTrainingLibrary] = useState(false)
+  const [showOnboarding, setShowOnboarding]           = useState(false)
 
   const filtered = activeCategory === 'Tất cả'
     ? mockGames
@@ -262,25 +264,46 @@ export default function GamesPage() {
         </p>
       </div>
 
-      {/* Học viện banner */}
-      <button
-        onClick={() => setShowTrainingLibrary(true)}
-        className="w-full rounded-2xl overflow-hidden text-left transition-all active:scale-[0.98]"
-        style={{ background: '#181818', border: '1px solid rgba(96,165,250,0.35)' }}>
-        <div className="px-4 py-4 flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0"
-               style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.3)' }}>
-            📚
+      {/* Academy section */}
+      <div className="flex flex-col gap-2.5">
+        <button
+          onClick={() => setShowTrainingLibrary(true)}
+          className="w-full rounded-2xl overflow-hidden text-left transition-all active:scale-[0.98]"
+          style={{ background: '#181818', border: '1px solid rgba(96,165,250,0.35)' }}>
+          <div className="px-4 py-4 flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0"
+                 style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.3)' }}>
+              📚
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-black text-white" style={{ fontSize: '14px' }}>Học viện Centosy</p>
+              <p style={{ fontSize: '12px', color: '#707070', marginTop: 3 }}>
+                Bài học sản phẩm · kỹ năng bán hàng · quy trình
+              </p>
+            </div>
+            <span style={{ fontSize: '18px', color: '#484848' }}>›</span>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-black text-white" style={{ fontSize: '14px' }}>Học viện Centosy</p>
-            <p style={{ fontSize: '12px', color: '#707070', marginTop: 3 }}>
-              Bài học sản phẩm · kỹ năng bán hàng · quy trình
-            </p>
+        </button>
+
+        <button
+          onClick={() => setShowOnboarding(true)}
+          className="w-full rounded-2xl overflow-hidden text-left transition-all active:scale-[0.98]"
+          style={{ background: '#181818', border: '1px solid rgba(167,139,250,0.3)' }}>
+          <div className="px-4 py-4 flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0"
+                 style={{ background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.25)' }}>
+              🚀
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-black text-white" style={{ fontSize: '14px' }}>Onboarding 7 ngày</p>
+              <p style={{ fontSize: '12px', color: '#707070', marginTop: 3 }}>
+                Checklist theo phòng ban · theo dõi tiến độ
+              </p>
+            </div>
+            <span style={{ fontSize: '18px', color: '#484848' }}>›</span>
           </div>
-          <span style={{ fontSize: '18px', color: '#484848' }}>›</span>
-        </div>
-      </button>
+        </button>
+      </div>
 
       {/* Filter tabs */}
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 no-scrollbar">
@@ -311,6 +334,7 @@ export default function GamesPage() {
       {ruleGame && <RuleModal game={ruleGame} onClose={() => setRuleGame(null)} />}
       {showProductQuiz && <ProductQuizPage onClose={() => setShowProductQuiz(false)} />}
       {showTrainingLibrary && <TrainingLibraryPage onClose={() => setShowTrainingLibrary(false)} />}
+      {showOnboarding && <OnboardingPage onClose={() => setShowOnboarding(false)} />}
     </div>
   )
 }
