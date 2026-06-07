@@ -8,6 +8,7 @@ import {
   canAccessTeamDashboard,
 } from '../lib/permissions'
 import DirectoryPage from './DirectoryPage'
+import DailyCheckIn from '../components/checkin/DailyCheckIn'
 
 // ── Props ─────────────────────────────────────────────────────
 interface Props {
@@ -274,7 +275,10 @@ export default function HomePage({
         )}
       </div>
 
-      {/* ── 3. ARENA SCORE CARD ────────────────────────────── */}
+      {/* ── 3. DAILY CHECK-IN ───────────────────────────────── */}
+      <DailyCheckIn />
+
+      {/* ── 4. ARENA SCORE CARD ─────────────────────────────── */}
       <div className="rounded-3xl overflow-hidden"
            style={{
              background: 'linear-gradient(150deg, #1b0a02 0%, #131313 55%, #0d0d0d 100%)',
