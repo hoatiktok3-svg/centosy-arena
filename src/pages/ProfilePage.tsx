@@ -11,6 +11,7 @@ import { supabase } from '../lib/supabaseClient'
 import { getBadge, PROFILE_BADGE_KEYS } from '../lib/badges'
 import { getLevelInfo } from '../lib/levelSystem'
 import RewardShopPage from './RewardShopPage'
+import AdminSettingsPage from './AdminSettingsPage'
 
 // me chỉ dùng cho mock data chưa có API: weeklyRank, game history
 const me = getCurrentUser()
@@ -94,7 +95,8 @@ export default function ProfilePage() {
   const [showTeam,      setShowTeam]      = useState(false)
   const [showDirector,  setShowDirector]  = useState(false)
   const [showFeedback,  setShowFeedback]  = useState(false)
-  const [showRewardShop, setShowRewardShop] = useState(false)
+  const [showRewardShop,   setShowRewardShop]   = useState(false)
+  const [showAdminSettings, setShowAdminSettings] = useState(false)
   const [myBadgeIds,      setMyBadgeIds]      = useState<string[] | null>(null) // null = loading
   const [recentMissions,  setRecentMissions]  = useState<RecentMission[] | null>(null)
 
@@ -360,12 +362,21 @@ export default function ProfilePage() {
               <p className="text-text-muted text-xs">Chỉ Admin mới thấy mục này</p>
             </div>
           </div>
-          <button
-            className="w-full py-2.5 rounded-lg bg-yellow-500/10 border border-yellow-600/30 text-yellow-400 text-sm font-semibold hover:bg-yellow-500/20 transition-colors active:scale-95"
-            onClick={() => setShowAdmin(true)}
-          >
-            Mở Admin Panel →
-          </button>
+          <div className="flex flex-col gap-2">
+            <button
+              className="w-full py-2.5 rounded-lg bg-yellow-500/10 border border-yellow-600/30 text-yellow-400 text-sm font-semibold hover:bg-yellow-500/20 transition-colors active:scale-95"
+              onClick={() => setShowAdmin(true)}
+            >
+              Mở Admin Panel →
+            </button>
+            <button
+              className="w-full py-2.5 rounded-lg text-sm font-semibold transition-colors active:scale-95"
+              style={{ background: 'rgba(233,78,27,0.08)', border: '1px solid rgba(233,78,27,0.25)', color: '#E94E1B' }}
+              onClick={() => setShowAdminSettings(true)}
+            >
+              ⚙️ Cài đặt hệ thống →
+            </button>
+          </div>
         </div>
       )}
 
@@ -497,7 +508,8 @@ export default function ProfilePage() {
       {showTeam     && <TeamDashboard   onClose={() => setShowTeam(false)}     />}
       {showDirector && <DirectorDashboard onClose={() => setShowDirector(false)} />}
       {showFeedback && <FeedbackForm    onClose={() => setShowFeedback(false)} />}
-      {showRewardShop && <RewardShopPage onClose={() => setShowRewardShop(false)} />}
+      {showRewardShop     && <RewardShopPage    onClose={() => setShowRewardShop(false)}    />}
+      {showAdminSettings  && <AdminSettingsPage onClose={() => setShowAdminSettings(false)} />}
 
       {showLogout && (
         <LogoutSheet
