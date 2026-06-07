@@ -4,6 +4,7 @@ import DifficultCustomerIntro from '../components/games/DifficultCustomerIntro'
 import DifficultCustomerGame, { GameAnswer } from '../components/games/DifficultCustomerGame'
 import DifficultCustomerResult from '../components/games/DifficultCustomerResult'
 import ProductQuizPage from './ProductQuizPage'
+import TrainingLibraryPage from './TrainingLibraryPage'
 
 /* ── Rule Modal ──────────────────────────────────────────── */
 function RuleModal({ game, onClose }: { game: Game; onClose: () => void }) {
@@ -180,7 +181,8 @@ export default function GamesPage() {
   const [activeGame, setActiveGame] = useState<Game | null>(null)
   const [gamePhase, setGamePhase] = useState<'list' | 'intro' | 'playing' | 'result'>('list')
   const [lastAnswers, setLastAnswers] = useState<GameAnswer[]>([])
-  const [showProductQuiz, setShowProductQuiz] = useState(false)
+  const [showProductQuiz, setShowProductQuiz]       = useState(false)
+  const [showTrainingLibrary, setShowTrainingLibrary] = useState(false)
 
   const filtered = activeCategory === 'Tất cả'
     ? mockGames
@@ -260,6 +262,26 @@ export default function GamesPage() {
         </p>
       </div>
 
+      {/* Học viện banner */}
+      <button
+        onClick={() => setShowTrainingLibrary(true)}
+        className="w-full rounded-2xl overflow-hidden text-left transition-all active:scale-[0.98]"
+        style={{ background: '#181818', border: '1px solid rgba(96,165,250,0.35)' }}>
+        <div className="px-4 py-4 flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0"
+               style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.3)' }}>
+            📚
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-black text-white" style={{ fontSize: '14px' }}>Học viện Centosy</p>
+            <p style={{ fontSize: '12px', color: '#707070', marginTop: 3 }}>
+              Bài học sản phẩm · kỹ năng bán hàng · quy trình
+            </p>
+          </div>
+          <span style={{ fontSize: '18px', color: '#484848' }}>›</span>
+        </div>
+      </button>
+
       {/* Filter tabs */}
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 no-scrollbar">
         {gameCategories.map(cat => (
@@ -288,6 +310,7 @@ export default function GamesPage() {
       <div className="h-2" />
       {ruleGame && <RuleModal game={ruleGame} onClose={() => setRuleGame(null)} />}
       {showProductQuiz && <ProductQuizPage onClose={() => setShowProductQuiz(false)} />}
+      {showTrainingLibrary && <TrainingLibraryPage onClose={() => setShowTrainingLibrary(false)} />}
     </div>
   )
 }
