@@ -6,6 +6,7 @@ import DifficultCustomerResult from '../components/games/DifficultCustomerResult
 import ProductQuizPage from './ProductQuizPage'
 import TrainingLibraryPage from './TrainingLibraryPage'
 import OnboardingPage from './OnboardingPage'
+import GameLeaderboardPage from './GameLeaderboardPage'
 
 /* ── Rule Modal ──────────────────────────────────────────── */
 function RuleModal({ game, onClose }: { game: Game; onClose: () => void }) {
@@ -182,9 +183,10 @@ export default function GamesPage() {
   const [activeGame, setActiveGame] = useState<Game | null>(null)
   const [gamePhase, setGamePhase] = useState<'list' | 'intro' | 'playing' | 'result'>('list')
   const [lastAnswers, setLastAnswers] = useState<GameAnswer[]>([])
-  const [showProductQuiz, setShowProductQuiz]       = useState(false)
+  const [showProductQuiz, setShowProductQuiz]         = useState(false)
   const [showTrainingLibrary, setShowTrainingLibrary] = useState(false)
   const [showOnboarding, setShowOnboarding]           = useState(false)
+  const [showGameLeaderboard, setShowGameLeaderboard] = useState(false)
 
   const filtered = activeCategory === 'Tất cả'
     ? mockGames
@@ -256,12 +258,20 @@ export default function GamesPage() {
     <div className="flex flex-col gap-5 py-4">
 
       {/* Header */}
-      <div>
-        <p className="section-title-brand">🎮 Game Center</p>
-        <p style={{ fontSize: '12px', color: '#585858', marginTop: 4 }}>
-          <span style={{ color: '#4ade80', fontWeight: 700 }}>{liveCount} đang mở</span>
-          {' · '}{comingCount} sắp ra mắt · Không thể dùng AI gian lận
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="section-title-brand">🎮 Game Center</p>
+          <p style={{ fontSize: '12px', color: '#585858', marginTop: 4 }}>
+            <span style={{ color: '#4ade80', fontWeight: 700 }}>{liveCount} đang mở</span>
+            {' · '}{comingCount} sắp ra mắt · Không thể dùng AI gian lận
+          </p>
+        </div>
+        <button
+          onClick={() => setShowGameLeaderboard(true)}
+          className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold"
+          style={{ fontSize: '11px', background: 'rgba(250,204,21,0.08)', border: '1px solid rgba(250,204,21,0.25)', color: '#facc15' }}>
+          🏆 Xếp hạng
+        </button>
       </div>
 
       {/* Academy section */}
@@ -332,9 +342,10 @@ export default function GamesPage() {
 
       <div className="h-2" />
       {ruleGame && <RuleModal game={ruleGame} onClose={() => setRuleGame(null)} />}
-      {showProductQuiz && <ProductQuizPage onClose={() => setShowProductQuiz(false)} />}
-      {showTrainingLibrary && <TrainingLibraryPage onClose={() => setShowTrainingLibrary(false)} />}
-      {showOnboarding && <OnboardingPage onClose={() => setShowOnboarding(false)} />}
+      {showProductQuiz     && <ProductQuizPage       onClose={() => setShowProductQuiz(false)}     />}
+      {showTrainingLibrary && <TrainingLibraryPage   onClose={() => setShowTrainingLibrary(false)} />}
+      {showOnboarding      && <OnboardingPage        onClose={() => setShowOnboarding(false)}      />}
+      {showGameLeaderboard && <GameLeaderboardPage   onClose={() => setShowGameLeaderboard(false)} />}
     </div>
   )
 }
