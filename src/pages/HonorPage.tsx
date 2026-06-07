@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabaseClient'
 import { canAccessAdminPanel } from '../lib/permissions'
 import { BADGE_CONFIG, getBadge } from '../lib/badges'
+import PeerPraiseSheet from '../components/praise/PeerPraiseSheet'
 
 // ── Types ─────────────────────────────────────────────────────
 interface RawUserBadge {
@@ -363,6 +364,16 @@ function HonorCard({ honor }: { honor: Honor }) {
   )
 }
 
+// ── Peer Praise types ────────────────────────────────────────
+interface PraiseRow {
+  id:          string
+  emoji:       string
+  message:     string
+  created_at:  string
+  from_profile: { full_name: string | null } | null
+  to_profile:   { full_name: string | null } | null
+}
+
 /* ── Main Page ───────────────────────────────────────────── */
 export default function HonorPage() {
   const { currentUser } = useAuth()
@@ -374,6 +385,8 @@ export default function HonorPage() {
   const [filter,       setFilter]        = useState<HonorFilter>('Tất cả')
   const [showAll,      setShowAll]       = useState(false)
   const [showAward,    setShowAward]     = useState(false)
+  const [showPraise,   setShowPraise]    = useState(false)
+  const [recentPraises,setRecentPraises] = useState<PraiseRow[] | null>(null)
 
   // ── Fetch real data ──────────────────────────────────────
   async function fetchHonors() {
@@ -400,6 +413,19 @@ export default function HonorPage() {
   }
 
   useEffect(() => { void fetchHonors() }, [])
+
+  useEffect(() => {
+    async function fetchPraises() {
+      const { data } = await supabase
+        .from('peer_praises')
+        .select('id, emoji, message, created_at, from_profile:from_user_id(full_name), to_profile:to_user_id(full_name)')
+        .eq('is_public', true)
+        .order('created_at', { ascending: false })
+        .limit(10)
+      setRecentPraises((data ?? []) as PraiseRow[])
+    }
+    void fetchPraises()
+  }, [])
 
   // ── Filter logic ─────────────────────────────────────────
   const featured  = honors.find(h => h.featured)
@@ -517,6 +543,57 @@ export default function HonorPage() {
         </div>
       )}
 
+      {/* ── Lời khen đồng đội ────────────────────────── */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <p className="section-title">👏 Lời khen đồng đội</p>
+          <button
+            onClick={() => setShowPraise(true)}
+            className="text-xs font-semibold px-3 py-1.5 rounded-lg active:scale-95 transition-all"
+            style={{ background: 'rgba(233,78,27,0.1)', border: '1px solid rgba(233,78,27,0.3)', color: '#E94E1B' }}
+          >
+            + Gửi lời khen
+          </button>
+        </div>
+
+        {recentPraises === null && (
+          <p className="text-text-muted text-xs text-center py-4">Đang tải...</p>
+        )}
+
+        {recentPraises !== null && recentPraises.length === 0 && (
+          <div className="arena-card text-center py-6">
+            <p className="text-3xl mb-2">👏</p>
+            <p className="text-text-muted text-sm">Chưa có lời khen nào. Hãy là người đầu tiên!</p>
+          </div>
+        )}
+
+        {recentPraises !== null && recentPraises.length > 0 && (
+          <div className="flex flex-col gap-2">
+            {recentPraises.map(p => {
+              const date = new Date(p.created_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })
+              return (
+                <div key={p.id} className="arena-card flex items-start gap-3">
+                  <span className="text-2xl shrink-0 mt-0.5">{p.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-sm leading-snug">{p.message}</p>
+                    <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                      <span className="text-brand text-[11px] font-bold">
+                        {p.from_profile?.full_name ?? '—'}
+                      </span>
+                      <span className="text-text-muted text-[11px]">→</span>
+                      <span className="text-green-400 text-[11px] font-bold">
+                        {p.to_profile?.full_name ?? '—'}
+                      </span>
+                      <span className="text-text-muted text-[10px] ml-auto">{date}</span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
       <div className="h-2" />
 
       {/* Award sheet */}
@@ -524,6 +601,23 @@ export default function HonorPage() {
         <AwardSheet
           onClose={() => setShowAward(false)}
           onAwarded={() => { setShowAward(false); void fetchHonors() }}
+        />
+      )}
+
+      {showPraise && (
+        <PeerPraiseSheet
+          onClose={() => setShowPraise(false)}
+          onSent={() => {
+            setShowPraise(false)
+            // Refetch praises sau khi gửi thành công
+            supabase
+              .from('peer_praises')
+              .select('id, emoji, message, created_at, from_profile:from_user_id(full_name), to_profile:to_user_id(full_name)')
+              .eq('is_public', true)
+              .order('created_at', { ascending: false })
+              .limit(10)
+              .then(({ data }) => setRecentPraises((data ?? []) as PraiseRow[]))
+          }}
         />
       )}
     </div>
