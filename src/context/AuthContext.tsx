@@ -8,13 +8,14 @@ import {
 } from 'react'
 import { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabaseClient'
+import type { AppRole } from '../lib/permissions'
 
 // Shape dùng trong toàn app — map từ public.profiles
 export interface UserProfile {
   id: string
   name: string
   email: string
-  role: 'admin' | 'staff'
+  role: AppRole
   department: string
   avatarInitials: string
   title: string
@@ -51,7 +52,7 @@ function mapProfile(row: Record<string, unknown>, email: string): UserProfile {
     id: String(row.id),
     name: String(row.full_name ?? email),
     email: String(row.email ?? email),
-    role: (row.role as 'admin' | 'staff') ?? 'staff',
+    role: (row.role as AppRole) ?? 'employee',
     department: String(row.department ?? 'van-phong'),
     avatarInitials: initials,
     title: String(row.title ?? ''),
@@ -78,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (error || !data) {
       // Profile chưa tồn tại (chưa chạy schema) — tạo UserProfile tối thiểu
-      setCurrentUser({ id: userId, name: email, email, role: 'staff', department: 'van-phong', avatarInitials: email[0]?.toUpperCase() ?? '?', title: '', score: 0, accountStatus: 'approved', rejectedReason: null, isActive: true, orgGroup: null, officeDepartment: null })
+      setCurrentUser({ id: userId, name: email, email, role: 'employee', department: 'van-phong', avatarInitials: email[0]?.toUpperCase() ?? '?', title: '', score: 0, accountStatus: 'approved', rejectedReason: null, isActive: true, orgGroup: null, officeDepartment: null })
     } else {
       setCurrentUser(mapProfile(data as Record<string, unknown>, email))
     }

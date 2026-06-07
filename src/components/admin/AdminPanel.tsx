@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabaseClient'
+import { canAccessAdminPanel, canApproveAccounts, getRoleLabel, getRoleBadgeStyle } from '../../lib/permissions'
 
 interface AdminPanelProps {
   onClose: () => void
@@ -69,7 +70,8 @@ const POINT_RULES = [
 
 export default function AdminPanel({ onClose }: AdminPanelProps) {
   const { currentUser } = useAuth()
-  const isAdmin = currentUser?.role === 'admin'
+  const isAdmin = canAccessAdminPanel(currentUser?.role)
+  const canApprove = canApproveAccounts(currentUser?.role)
 
   const [profiles,       setProfiles]       = useState<ProfileRow[]>([])
   const [gameStats,      setGameStats]      = useState<Record<string, GameStat>>({})
@@ -83,6 +85,7 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
   const [actionLoading,  setActionLoading]  = useState<string | null>(null)  // id đang xử lý
   const [rejectTarget,   setRejectTarget]   = useState<string | null>(null)  // id đang mở reject form
   const [rejectReason,   setRejectReason]   = useState('')
+  const [approveRole,    setApproveRole]    = useState<Record<string, string>>({})  // id → role được assign
 
   useEffect(() => {
     if (!isAdmin) { setLoading(false); return }
@@ -142,11 +145,13 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
   // ── Approve / Reject ──────────────────────────────────
   async function handleApprove(id: string) {
     setActionLoading(id)
+    const roleToAssign = approveRole[id] || 'employee'
     await supabase
       .from('profiles')
       .update({
         account_status: 'approved',
         is_active:      true,
+        role:           roleToAssign,
         approved_by:    currentUser?.id ?? null,
         approved_at:    new Date().toISOString(),
       })
@@ -189,7 +194,9 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
   // ── KPI aggregates ─────────────────────────────────────
   const totalProfiles  = profiles.length
   const totalAdmin     = profiles.filter(p => p.role === 'admin').length
-  const totalStaff     = profiles.filter(p => p.role === 'staff').length
+  const totalDirector  = profiles.filter(p => p.role === 'director').length
+  const totalManager   = profiles.filter(p => p.role === 'manager').length
+  const totalStaff     = profiles.filter(p => p.role === 'staff' || p.role === 'employee').length
   const totalActive    = profiles.filter(p => p.is_active !== false).length
   const hasPlayedIds   = new Set(Object.keys(gameStats))
   const totalPlayers   = hasPlayedIds.size
@@ -212,7 +219,7 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
 
   // ── KPI card data ──────────────────────────────────────
   const kpiCards = [
-    { label: 'Tổng nhân sự',   value: loading ? '…' : totalProfiles, sub: `${totalAdmin} admin · ${totalStaff} staff`,  color: '#60a5fa' },
+    { label: 'Tổng nhân sự',   value: loading ? '…' : totalProfiles, sub: `${totalAdmin} admin · ${totalDirector} director · ${totalManager} manager · ${totalStaff} nhân viên`,  color: '#60a5fa' },
     { label: 'Tài khoản active', value: loading ? '…' : totalActive,   sub: `${totalProfiles - totalActive} tạm khóa`,   color: '#4ade80' },
     { label: 'Đã chơi game',   value: loading ? '…' : totalPlayers,  sub: `${totalProfiles - totalPlayers} chưa tham gia`, color: '#E94E1B' },
     { label: 'Tổng lượt chơi', value: loading ? '…' : totalPlays,    sub: gameStatsNote ?? 'Tất cả game',               color: '#facc15' },
@@ -335,6 +342,21 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
                       </div>
                     )}
 
+                    {/* Role assign dropdown (chỉ admin mới thấy) */}
+                    {!isRejectOpen && canApprove && (
+                      <div className="px-4 pb-2">
+                        <select
+                          value={approveRole[p.id] || 'employee'}
+                          onChange={e => setApproveRole(prev => ({ ...prev, [p.id]: e.target.value }))}
+                          className="w-full bg-arena-bg border border-arena-border rounded-lg px-3 py-2 text-text-secondary text-xs focus:outline-none focus:border-brand"
+                        >
+                          <option value="employee">Nhân viên</option>
+                          <option value="manager">Quản lý</option>
+                          <option value="director">Giám đốc</option>
+                        </select>
+                      </div>
+                    )}
+
                     {/* Action buttons */}
                     {!isRejectOpen && (
                       <div className="flex gap-2 px-4 pb-3">
@@ -438,11 +460,14 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
                              className="truncate">
                             {p.full_name}
                           </p>
-                          {p.role === 'admin' && (
-                            <span style={{ fontSize: '9px', fontWeight: 900, color: '#facc15', background: 'rgba(250,204,21,0.15)', padding: '2px 6px', borderRadius: 99 }}>
-                              ADMIN
-                            </span>
-                          )}
+                          {p.role !== 'employee' && p.role !== 'staff' && (() => {
+                            const s = getRoleBadgeStyle(p.role)
+                            return (
+                              <span style={{ fontSize: '9px', fontWeight: 900, color: s.color, background: s.bg, border: `1px solid ${s.border}`, padding: '2px 6px', borderRadius: 99 }}>
+                                {getRoleLabel(p.role).toUpperCase()}
+                              </span>
+                            )
+                          })()}
                         </div>
                         <p style={{ fontSize: '11px', color: '#555' }} className="truncate">{p.email}</p>
                         <div className="flex items-center gap-2 mt-0.5">

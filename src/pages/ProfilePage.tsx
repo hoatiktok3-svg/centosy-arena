@@ -3,6 +3,7 @@ import { getCurrentUser } from '../data/mockUsers'
 import { mockGameHistory, mockRecentAchievements } from '../data/mockProfile'
 import { useAuth } from '../context/AuthContext'
 import AdminPanel from '../components/admin/AdminPanel'
+import { canAccessAdminPanel, getRoleLabel, getRoleBadgeStyle } from '../lib/permissions'
 
 // me chỉ dùng cho mock data chưa có API: badges, weeklyRank, game history
 const me = getCurrentUser()
@@ -85,7 +86,9 @@ export default function ProfilePage() {
   // Nếu title rỗng → profile chưa được Admin tạo đầy đủ trong Supabase
   const isProfileIncomplete = !currentUser?.title
 
-  const isAdmin = currentUser?.role === 'admin'
+  const isAdmin = canAccessAdminPanel(currentUser?.role)
+  const roleLabel = getRoleLabel(currentUser?.role)
+  const roleBadge = getRoleBadgeStyle(currentUser?.role)
 
   // Ưu tiên org_group mới; fallback về department cũ cho account trước STEP 26A
   const orgGroupLabel = currentUser?.orgGroup
@@ -139,15 +142,12 @@ export default function ProfilePage() {
             <p className="text-text-secondary text-sm mt-0.5">{currentUser.title}</p>
           )}
           <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
-            {isAdmin ? (
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-yellow-500/20 border border-yellow-500/40 text-yellow-400">
-                ADMIN
-              </span>
-            ) : (
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-brand/20 border border-brand/40 text-brand">
-                NHÂN VIÊN
-              </span>
-            )}
+            <span
+              className="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider"
+              style={{ background: roleBadge.bg, border: `1px solid ${roleBadge.border}`, color: roleBadge.color }}
+            >
+              {roleLabel}
+            </span>
             {deptLabel && <span className="badge-gray">{deptLabel}</span>}
             {/* Bộ phận văn phòng — chỉ hiện khi thuộc Văn phòng */}
             {officeDeptLabel && (
