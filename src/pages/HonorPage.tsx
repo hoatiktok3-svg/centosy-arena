@@ -7,6 +7,7 @@ import { BADGE_CONFIG, getBadge } from '../lib/badges'
 import PeerPraiseSheet from '../components/praise/PeerPraiseSheet'
 import StoriesPage from './StoriesPage'
 import InspirationVotePage from './InspirationVotePage'
+import RecognitionReportPage from './RecognitionReportPage'
 
 // ── Types ─────────────────────────────────────────────────────
 interface RawUserBadge {
@@ -390,6 +391,7 @@ export default function HonorPage() {
   const [showPraise,   setShowPraise]    = useState(false)
   const [showStories,  setShowStories]   = useState(false)
   const [showVote,     setShowVote]      = useState(false)
+  const [showReport,   setShowReport]    = useState(false)
   const [recentPraises,setRecentPraises] = useState<PraiseRow[] | null>(null)
 
   // ── Fetch real data ──────────────────────────────────────
@@ -471,6 +473,14 @@ export default function HonorPage() {
             📖 Stories
           </button>
           {isAdmin && (
+          <>
+          <button
+            onClick={() => setShowReport(true)}
+            className="shrink-0 py-2 px-3 rounded-xl font-bold text-xs active:scale-95 transition-transform"
+            style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', color: '#34d399' }}
+          >
+            📊 Báo cáo
+          </button>
           <button
             onClick={() => setShowAward(true)}
             className="shrink-0 py-2 px-3.5 rounded-xl font-bold text-xs active:scale-95 transition-transform"
@@ -478,6 +488,7 @@ export default function HonorPage() {
           >
               + Trao huy hiệu
           </button>
+          </>
           )}
         </div>
       </div>
@@ -624,6 +635,7 @@ export default function HonorPage() {
         />
       )}
 
+      {showReport  && <RecognitionReportPage onClose={() => setShowReport(false)} />}
       {showVote    && <InspirationVotePage onClose={() => setShowVote(false)} />}
       {showStories && <StoriesPage onClose={() => setShowStories(false)} />}
 
