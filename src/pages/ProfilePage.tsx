@@ -4,7 +4,8 @@ import { mockGameHistory, mockRecentAchievements } from '../data/mockProfile'
 import { useAuth } from '../context/AuthContext'
 import AdminPanel from '../components/admin/AdminPanel'
 import TeamDashboard from '../components/team/TeamDashboard'
-import { canAccessAdminPanel, canAccessTeamDashboard, getRoleLabel, getRoleBadgeStyle } from '../lib/permissions'
+import DirectorDashboard from '../components/director/DirectorDashboard'
+import { canAccessAdminPanel, canAccessTeamDashboard, canAccessDirectorDashboard, getRoleLabel, getRoleBadgeStyle } from '../lib/permissions'
 import { supabase } from '../lib/supabaseClient'
 import { getBadge, PROFILE_BADGE_KEYS } from '../lib/badges'
 
@@ -69,10 +70,11 @@ function LogoutSheet({ onClose, onConfirm }: { onClose: () => void; onConfirm: (
 
 export default function ProfilePage() {
   const { currentUser, logout } = useAuth()
-  const [showLogout,  setShowLogout]  = useState(false)
-  const [showAdmin,   setShowAdmin]   = useState(false)
-  const [showTeam,    setShowTeam]    = useState(false)
-  const [myBadgeIds,  setMyBadgeIds]  = useState<string[] | null>(null) // null = loading
+  const [showLogout,    setShowLogout]    = useState(false)
+  const [showAdmin,     setShowAdmin]     = useState(false)
+  const [showTeam,      setShowTeam]      = useState(false)
+  const [showDirector,  setShowDirector]  = useState(false)
+  const [myBadgeIds,    setMyBadgeIds]    = useState<string[] | null>(null) // null = loading
 
   // Fetch real badges từ Supabase
   useEffect(() => {
@@ -94,8 +96,9 @@ export default function ProfilePage() {
   // Nếu title rỗng → profile chưa được Admin tạo đầy đủ trong Supabase
   const isProfileIncomplete = !currentUser?.title
 
-  const isAdmin   = canAccessAdminPanel(currentUser?.role)
-  const isManager = canAccessTeamDashboard(currentUser?.role)
+  const isAdmin    = canAccessAdminPanel(currentUser?.role)
+  const isManager  = canAccessTeamDashboard(currentUser?.role)
+  const isDirector = canAccessDirectorDashboard(currentUser?.role)
   const roleLabel = getRoleLabel(currentUser?.role)
   const roleBadge = getRoleBadgeStyle(currentUser?.role)
 
@@ -186,6 +189,29 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* ── Director Dashboard card (director+) ── */}
+      {isDirector && (
+        <div className="arena-card" style={{ border: '1px solid rgba(167,139,250,0.25)', background: 'rgba(167,139,250,0.04)' }}>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                 style={{ background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.28)' }}>
+              <span className="text-lg">👑</span>
+            </div>
+            <div>
+              <p className="font-bold text-sm" style={{ color: '#a78bfa' }}>Director Dashboard</p>
+              <p className="text-text-muted text-xs">Tổng quan toàn công ty · KPI · Top nhân viên</p>
+            </div>
+          </div>
+          <button
+            className="w-full py-2.5 rounded-lg font-semibold text-sm active:scale-95 transition-all"
+            style={{ background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.28)', color: '#a78bfa' }}
+            onClick={() => setShowDirector(true)}
+          >
+            Xem Director Dashboard →
+          </button>
+        </div>
+      )}
 
       {/* ── Team Dashboard card (manager+) ── */}
       {isManager && (
@@ -324,7 +350,8 @@ export default function ProfilePage() {
       <div className="h-2" />
 
       {showAdmin && <AdminPanel onClose={() => setShowAdmin(false)} />}
-      {showTeam  && <TeamDashboard onClose={() => setShowTeam(false)} />}
+      {showTeam     && <TeamDashboard     onClose={() => setShowTeam(false)}     />}
+      {showDirector && <DirectorDashboard onClose={() => setShowDirector(false)} />}
 
       {showLogout && (
         <LogoutSheet
