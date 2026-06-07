@@ -21,6 +21,7 @@ import StageRecognitionPage from './StageRecognitionPage'
 import TournamentControlCenterPage from './TournamentControlCenterPage'
 import TVProjectorModePage from './TVProjectorModePage'
 import PublicEventModePage from './PublicEventModePage'
+import TournamentExportPage from './TournamentExportPage'
 
 // me chỉ dùng cho mock data chưa có API: weeklyRank, game history
 const me = getCurrentUser()
@@ -115,6 +116,7 @@ export default function ProfilePage() {
   const [showTournamentCC,  setShowTournamentCC]  = useState(false)
   const [showTVMode,        setShowTVMode]        = useState(false)
   const [showPublicEvent,   setShowPublicEvent]   = useState(false)
+  const [showTournamentExport, setShowTournamentExport] = useState(false)
   const [myBadgeIds,      setMyBadgeIds]      = useState<string[] | null>(null) // null = loading
   const [recentMissions,  setRecentMissions]  = useState<RecentMission[] | null>(null)
 
@@ -457,6 +459,13 @@ export default function ProfilePage() {
             >
               🌐 Public Event Mode →
             </button>
+            <button
+              className="w-full py-3 rounded-xl font-semibold text-left px-4 transition-all active:scale-[0.98]"
+              style={{ background: 'rgba(233,78,27,0.08)', border: '1px solid rgba(233,78,27,0.2)', color: '#E94E1B' }}
+              onClick={() => setShowTournamentExport(true)}
+            >
+              📥 Export Kết Quả Giải →
+            </button>
           </div>
         </div>
       )}
@@ -599,7 +608,8 @@ export default function ProfilePage() {
       {showStage          && <StageRecognitionPage         onClose={() => setShowStage(false)}         />}
       {showTournamentCC   && <TournamentControlCenterPage  onClose={() => setShowTournamentCC(false)} />}
       {showTVMode         && <TVProjectorModePage     onClose={() => setShowTVMode(false)}      />}
-      {showPublicEvent    && <PublicEventModePage     onClose={() => setShowPublicEvent(false)} />}
+      {showPublicEvent    && <PublicEventModePage     onClose={() => setShowPublicEvent(false)}      />}
+      {showTournamentExport && <TournamentExportPage  onClose={() => setShowTournamentExport(false)} />}
 
       {showLogout && (
         <LogoutSheet
