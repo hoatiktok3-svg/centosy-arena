@@ -5,6 +5,7 @@ import { useGameRecognition } from '../lib/useGameRecognition'
 import GameScoreToast from '../components/games/GameScoreToast'
 import { calcSpeedScore, analyzeSessionAntiCheat, getSpeedLabel } from '../lib/speedScoring'
 import { hapticLight, hapticSuccess, hapticError, hapticCelebration } from '../lib/mobileUtils'
+import { soundSelect, soundCorrect, soundWrong, soundComplete, isMuted, toggleMute } from '../lib/gameSounds'
 
 // ── Types ─────────────────────────────────────────────────────
 interface QuizQuestion {
@@ -272,11 +273,12 @@ function QuestionScreen({
   const [selected, setSelected]         = useState<number | null>(null)
   const [confirmed, setConfirmed]       = useState(false)
   const [questionMs, setQuestionMs]     = useState(0)
+  const [muted, setMuted]              = useState(isMuted)
   const questionStart                   = useRef(Date.now())
 
   const handleSelect = (i: number) => {
     if (confirmed) return
-    hapticLight()
+    hapticLight(); soundSelect()
     setSelected(i)
   }
 
@@ -285,8 +287,8 @@ function QuestionScreen({
     const ms = Date.now() - questionStart.current
     setQuestionMs(ms)
     const correct = selected === question.correctIndex
-    if (correct) hapticSuccess()
-    else hapticError()
+    if (correct) { hapticSuccess(); soundCorrect() }
+    else { hapticError(); soundWrong() }
     setConfirmed(true)
   }
 
@@ -308,10 +310,18 @@ function QuestionScreen({
            style={{ borderBottom: '1px solid #1e1e1e', background: '#0d0d0d' }}>
         <div className="flex items-center justify-between mb-3 max-w-[430px] mx-auto">
           <span style={{ fontSize: '13px', color: '#585858' }}>Câu {index + 1}/{total}</span>
-          <div className="flex items-center gap-1.5 rounded-full px-3 py-1"
-               style={{ background: '#1a1a1a', border: '1px solid #2c2c2c' }}>
-            <span style={{ fontSize: '14px' }}>🏅</span>
-            <span className="font-black" style={{ fontSize: '13px', color: '#E94E1B' }}>{score}đ</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setMuted(toggleMute())}
+              className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ background: '#1a1a1a', border: '1px solid #2c2c2c', fontSize: '14px' }}>
+              {muted ? '🔇' : '🔊'}
+            </button>
+            <div className="flex items-center gap-1.5 rounded-full px-3 py-1"
+                 style={{ background: '#1a1a1a', border: '1px solid #2c2c2c' }}>
+              <span style={{ fontSize: '14px' }}>🏅</span>
+              <span className="font-black" style={{ fontSize: '13px', color: '#E94E1B' }}>{score}đ</span>
+            </div>
           </div>
         </div>
         {/* Progress bar */}
@@ -639,7 +649,7 @@ export default function ProductQuizPage({ onClose }: Props) {
 
     if (currentIndex + 1 >= QUIZ_QUESTIONS.length) {
       setPhase('result')
-      hapticCelebration()
+      hapticCelebration(); soundComplete()
       // Anti-cheat session check
       const antiCheat = analyzeSessionAntiCheat(newAnswers.map(a => ({
         isCorrect: a.isCorrect,
