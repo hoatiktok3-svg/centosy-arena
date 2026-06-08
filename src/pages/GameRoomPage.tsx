@@ -274,6 +274,7 @@ export default function GameRoomPage({ onClose }: Props) {
   const [questions, setQuestions] = useState<RoomQuestion[]>([])
   const [myAnswer, setMyAnswer]   = useState<number | null>(null)
   const channelRef                = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const autoAdvanceRef            = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ── Subscribe to room realtime ────────────────────────────
   const subscribeRoom = useCallback((roomId: string) => {
@@ -298,19 +299,46 @@ export default function GameRoomPage({ onClose }: Props) {
 
   // ── Load questions when room started ─────────────────────
   useEffect(() => {
-    if (!room?.question_set_id || room.status !== 'playing') return
+    if (!room?.question_set_id) return
     void supabase.from('questions').select('*').eq('set_id', room.question_set_id).order('order_index')
-      .then(({ data }) => { if (data) setQuestions(data as RoomQuestion[]) })
-  }, [room?.question_set_id, room?.status])
+      .then(({ data }) => {
+        if (!data) return
+        setQuestions(data as RoomQuestion[])
+        // Sync total_questions in DB if admin
+        if (isAdmin && data.length > 0 && room.total_questions !== data.length) {
+          void supabase.from('game_rooms').update({ total_questions: data.length }).eq('id', room.id)
+        }
+      })
+  }, [room?.question_set_id])  // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Sync screen with room status ─────────────────────────
   useEffect(() => {
     if (!room) return
-    if (room.status === 'waiting')              setScreen('lobby')
-    else if (room.status === 'playing')         { setScreen('question'); setMyAnswer(null) }
-    else if (room.status === 'showing_leaderboard') setScreen('leaderboard')
-    else if (room.status === 'finished')        setScreen('result')
-  }, [room?.status, room?.current_question_index])
+    if (room.status === 'waiting') {
+      setScreen('lobby')
+    } else if (room.status === 'playing') {
+      setScreen('question')
+      setMyAnswer(null)
+      // Admin: auto-advance to showing_leaderboard after question time limit
+      if (isAdmin && room.current_question_started_at) {
+        if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current)
+        const elapsed  = Date.now() - new Date(room.current_question_started_at).getTime()
+        const remaining = Math.max(0, room.question_time_limit_s * 1000 - elapsed + 800) // +800ms buffer
+        autoAdvanceRef.current = setTimeout(() => {
+          void supabase.from('game_rooms').update({ status: 'showing_leaderboard' }).eq('id', room.id)
+        }, remaining)
+      }
+    } else if (room.status === 'showing_leaderboard') {
+      if (autoAdvanceRef.current) { clearTimeout(autoAdvanceRef.current); autoAdvanceRef.current = null }
+      setScreen('leaderboard')
+    } else if (room.status === 'finished') {
+      setScreen('result')
+    } else if (room.status === 'cancelled') {
+      // Someone cancelled — go back to landing
+      if (channelRef.current) void supabase.removeChannel(channelRef.current)
+      setRoom(null); setPlayers([]); setScreen('landing')
+    }
+  }, [room?.status, room?.current_question_index])  // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRoomCreated = (r: GameRoom) => {
     setRoom(r)
