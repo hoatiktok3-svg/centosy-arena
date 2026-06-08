@@ -18,6 +18,7 @@ import GameLibraryPage from './GameLibraryPage'
 import AIQuestionGenerator from '../components/room/AIQuestionGenerator'
 import RoomInviteModal from '../components/room/RoomInviteModal'
 import AdminGameView from '../components/room/AdminGameView'
+import QuestionUploader from '../components/room/QuestionUploader'
 
 interface Props {
   onClose: () => void
@@ -136,7 +137,8 @@ function CreateRoomView({
   const [selectedSet, setSelectedSet]   = useState<string>('')
   const [loading, setLoading]         = useState(false)
   const [error, setError]             = useState('')
-  const [showAIGen, setShowAIGen]     = useState(false)
+  const [showAIGen, setShowAIGen]       = useState(false)
+  const [showUploader, setShowUploader] = useState(false)
 
   const loadSets = () => {
     void supabase.from('question_sets').select('id,title,description,is_active').eq('is_active', true)
@@ -225,18 +227,25 @@ function CreateRoomView({
           <label style={{ fontSize: '11px', color: '#888', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
             Bộ câu hỏi (tuỳ chọn)
           </label>
-          {/* AI Generator button */}
-          <button
-            onClick={() => setShowAIGen(true)}
-            className="mt-2 mb-1 w-full flex items-center gap-2.5 px-4 py-3 rounded-xl transition-all active:scale-95"
-            style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.35)', color: '#a78bfa' }}>
-            <span className="text-base">🤖</span>
-            <div className="text-left">
-              <p className="font-bold text-sm">Tạo câu hỏi bằng AI</p>
-              <p className="text-xs opacity-70">Nhập chủ đề → AI tự sinh câu hỏi</p>
-            </div>
-            <span className="ml-auto text-lg">→</span>
-          </button>
+          {/* AI Generator + Upload buttons */}
+          <div className="mt-2 mb-1 grid grid-cols-2 gap-2">
+            <button
+              onClick={() => setShowAIGen(true)}
+              className="flex flex-col items-start gap-1 px-3 py-3 rounded-xl transition-all active:scale-95"
+              style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.35)', color: '#a78bfa' }}>
+              <span className="text-lg">🤖</span>
+              <p className="font-bold text-xs">Tạo bằng AI</p>
+              <p className="text-xs opacity-60 leading-tight">Nhập chủ đề → AI sinh câu</p>
+            </button>
+            <button
+              onClick={() => setShowUploader(true)}
+              className="flex flex-col items-start gap-1 px-3 py-3 rounded-xl transition-all active:scale-95"
+              style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.3)', color: '#10b981' }}>
+              <span className="text-lg">📂</span>
+              <p className="font-bold text-xs">Tải file lên</p>
+              <p className="text-xs opacity-60 leading-tight">JSON / CSV từ ChatGPT</p>
+            </button>
+          </div>
 
           <div className="mt-2 flex flex-col gap-2">
             <button onClick={() => setSelectedSet('')}
@@ -282,6 +291,17 @@ function CreateRoomView({
           onClose={() => setShowAIGen(false)}
           onCreated={(setId, setTitle) => {
             setShowAIGen(false)
+            setSelectedSet(setId)
+            loadSets()
+            void setTitle // mark used
+          }}
+        />
+      )}
+      {showUploader && (
+        <QuestionUploader
+          onClose={() => setShowUploader(false)}
+          onCreated={(setId, setTitle) => {
+            setShowUploader(false)
             setSelectedSet(setId)
             loadSets()
             void setTitle // mark used
