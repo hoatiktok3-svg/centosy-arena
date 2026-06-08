@@ -323,6 +323,9 @@ export default function GameRoomPage({ onClose }: Props) {
   const [showHistory, setShowHistory] = useState(false)
   const [showLibrary, setShowLibrary] = useState(false)
   const [showInvite, setShowInvite]   = useState(false)
+  const [showSetPicker, setShowSetPicker] = useState(false)
+  const [setPickerSets, setSetPickerSets] = useState<QuestionSet[]>([])
+  const [startError, setStartError]   = useState('')
   const [room, setRoom]           = useState<GameRoom | null>(null)
   const [players, setPlayers]     = useState<RoomPlayer[]>([])
   const [questions, setQuestions] = useState<RoomQuestion[]>([])
@@ -434,9 +437,73 @@ export default function GameRoomPage({ onClose }: Props) {
       .then(({ data }) => { if (data) setPlayers(data as RoomPlayer[]) })
   }
 
+  // ── Admin: Open question set picker from lobby ───────────
+  const openSetPicker = () => {
+    void supabase.from('question_sets').select('id,title,description,is_active').eq('is_active', true)
+      .then(({ data }) => { if (data) setSetPickerSets(data as QuestionSet[]) })
+    setShowSetPicker(true)
+  }
+  const handlePickSet = async (setId: string) => {
+    if (!room) return
+    // Fetch question count
+    const { count } = await supabase
+      .from('room_questions').select('id', { count: 'exact', head: true })
+      .eq('question_set_id', setId)
+    const { data: updatedRoom } = await supabase
+      .from('game_rooms')
+      .update({ question_set_id: setId, total_questions: count ?? 0 })
+      .eq('id', room.id)
+      .select().single()
+    if (updatedRoom) setRoom(updatedRoom as GameRoom)
+    else setRoom(prev => prev ? { ...prev, question_set_id: setId, total_questions: count ?? 0 } : null)
+    setShowSetPicker(false)
+    setStartError('')
+  }
+
+  // ── Admin: Add simulated bot players ─────────────────────
+  const handleAddBots = async () => {
+    if (!room) return
+    const bots = [
+      { display_name: '🤖 Bot Minh', score: 0 },
+      { display_name: '🤖 Bot Lan',  score: 0 },
+      { display_name: '🤖 Bot Tuấn', score: 0 },
+    ]
+    for (const bot of bots) {
+      const fakeId = crypto.randomUUID()
+      await supabase.from('room_players').insert({
+        room_id:      room.id,
+        user_id:      fakeId,
+        display_name: bot.display_name,
+        is_active:    true,
+        total_score:  bot.score,
+        correct_count: 0,
+      })
+    }
+    // Refresh players
+    void supabase.from('room_players').select('*').eq('room_id', room.id)
+      .then(({ data }) => { if (data) setPlayers(data as RoomPlayer[]) })
+  }
+
   // ── Admin: Start game ─────────────────────────────────────
   const handleStart = async () => {
     if (!room) return
+    if (!room.question_set_id) {
+      setStartError('⚠️ Vui lòng chọn bộ câu hỏi trước khi bắt đầu!')
+      return
+    }
+    if (questions.length === 0) {
+      // Try loading questions first
+      const { data: qs } = await supabase
+        .from('room_questions').select('*')
+        .eq('question_set_id', room.question_set_id)
+        .order('sort_order')
+      if (!qs || qs.length === 0) {
+        setStartError('⚠️ Bộ câu hỏi trống! Thêm câu hỏi trước.')
+        return
+      }
+      setQuestions(qs as RoomQuestion[])
+    }
+    setStartError('')
     await supabase.from('game_rooms').update({
       status:                        'playing',
       current_question_index:        0,
@@ -536,7 +603,10 @@ export default function GameRoomPage({ onClose }: Props) {
       <>
         <RoomLobby room={room} players={players} myUserId={currentUser?.id ?? ''} isAdmin={isAdmin}
           onStart={() => void handleStart()} onCancel={() => void handleCancel()} onLeave={() => void handleLeave()}
-          onInvite={isAdmin ? () => setShowInvite(true) : undefined} />
+          onInvite={isAdmin ? () => setShowInvite(true) : undefined}
+          onSelectSet={isAdmin ? openSetPicker : undefined}
+          onAddBots={isAdmin ? () => void handleAddBots() : undefined}
+          startError={startError} />
         {showInvite && (
           <RoomInviteModal
             roomId={room.id}
@@ -545,10 +615,82 @@ export default function GameRoomPage({ onClose }: Props) {
             onClose={() => setShowInvite(false)}
           />
         )}
+        {/* Question Set Picker Modal */}
+        {showSetPicker && (
+          <div className="fixed inset-0 z-[200] flex flex-col" style={{ background: '#080808' }}>
+            <div className="shrink-0 px-4 pt-5 pb-4 flex items-center gap-3"
+                 style={{ borderBottom: '1px solid #1a1a1a' }}>
+              <button onClick={() => setShowSetPicker(false)}
+                      className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center"
+                      style={{ background: '#141414', border: '1px solid #222' }}>
+                <span style={{ fontSize: '16px', color: '#888' }}>←</span>
+              </button>
+              <div>
+                <p className="font-black text-white" style={{ fontSize: '15px' }}>📚 Chọn bộ câu hỏi</p>
+                <p style={{ fontSize: '11px', color: '#555' }}>Chọn cho phòng: {room.title}</p>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto px-4 py-5 flex flex-col gap-3">
+              {setPickerSets.length === 0 && (
+                <div className="text-center py-10">
+                  <p style={{ fontSize: '32px', marginBottom: 8 }}>📭</p>
+                  <p style={{ fontSize: '13px', color: '#555' }}>Chưa có bộ câu hỏi nào.</p>
+                  <p style={{ fontSize: '12px', color: '#444', marginTop: 4 }}>
+                    Tạo phòng mới và dùng AI hoặc tải file lên.
+                  </p>
+                </div>
+              )}
+              {setPickerSets.map(qs => (
+                <button key={qs.id}
+                  onClick={() => void handlePickSet(qs.id)}
+                  className="w-full text-left px-4 py-4 rounded-2xl transition-all active:scale-[0.98]"
+                  style={{
+                    background: room.question_set_id === qs.id ? 'rgba(233,78,27,0.1)' : '#141414',
+                    border: `1px solid ${room.question_set_id === qs.id ? 'rgba(233,78,27,0.4)' : '#222'}`,
+                  }}>
+                  <p className="font-bold text-white" style={{ fontSize: '14px' }}>{qs.title}</p>
+                  {qs.description && <p style={{ fontSize: '11px', color: '#666', marginTop: 3 }}>{qs.description}</p>}
+                  {room.question_set_id === qs.id && (
+                    <span style={{ fontSize: '10px', color: '#E94E1B', fontWeight: 700 }}>✓ Đang chọn</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </>
     )
   }
-  if (screen === 'question' && room && currentQ) {
+  if (screen === 'question' && room) {
+    if (!currentQ) {
+      // Câu hỏi chưa load — hiện spinner / lỗi thay vì fall-through về landing
+      return (
+        <div className="fixed inset-0 z-[150] flex flex-col items-center justify-center gap-4"
+             style={{ background: '#080808' }}>
+          {room.question_set_id ? (
+            <>
+              <div className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin"
+                   style={{ borderColor: '#E94E1B', borderTopColor: 'transparent' }} />
+              <p style={{ fontSize: '13px', color: '#555' }}>Đang tải câu hỏi...</p>
+            </>
+          ) : (
+            <>
+              <p style={{ fontSize: '32px' }}>⚠️</p>
+              <p className="font-bold text-white" style={{ fontSize: '15px' }}>Chưa chọn bộ câu hỏi</p>
+              <p style={{ fontSize: '12px', color: '#555' }}>Game đã bắt đầu nhưng không có câu hỏi nào.</p>
+              {isAdmin && (
+                <button
+                  onClick={() => void supabase.from('game_rooms').update({ status: 'cancelled' }).eq('id', room.id)}
+                  className="mt-2 px-5 py-2.5 rounded-xl font-bold"
+                  style={{ fontSize: '13px', background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.3)' }}>
+                  Huỷ phòng & quay lại
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      )
+    }
     // Admin sees live leaderboard + question control panel
     if (isAdmin) {
       return <AdminGameView

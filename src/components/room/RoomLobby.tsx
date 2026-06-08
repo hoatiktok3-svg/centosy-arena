@@ -4,17 +4,20 @@ import { GameRoom, RoomPlayer } from './roomTypes'
 import GameRules from './GameRules'
 
 interface Props {
-  room:       GameRoom
-  players:    RoomPlayer[]
-  myUserId:   string
-  isAdmin:    boolean
-  onStart:    () => void    // Admin only
-  onCancel:   () => void
-  onLeave:    () => void    // Player only
-  onInvite?:  () => void   // Admin only — open invite modal
+  room:          GameRoom
+  players:       RoomPlayer[]
+  myUserId:      string
+  isAdmin:       boolean
+  onStart:       () => void    // Admin only
+  onCancel:      () => void
+  onLeave:       () => void    // Player only
+  onInvite?:     () => void   // Admin only — open invite modal
+  onSelectSet?:  () => void   // Admin only — pick question set
+  onAddBots?:    () => void   // Admin only — add simulated players
+  startError?:   string       // Error message from handleStart
 }
 
-export default function RoomLobby({ room, players, myUserId, isAdmin, onStart, onCancel, onLeave, onInvite }: Props) {
+export default function RoomLobby({ room, players, myUserId, isAdmin, onStart, onCancel, onLeave, onInvite, onSelectSet, onAddBots, startError }: Props) {
   const [copied, setCopied]     = useState(false)
   const [showRules, setShowRules] = useState(false)
   const activePlayers = players.filter(p => p.is_active)
@@ -84,6 +87,45 @@ export default function RoomLobby({ room, players, myUserId, isAdmin, onStart, o
           </p>
         </div>
 
+        {/* ⚠️ No question set warning — admin */}
+        {isAdmin && !room.question_set_id && (
+          <div className="rounded-2xl px-4 py-3 flex items-start gap-3"
+               style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.3)' }}>
+            <span style={{ fontSize: '18px', flexShrink: 0 }}>⚠️</span>
+            <div className="flex-1">
+              <p className="font-bold" style={{ fontSize: '12px', color: '#fbbf24' }}>Chưa chọn bộ câu hỏi</p>
+              <p style={{ fontSize: '11px', color: '#92713a', marginTop: 2 }}>
+                Cần chọn bộ câu hỏi trước khi bắt đầu thi.
+              </p>
+            </div>
+            {onSelectSet && (
+              <button
+                onClick={onSelectSet}
+                className="shrink-0 px-3 py-1.5 rounded-xl font-bold"
+                style={{ fontSize: '11px', background: 'rgba(251,191,36,0.15)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.4)' }}>
+                📚 Chọn
+              </button>
+            )}
+          </div>
+        )}
+        {/* ✅ Question set selected */}
+        {isAdmin && room.question_set_id && room.total_questions > 0 && (
+          <div className="rounded-2xl px-4 py-3 flex items-center gap-3"
+               style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.25)' }}>
+            <span style={{ fontSize: '16px' }}>✅</span>
+            <p style={{ fontSize: '12px', color: '#6ee7b7' }}>
+              Bộ câu hỏi: <span className="font-bold">{room.total_questions} câu</span>
+            </p>
+            {onSelectSet && (
+              <button onClick={onSelectSet}
+                      className="ml-auto shrink-0 px-2.5 py-1 rounded-lg font-bold"
+                      style={{ fontSize: '10px', color: '#555', background: '#1a1a1a', border: '1px solid #2a2a2a' }}>
+                Đổi
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Info row */}
         <div className="grid grid-cols-3 gap-2">
           {[
@@ -147,20 +189,38 @@ export default function RoomLobby({ room, players, myUserId, isAdmin, onStart, o
       <div className="shrink-0 px-4 pb-8 pt-3" style={{ borderTop: '1px solid #1a1a1a', background: '#080808' }}>
         {isAdmin ? (
           <div className="flex flex-col gap-2">
-            {onInvite && (
-              <button
-                onClick={onInvite}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-bold transition-all active:scale-[0.98]"
-                style={{ fontSize: '14px', background: 'rgba(233,78,27,0.1)', border: '1px solid rgba(233,78,27,0.35)', color: '#E94E1B' }}>
-                📨 Gửi lời mời thành viên
-              </button>
+            {/* Error from handleStart */}
+            {startError && (
+              <div className="rounded-xl px-4 py-2.5"
+                   style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)' }}>
+                <p style={{ fontSize: '12px', color: '#f87171', textAlign: 'center' }}>{startError}</p>
+              </div>
             )}
+            {/* Row: Invite + Add bots */}
+            <div className="grid grid-cols-2 gap-2">
+              {onInvite && (
+                <button
+                  onClick={onInvite}
+                  className="flex items-center justify-center gap-1.5 py-2.5 rounded-2xl font-bold transition-all active:scale-[0.98]"
+                  style={{ fontSize: '12px', background: 'rgba(233,78,27,0.1)', border: '1px solid rgba(233,78,27,0.35)', color: '#E94E1B' }}>
+                  📨 Gửi lời mời
+                </button>
+              )}
+              {onAddBots && (
+                <button
+                  onClick={onAddBots}
+                  className="flex items-center justify-center gap-1.5 py-2.5 rounded-2xl font-bold transition-all active:scale-[0.98]"
+                  style={{ fontSize: '12px', background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.35)', color: '#a78bfa' }}>
+                  🤖 Thêm bot test
+                </button>
+              )}
+            </div>
             <button
               onClick={onStart}
-              disabled={activePlayers.length < 1}
+              disabled={activePlayers.length < 1 || !room.question_set_id}
               className="w-full font-black text-white rounded-2xl py-4 transition-all active:scale-[0.98] disabled:opacity-40"
               style={{ fontSize: '15px', background: 'linear-gradient(90deg,#E94E1B,#FF5A28)', boxShadow: '0 4px 20px rgba(233,78,27,0.35)' }}>
-              {activePlayers.length < 1 ? 'Chờ người chơi vào...' : `▶ Bắt đầu (${activePlayers.length} người)`}
+              {!room.question_set_id ? '⚠️ Chọn bộ câu hỏi trước' : activePlayers.length < 1 ? 'Chờ người chơi vào...' : `▶ Bắt đầu (${activePlayers.length} người)`}
             </button>
           </div>
         ) : (
