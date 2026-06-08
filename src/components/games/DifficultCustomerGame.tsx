@@ -4,6 +4,8 @@ import {
   CustomerScenario,
 } from '../../data/mockDifficultCustomer'
 import DifficultCustomerFeedback from './DifficultCustomerFeedback'
+import { soundSelect, soundCorrect, soundWrong, soundComplete, soundTick, isMuted, toggleMute } from '../../lib/gameSounds'
+import { hapticLight, hapticSuccess, hapticError, hapticCelebration } from '../../lib/mobileUtils'
 
 const QUESTIONS_PER_GAME = 5
 const TIMER_SECONDS = 20
@@ -37,6 +39,7 @@ export default function DifficultCustomerGame({ onFinish, onBack }: Props) {
   const [chosen, setChosen]             = useState<'A' | 'B' | 'C' | 'D' | null>(null)
   const [answers, setAnswers]           = useState<GameAnswer[]>([])
   const [scoreFlash, setScoreFlash]     = useState(false)
+  const [muted, setMuted]              = useState(isMuted)
 
   const current = scenarios[currentIndex]
 
@@ -47,12 +50,17 @@ export default function DifficultCustomerGame({ onFinish, onBack }: Props) {
       commitAnswer(null)
       return
     }
+    if (timeLeft <= 3) soundTick()
     const id = setInterval(() => setTimeLeft(t => t - 1), 1000)
     return () => clearInterval(id)
   }, [timeLeft, phase])
 
   const commitAnswer = (opt: 'A' | 'B' | 'C' | 'D' | null) => {
     const score = opt ? current.scoreByOption[opt] : 0
+    // Sound + haptic feedback
+    if (score >= 15) { soundCorrect(); hapticSuccess() }
+    else if (score >= 5) { hapticLight() }
+    else { soundWrong(); hapticError() }
     setChosen(opt)
     setAnswers(prev => [...prev, { scenarioId: current.id, chosen: opt, score }])
     setScoreFlash(true)
@@ -62,12 +70,14 @@ export default function DifficultCustomerGame({ onFinish, onBack }: Props) {
 
   const handleSelect = (opt: 'A' | 'B' | 'C' | 'D') => {
     if (phase !== 'playing') return
+    soundSelect(); hapticLight()
     commitAnswer(opt)
   }
 
   const handleNext = () => {
     const nextIndex = currentIndex + 1
     if (nextIndex >= QUESTIONS_PER_GAME) {
+      soundComplete(); hapticCelebration()
       onFinish(answers)
     } else {
       setCurrentIndex(nextIndex)
@@ -95,6 +105,14 @@ export default function DifficultCustomerGame({ onFinish, onBack }: Props) {
                 className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-95"
                 style={{ background: '#141414', border: '1px solid #222' }}>
           <span style={{ fontSize: '16px', color: '#888' }}>←</span>
+        </button>
+
+        <button
+          onClick={() => setMuted(toggleMute())}
+          className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-95"
+          style={{ background: '#141414', border: '1px solid #222', fontSize: '15px' }}
+          aria-label={muted ? 'Bật âm thanh' : 'Tắt âm thanh'}>
+          {muted ? '🔇' : '🔊'}
         </button>
 
         <div className="flex-1">
