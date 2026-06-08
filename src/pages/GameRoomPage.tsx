@@ -311,6 +311,29 @@ export default function GameRoomPage({ onClose }: Props) {
       })
   }, [room?.question_set_id])  // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── STEP 101: Save final ranks + scores when game finishes ──
+  const scoreSavedRef = useRef(false)
+  useEffect(() => {
+    if (!room || room.status !== 'finished' || scoreSavedRef.current) return
+    scoreSavedRef.current = true
+    // Admin updates final ranks
+    if (isAdmin) {
+      const sorted = [...players].filter(p => p.is_active).sort((a, b) => b.total_score - a.total_score)
+      sorted.forEach((p, i) => {
+        void supabase.from('room_players').update({ final_rank: i + 1 }).eq('id', p.id)
+      })
+    }
+    // Each player saves their score to profiles via saveGameResultSafe
+    if (me && me.total_score > 0) {
+      void supabase.rpc('add_game_score_safe', {
+        p_user_id: currentUser!.id,
+        p_score:   me.total_score,
+        p_game_key: 'realtime_room',
+        p_date:     new Date().toISOString().slice(0, 10),
+      }).catch(() => {/* RPC may not exist yet — silent fail */})
+    }
+  }, [room?.status])  // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Sync screen with room status ─────────────────────────
   useEffect(() => {
     if (!room) return
@@ -389,9 +412,14 @@ export default function GameRoomPage({ onClose }: Props) {
     await handleNextQuestion()
   }
 
-  // ── Player: Submit answer ─────────────────────────────────
+  // ── Player: Submit answer (STEP 99: chống bấm nhiều lần) ─
+  const answerSubmittingRef = useRef(false)
   const handleAnswer = async (optionIndex: number, responseTimeMs: number) => {
-    if (!room || !currentUser || myAnswer !== null) return
+    if (!room || !currentUser) return
+    if (myAnswer !== null) return        // đã chọn rồi
+    if (answerSubmittingRef.current) return  // đang submit
+    if (room.status !== 'playing') return    // không phải lúc chơi
+    answerSubmittingRef.current = true
     setMyAnswer(optionIndex)
     const q = questions[room.current_question_index]
     if (!q) return
@@ -416,6 +444,7 @@ export default function GameRoomPage({ onClose }: Props) {
       p_points:     pointsEarned,
       p_is_correct: isCorrect,
     })
+    answerSubmittingRef.current = false
   }
 
   const handleCancel = async () => {
@@ -437,6 +466,8 @@ export default function GameRoomPage({ onClose }: Props) {
 
   const me = players.find(p => p.user_id === currentUser?.id)
   const currentQ = questions[room?.current_question_index ?? 0]
+  const sortedPlayers = [...players].filter(p => p.is_active).sort((a, b) => b.total_score - a.total_score)
+  const myRank = me ? sortedPlayers.findIndex(p => p.user_id === currentUser?.id) + 1 : null
 
   // ── Screens ───────────────────────────────────────────────
   if (screen === 'create') {
@@ -455,7 +486,7 @@ export default function GameRoomPage({ onClose }: Props) {
       totalQuestions={room.total_questions || questions.length}
       myAnswer={myAnswer} onAnswer={(i, ms) => void handleAnswer(i, ms)}
       currentScore={me?.total_score ?? 0}
-      myRank={null} />
+      myRank={myRank} />
   }
   if (screen === 'leaderboard' && room) {
     return <LiveLeaderboard players={players} myUserId={currentUser?.id ?? ''}
