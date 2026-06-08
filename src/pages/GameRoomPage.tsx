@@ -160,7 +160,7 @@ function CreateRoomView({
         })
         .select()
         .single()
-      if (e || !room) { setError('Tạo phòng thất bại. Thử lại.'); return }
+      if (e || !room) { setError(`Tạo phòng thất bại: ${e?.message ?? 'Lỗi không xác định'}`); return }
       onCreated(room as GameRoom)
     } catch {
       setError('Lỗi kết nối.')
