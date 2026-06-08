@@ -15,6 +15,8 @@ import LiveLeaderboard from '../components/room/LiveLeaderboard'
 import RoomResult from '../components/room/RoomResult'
 import RoomHistory from '../components/room/RoomHistory'
 import GameLibraryPage from './GameLibraryPage'
+import AIQuestionGenerator from '../components/room/AIQuestionGenerator'
+import RoomInviteModal from '../components/room/RoomInviteModal'
 
 interface Props {
   onClose: () => void
@@ -131,15 +133,16 @@ function CreateRoomView({
   const [timeLimitS, setTimeLimitS] = useState(15)
   const [questionSets, setQuestionSets] = useState<QuestionSet[]>([])
   const [selectedSet, setSelectedSet]   = useState<string>('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError]     = useState('')
+  const [loading, setLoading]         = useState(false)
+  const [error, setError]             = useState('')
+  const [showAIGen, setShowAIGen]     = useState(false)
 
-  useEffect(() => {
+  const loadSets = () => {
     void supabase.from('question_sets').select('id,title,description,is_active').eq('is_active', true)
-      .then(({ data }) => {
-        if (data) setQuestionSets(data as QuestionSet[])
-      })
-  }, [])
+      .then(({ data }) => { if (data) setQuestionSets(data as QuestionSet[]) })
+  }
+
+  useEffect(() => { loadSets() }, [])
 
   const handleCreate = async () => {
     if (!title.trim()) { setError('Nhập tên buổi chơi.'); return }
@@ -221,6 +224,19 @@ function CreateRoomView({
           <label style={{ fontSize: '11px', color: '#888', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
             Bộ câu hỏi (tuỳ chọn)
           </label>
+          {/* AI Generator button */}
+          <button
+            onClick={() => setShowAIGen(true)}
+            className="mt-2 mb-1 w-full flex items-center gap-2.5 px-4 py-3 rounded-xl transition-all active:scale-95"
+            style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.35)', color: '#a78bfa' }}>
+            <span className="text-base">🤖</span>
+            <div className="text-left">
+              <p className="font-bold text-sm">Tạo câu hỏi bằng AI</p>
+              <p className="text-xs opacity-70">Nhập chủ đề → AI tự sinh câu hỏi</p>
+            </div>
+            <span className="ml-auto text-lg">→</span>
+          </button>
+
           <div className="mt-2 flex flex-col gap-2">
             <button onClick={() => setSelectedSet('')}
               className="w-full text-left px-4 py-2.5 rounded-xl"
@@ -236,7 +252,7 @@ function CreateRoomView({
             ))}
             {questionSets.length === 0 && (
               <p style={{ fontSize: '12px', color: '#555', paddingLeft: 4 }}>
-                Chưa có bộ câu hỏi nào. Tạo trong Game Library.
+                Chưa có bộ câu hỏi nào. Tạo trong Game Library hoặc dùng AI.
               </p>
             )}
           </div>
@@ -259,6 +275,18 @@ function CreateRoomView({
           {loading ? 'Đang tạo...' : '+ Tạo phòng'}
         </button>
       </div>
+
+      {showAIGen && (
+        <AIQuestionGenerator
+          onClose={() => setShowAIGen(false)}
+          onCreated={(setId, setTitle) => {
+            setShowAIGen(false)
+            setSelectedSet(setId)
+            loadSets()
+            void setTitle // mark used
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -273,6 +301,7 @@ export default function GameRoomPage({ onClose }: Props) {
   const [screen, setScreen]           = useState<Screen>('landing')
   const [showHistory, setShowHistory] = useState(false)
   const [showLibrary, setShowLibrary] = useState(false)
+  const [showInvite, setShowInvite]   = useState(false)
   const [room, setRoom]           = useState<GameRoom | null>(null)
   const [players, setPlayers]     = useState<RoomPlayer[]>([])
   const [questions, setQuestions] = useState<RoomQuestion[]>([])
@@ -481,8 +510,21 @@ export default function GameRoomPage({ onClose }: Props) {
     return <JoinRoomView onJoined={handleRoomJoined} onClose={() => setScreen('landing')} />
   }
   if (screen === 'lobby' && room) {
-    return <RoomLobby room={room} players={players} myUserId={currentUser?.id ?? ''} isAdmin={isAdmin}
-      onStart={() => void handleStart()} onCancel={() => void handleCancel()} onLeave={() => void handleLeave()} />
+    return (
+      <>
+        <RoomLobby room={room} players={players} myUserId={currentUser?.id ?? ''} isAdmin={isAdmin}
+          onStart={() => void handleStart()} onCancel={() => void handleCancel()} onLeave={() => void handleLeave()}
+          onInvite={isAdmin ? () => setShowInvite(true) : undefined} />
+        {showInvite && (
+          <RoomInviteModal
+            roomId={room.id}
+            roomCode={room.code}
+            roomTitle={room.title}
+            onClose={() => setShowInvite(false)}
+          />
+        )}
+      </>
+    )
   }
   if (screen === 'question' && room && currentQ) {
     return <QuestionDisplay room={room} question={currentQ}

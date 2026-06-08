@@ -11,9 +11,10 @@ interface Props {
   onStart:    () => void    // Admin only
   onCancel:   () => void
   onLeave:    () => void    // Player only
+  onInvite?:  () => void   // Admin only — open invite modal
 }
 
-export default function RoomLobby({ room, players, myUserId, isAdmin, onStart, onCancel, onLeave }: Props) {
+export default function RoomLobby({ room, players, myUserId, isAdmin, onStart, onCancel, onLeave, onInvite }: Props) {
   const [copied, setCopied]     = useState(false)
   const [showRules, setShowRules] = useState(false)
   const activePlayers = players.filter(p => p.is_active)
@@ -145,13 +146,23 @@ export default function RoomLobby({ room, players, myUserId, isAdmin, onStart, o
       {/* Bottom */}
       <div className="shrink-0 px-4 pb-8 pt-3" style={{ borderTop: '1px solid #1a1a1a', background: '#080808' }}>
         {isAdmin ? (
-          <button
-            onClick={onStart}
-            disabled={activePlayers.length < 1}
-            className="w-full font-black text-white rounded-2xl py-4 transition-all active:scale-[0.98] disabled:opacity-40"
-            style={{ fontSize: '15px', background: 'linear-gradient(90deg,#E94E1B,#FF5A28)', boxShadow: '0 4px 20px rgba(233,78,27,0.35)' }}>
-            {activePlayers.length < 1 ? 'Chờ người chơi vào...' : `▶ Bắt đầu (${activePlayers.length} người)`}
-          </button>
+          <div className="flex flex-col gap-2">
+            {onInvite && (
+              <button
+                onClick={onInvite}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-bold transition-all active:scale-[0.98]"
+                style={{ fontSize: '14px', background: 'rgba(233,78,27,0.1)', border: '1px solid rgba(233,78,27,0.35)', color: '#E94E1B' }}>
+                📨 Gửi lời mời thành viên
+              </button>
+            )}
+            <button
+              onClick={onStart}
+              disabled={activePlayers.length < 1}
+              className="w-full font-black text-white rounded-2xl py-4 transition-all active:scale-[0.98] disabled:opacity-40"
+              style={{ fontSize: '15px', background: 'linear-gradient(90deg,#E94E1B,#FF5A28)', boxShadow: '0 4px 20px rgba(233,78,27,0.35)' }}>
+              {activePlayers.length < 1 ? 'Chờ người chơi vào...' : `▶ Bắt đầu (${activePlayers.length} người)`}
+            </button>
+          </div>
         ) : (
           <div className="flex flex-col items-center gap-3">
             <div className="flex items-center gap-2">
