@@ -36,6 +36,7 @@ export default function DifficultCustomerGame({ onFinish, onBack }: Props) {
   const [phase, setPhase]               = useState<'playing' | 'feedback'>('playing')
   const [chosen, setChosen]             = useState<'A' | 'B' | 'C' | 'D' | null>(null)
   const [answers, setAnswers]           = useState<GameAnswer[]>([])
+  const [scoreFlash, setScoreFlash]     = useState(false)
 
   const current = scenarios[currentIndex]
 
@@ -54,6 +55,8 @@ export default function DifficultCustomerGame({ onFinish, onBack }: Props) {
     const score = opt ? current.scoreByOption[opt] : 0
     setChosen(opt)
     setAnswers(prev => [...prev, { scenarioId: current.id, chosen: opt, score }])
+    setScoreFlash(true)
+    setTimeout(() => setScoreFlash(false), 600)
     setPhase('feedback')
   }
 
@@ -71,6 +74,7 @@ export default function DifficultCustomerGame({ onFinish, onBack }: Props) {
       setTimeLeft(TIMER_SECONDS)
       setChosen(null)
       setPhase('playing')
+      setScoreFlash(false)
     }
   }
 
@@ -98,7 +102,7 @@ export default function DifficultCustomerGame({ onFinish, onBack }: Props) {
             <span style={{ fontSize: '12px', color: '#888' }}>
               Câu <span style={{ color: '#fff', fontWeight: 700 }}>{currentIndex + 1}</span> / {QUESTIONS_PER_GAME}
             </span>
-            <span style={{ fontSize: '11px', color: '#555' }}>
+            <span style={{ fontSize: '11px', fontWeight: 700, transition: 'color 0.3s', color: scoreFlash ? '#4ade80' : '#555' }}>
               {totalScore}đ tích lũy
             </span>
           </div>

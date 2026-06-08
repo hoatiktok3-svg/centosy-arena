@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { CustomerScenario } from '../../data/mockDifficultCustomer'
 
 interface Props {
@@ -71,6 +72,8 @@ function getGrade(chosen: 'A' | 'B' | 'C' | 'D' | null, score: number): Grade {
   return 'wrong'
 }
 
+const AUTO_ADVANCE_MS = 2200
+
 export default function DifficultCustomerFeedback({ scenario, chosen, onNext, isLast, questionNumber, total }: Props) {
   const score    = chosen ? scenario.scoreByOption[chosen] : 0
   const grade    = getGrade(chosen, score)
@@ -78,6 +81,36 @@ export default function DifficultCustomerFeedback({ scenario, chosen, onNext, is
   const chosenOpt = chosen ? scenario.options.find(o => o.id === chosen) : null
   const bestOpt   = scenario.options.find(o => o.id === scenario.bestAnswer)!
   const showBestSeparately = chosen !== scenario.bestAnswer
+
+  // Auto-advance countdown
+  const [progress, setProgress] = useState(0)
+  const [advanced, setAdvanced] = useState(false)
+
+  useEffect(() => {
+    setProgress(0)
+    setAdvanced(false)
+    const step = 50
+    const interval = setInterval(() => {
+      setProgress(p => {
+        const next = p + (step / AUTO_ADVANCE_MS) * 100
+        return next >= 100 ? 100 : next
+      })
+    }, step)
+    const timeout = setTimeout(() => {
+      setAdvanced(true)
+      onNext()
+    }, AUTO_ADVANCE_MS)
+    return () => {
+      clearInterval(interval)
+      clearTimeout(timeout)
+    }
+  }, [questionNumber])  // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleNext = () => {
+    if (advanced) return
+    setAdvanced(true)
+    onNext()
+  }
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
@@ -223,15 +256,25 @@ export default function DifficultCustomerFeedback({ scenario, chosen, onNext, is
         <div className="h-2" />
       </div>
 
-      {/* ── BOTTOM BUTTON ──────────────────────────────────── */}
+      {/* ── BOTTOM BUTTON + AUTO-ADVANCE BAR ──────────────── */}
       <div className="shrink-0 px-4 pb-8 pt-3"
            style={{ borderTop: '1px solid #1a1a1a', background: '#080808' }}>
+        {/* Auto-advance progress bar */}
+        <div className="w-full h-1 rounded-full mb-3 overflow-hidden"
+             style={{ background: '#1f1f1f' }}>
+          <div className="h-full rounded-full transition-none"
+               style={{ width: `${progress}%`, background: 'linear-gradient(90deg,#E94E1B,#FF5A28)' }} />
+        </div>
         <button
-          onClick={onNext}
-          className="w-full font-black text-white rounded-2xl py-4 transition-all active:scale-[0.98]"
+          onClick={handleNext}
+          disabled={advanced}
+          className="w-full font-black text-white rounded-2xl py-4 transition-all active:scale-[0.98] disabled:opacity-60"
           style={{ fontSize: '15px', letterSpacing: '0.03em', background: 'linear-gradient(90deg,#E94E1B,#FF5A28)', boxShadow: '0 4px 20px rgba(233,78,27,0.35)' }}>
           {isLast ? '🏁 Xem kết quả' : `Câu tiếp theo → (${questionNumber + 1}/${total})`}
         </button>
+        <p style={{ fontSize: '10px', color: '#444', textAlign: 'center', marginTop: 8 }}>
+          Tự chuyển sau {(AUTO_ADVANCE_MS / 1000).toFixed(1)}s — hoặc nhấn để chuyển ngay
+        </p>
       </div>
 
     </div>
