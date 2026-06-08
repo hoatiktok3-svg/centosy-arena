@@ -151,8 +151,8 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
   // ── Approve / Reject ──────────────────────────────────
   async function handleApprove(id: string) {
     setActionLoading(id)
-    const roleToAssign = approveRole[id] || 'employee'
-    await supabase
+    const roleToAssign = (approveRole[id] === 'admin' ? 'admin' : 'staff') as 'admin' | 'staff'
+    const { error } = await supabase
       .from('profiles')
       .update({
         account_status: 'approved',
@@ -162,14 +162,17 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
         approved_at:    new Date().toISOString(),
       })
       .eq('id', id)
-    setPendingList(prev => prev.filter(p => p.id !== id))
+    if (!error) {
+      setPendingList(prev => prev.filter(p => p.id !== id))
+      setProfiles(prev => prev.map(p => p.id === id ? { ...p, account_status: 'approved', is_active: true, role: roleToAssign } : p))
+    }
     setActionLoading(null)
   }
 
   async function handleReject(id: string) {
     if (!rejectReason.trim()) return
     setActionLoading(id)
-    await supabase
+    const { error } = await supabase
       .from('profiles')
       .update({
         account_status:  'rejected',
@@ -177,7 +180,10 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
         rejected_reason: rejectReason.trim(),
       })
       .eq('id', id)
-    setPendingList(prev => prev.filter(p => p.id !== id))
+    if (!error) {
+      setPendingList(prev => prev.filter(p => p.id !== id))
+      setProfiles(prev => prev.map(p => p.id === id ? { ...p, account_status: 'rejected', is_active: false } : p))
+    }
     setActionLoading(null)
     setRejectTarget(null)
     setRejectReason('')
@@ -375,13 +381,12 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
                     {!isRejectOpen && canApprove && (
                       <div className="px-4 pb-2">
                         <select
-                          value={approveRole[p.id] || 'employee'}
+                          value={approveRole[p.id] || 'staff'}
                           onChange={e => setApproveRole(prev => ({ ...prev, [p.id]: e.target.value }))}
                           className="w-full bg-arena-bg border border-arena-border rounded-lg px-3 py-2 text-text-secondary text-xs focus:outline-none focus:border-brand"
                         >
-                          <option value="employee">Nhân viên</option>
-                          <option value="manager">Quản lý</option>
-                          <option value="director">Giám đốc</option>
+                          <option value="staff">Nhân viên</option>
+                          <option value="admin">Quản trị viên</option>
                         </select>
                       </div>
                     )}
@@ -511,21 +516,49 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
                         </div>
                       </div>
 
-                      {/* Score + plays */}
-                      <div className="text-right shrink-0">
+                      {/* Score + action */}
+                      <div className="text-right shrink-0 flex flex-col items-end gap-1">
                         {gs ? (
                           <>
                             <p style={{ fontSize: '14px', fontWeight: 900, color: '#E94E1B' }}>
                               {gs.totalScore.toLocaleString('vi-VN')}
                             </p>
-                            <p style={{ fontSize: '10px', color: '#484848', marginTop: 1 }}>
+                            <p style={{ fontSize: '10px', color: '#484848' }}>
                               {gs.plays} lượt
                             </p>
                           </>
-                        ) : gameStatsNote ? (
-                          <p style={{ fontSize: '10px', color: '#3a3a3a' }}>—</p>
                         ) : (
                           <p style={{ fontSize: '10px', color: '#3a3a3a' }}>0 đ</p>
+                        )}
+                        {/* Quick action buttons */}
+                        {p.role !== 'admin' && (
+                          <div className="flex gap-1 mt-1">
+                            {p.is_active ? (
+                              <button
+                                onClick={async () => {
+                                  setStatusLoading(p.id)
+                                  await supabase.rpc('admin_set_user_status', { p_user_id: p.id, p_status: 'inactive' })
+                                  setProfiles(prev => prev.map(x => x.id === p.id ? { ...x, is_active: false, account_status: 'inactive' } : x))
+                                  setStatusLoading(null)
+                                }}
+                                disabled={statusLoading === p.id}
+                                style={{ fontSize: '10px', padding: '2px 7px', borderRadius: 6, background: 'rgba(156,163,175,0.1)', border: '1px solid rgba(156,163,175,0.3)', color: '#9ca3af' }}>
+                                {statusLoading === p.id ? '...' : '🔒'}
+                              </button>
+                            ) : (
+                              <button
+                                onClick={async () => {
+                                  setStatusLoading(p.id)
+                                  await supabase.rpc('admin_set_user_status', { p_user_id: p.id, p_status: 'approved' })
+                                  setProfiles(prev => prev.map(x => x.id === p.id ? { ...x, is_active: true, account_status: 'approved' } : x))
+                                  setStatusLoading(null)
+                                }}
+                                disabled={statusLoading === p.id}
+                                style={{ fontSize: '10px', padding: '2px 7px', borderRadius: 6, background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)', color: '#4ade80' }}>
+                                {statusLoading === p.id ? '...' : '✓'}
+                              </button>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
