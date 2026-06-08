@@ -9,14 +9,16 @@ interface AdminPanelProps {
 }
 
 interface ProfileRow {
-  id:         string
-  full_name:  string
-  email:      string
-  department: string
-  role:       'admin' | 'staff'
-  score:      number
-  is_active:  boolean
-  title:      string | null
+  id:             string
+  full_name:      string
+  email:          string
+  department:     string
+  org_group:      string | null
+  role:           'admin' | 'staff'
+  score:          number
+  is_active:      boolean
+  title:          string | null
+  account_status: string | null
 }
 
 interface PendingRow {
@@ -102,7 +104,7 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
       // ── 1. Profiles ──────────────────────────────────────
       const { data: pData, error: pErr } = await supabase
         .from('profiles')
-        .select('id, full_name, email, department, role, score, is_active, title')
+        .select('id, full_name, email, department, org_group, role, score, is_active, title, account_status')
         .order('full_name', { ascending: true })
 
       if (pErr) {
@@ -201,32 +203,42 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
   const totalDirector  = profiles.filter(p => (p.role as string) === 'director').length
   const totalManager   = profiles.filter(p => (p.role as string) === 'manager').length
   const totalStaff     = profiles.filter(p => p.role === 'staff' || (p.role as string) === 'employee').length
-  const totalActive    = profiles.filter(p => p.is_active !== false).length
+  const totalActive    = profiles.filter(p => p.is_active !== false && p.account_status !== 'pending' && p.account_status !== 'rejected').length
+  const totalPending   = pendingList.length
   const hasPlayedIds   = new Set(Object.keys(gameStats))
   const totalPlayers   = hasPlayedIds.size
   const totalPlays     = Object.values(gameStats).reduce((s, g) => s + g.plays, 0)
 
   const filtered = filterDept === 'all'
     ? profiles
-    : profiles.filter(p => p.department === filterDept)
+    : profiles.filter(p => p.department === filterDept || p.org_group === filterDept)
 
   // ── Status helper ──────────────────────────────────────
   function getStatus(p: ProfileRow): { label: string; color: string; bg: string } {
-    if (p.is_active === false) {
-      return { label: 'Tạm khóa', color: '#888', bg: 'rgba(255,255,255,0.06)' }
+    if (p.account_status === 'pending') {
+      return { label: '⏳ Chờ duyệt', color: '#E9A21B', bg: 'rgba(233,162,27,0.1)' }
+    }
+    if (p.account_status === 'rejected') {
+      return { label: '✕ Từ chối', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' }
+    }
+    if (p.account_status === 'resigned') {
+      return { label: 'Nghỉ việc', color: '#6b7280', bg: 'rgba(107,114,128,0.1)' }
+    }
+    if (p.is_active === false || p.account_status === 'inactive') {
+      return { label: '🔒 Tạm khóa', color: '#888', bg: 'rgba(255,255,255,0.06)' }
     }
     if (hasPlayedIds.has(p.id)) {
-      return { label: 'Đã tham gia', color: '#4ade80', bg: 'rgba(74,222,128,0.1)' }
+      return { label: 'Đã chơi', color: '#4ade80', bg: 'rgba(74,222,128,0.1)' }
     }
     return { label: 'Chưa chơi', color: '#facc15', bg: 'rgba(250,204,21,0.1)' }
   }
 
   // ── KPI card data ──────────────────────────────────────
   const kpiCards = [
-    { label: 'Tổng nhân sự',   value: loading ? '…' : totalProfiles, sub: `${totalAdmin} admin · ${totalDirector} director · ${totalManager} manager · ${totalStaff} nhân viên`,  color: '#60a5fa' },
-    { label: 'Tài khoản active', value: loading ? '…' : totalActive,   sub: `${totalProfiles - totalActive} tạm khóa`,   color: '#4ade80' },
-    { label: 'Đã chơi game',   value: loading ? '…' : totalPlayers,  sub: `${totalProfiles - totalPlayers} chưa tham gia`, color: '#E94E1B' },
-    { label: 'Tổng lượt chơi', value: loading ? '…' : totalPlays,    sub: gameStatsNote ?? 'Tất cả game',               color: '#facc15' },
+    { label: 'Tổng tài khoản', value: loading ? '…' : totalProfiles, sub: `${totalAdmin} admin · ${totalManager} quản lý · ${totalStaff} nhân viên`, color: '#60a5fa' },
+    { label: '⏳ Chờ duyệt',   value: loading ? '…' : totalPending,  sub: totalPending > 0 ? 'Cần xem xét ngay' : 'Không có tài khoản chờ',          color: totalPending > 0 ? '#E9A21B' : '#555' },
+    { label: 'Đã chơi game',   value: loading ? '…' : totalPlayers,  sub: `${totalProfiles - totalPlayers} chưa tham gia`,                            color: '#E94E1B' },
+    { label: 'Tổng lượt chơi', value: loading ? '…' : totalPlays,    sub: gameStatsNote ?? 'Tất cả game',                                              color: '#facc15' },
   ]
 
   return (
@@ -264,15 +276,28 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
         </div>
 
         {/* ── Tài khoản chờ duyệt ──────────────────────── */}
-        {!loading && pendingList.length > 0 && (
+        {!loading && (
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
-              <p className="section-title">Tài khoản chờ duyệt</p>
-              <span style={{ fontSize: '11px', fontWeight: 700, color: '#E9A21B', background: 'rgba(233,162,27,0.15)', padding: '2px 8px', borderRadius: 99 }}>
-                {pendingList.length} đang chờ
+              <p className="section-title">🕐 Tài khoản chờ duyệt</p>
+              <span style={{ fontSize: '11px', fontWeight: 700,
+                color: pendingList.length > 0 ? '#E9A21B' : '#555',
+                background: pendingList.length > 0 ? 'rgba(233,162,27,0.15)' : 'rgba(255,255,255,0.05)',
+                padding: '2px 8px', borderRadius: 99 }}>
+                {pendingList.length > 0 ? `${pendingList.length} đang chờ` : 'Không có'}
               </span>
             </div>
 
+            {pendingList.length === 0 ? (
+              <div className="rounded-2xl px-4 py-6 text-center"
+                   style={{ background: '#0E0E0E', border: '1px solid #1f1f1f' }}>
+                <p style={{ fontSize: '24px', marginBottom: 8 }}>✅</p>
+                <p style={{ fontSize: '13px', color: '#555' }}>Không có tài khoản nào đang chờ duyệt.</p>
+                <p style={{ fontSize: '11px', color: '#3a3a3a', marginTop: 4 }}>
+                  Khi nhân viên đăng ký mới, họ sẽ xuất hiện ở đây.
+                </p>
+              </div>
+            ) : (
             <div className="rounded-2xl overflow-hidden" style={{ background: '#0E0E0E', border: '1px solid #2a1f00' }}>
               {pendingList.map((p, i) => {
                 const isProcessing = actionLoading === p.id
@@ -386,6 +411,7 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
                 )
               })}
             </div>
+            )}
           </div>
         )}
 
