@@ -14,7 +14,7 @@ const CONFETTI = ['🎉', '🎊', '✨', '🏆']
 export default function RoomResult({ players, myUserId, roomTitle, onClose }: Props) {
   const sorted = [...players]
     .filter(p => p.is_active)
-    .sort((a, b) => b.total_score - a.total_score)
+    .sort((a, b) => b.score - a.score)
 
   const top3   = sorted.slice(0, 3)
   const me     = sorted.find(p => p.user_id === myUserId)
@@ -60,7 +60,7 @@ export default function RoomResult({ players, myUserId, roomTitle, onClose }: Pr
                     </div>
                     <div className="text-right shrink-0">
                       <p className="font-black" style={{ fontSize: '20px', color: i === 0 ? '#facc15' : i === 1 ? '#9ca3af' : '#fb923c' }}>
-                        {p.total_score}đ
+                        {p.score}đ
                       </p>
                     </div>
                   </div>
@@ -84,7 +84,7 @@ export default function RoomResult({ players, myUserId, roomTitle, onClose }: Pr
               </div>
               <div className="flex-1 grid grid-cols-2 gap-2">
                 <div className="rounded-xl p-2 text-center" style={{ background: '#141414' }}>
-                  <p className="font-black text-white" style={{ fontSize: '18px' }}>{me.total_score}</p>
+                  <p className="font-black text-white" style={{ fontSize: '18px' }}>{me.score}</p>
                   <p style={{ fontSize: '10px', color: '#555' }}>Điểm</p>
                 </div>
                 <div className="rounded-xl p-2 text-center" style={{ background: '#141414' }}>
@@ -122,7 +122,7 @@ export default function RoomResult({ players, myUserId, roomTitle, onClose }: Pr
                       {p.display_name ?? `Người chơi ${rank}`}
                       {isMe && <span style={{ marginLeft: 6, fontSize: '9px', color: '#E94E1B' }}>Bạn</span>}
                     </p>
-                    <span className="font-bold" style={{ fontSize: '13px', color: '#ccc' }}>{p.total_score}đ</span>
+                    <span className="font-bold" style={{ fontSize: '13px', color: '#ccc' }}>{p.score}đ</span>
                   </div>
                 )
               })}

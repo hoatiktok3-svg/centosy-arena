@@ -12,7 +12,7 @@ export interface GameRoom {
   question_time_limit_s:       number
   total_questions:             number
   created_at:                  string
-  finished_at:                 string | null
+  ended_at:                    string | null
 }
 
 export interface RoomPlayer {
@@ -21,7 +21,7 @@ export interface RoomPlayer {
   user_id:      string
   display_name: string | null
   joined_at:    string
-  total_score:  number
+  score:        number
   correct_count: number
   final_rank:   number | null
   is_active:    boolean

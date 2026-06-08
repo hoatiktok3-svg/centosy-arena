@@ -31,7 +31,7 @@ export default function AdminGameView({
   const chanRef   = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
   const activePlayers = players.filter(p => p.is_active)
-  const sorted = [...activePlayers].sort((a, b) => b.total_score - a.total_score)
+  const sorted = [...activePlayers].sort((a, b) => b.score - a.score)
   const totalActive = activePlayers.length
 
   // ── Reset per question ─────────────────────────────────
@@ -194,7 +194,7 @@ export default function AdminGameView({
             {/* Stats */}
             <div className="flex items-center gap-2.5 shrink-0">
               <span style={{ fontSize: '10px', color: '#555' }}>{p.correct_count}✓</span>
-              <span className="font-black" style={{ fontSize: '15px', color: '#fff' }}>{p.total_score}đ</span>
+              <span className="font-black" style={{ fontSize: '15px', color: '#fff' }}>{p.score}đ</span>
             </div>
           </div>
         ))}

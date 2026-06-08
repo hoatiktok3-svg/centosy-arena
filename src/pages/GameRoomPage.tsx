@@ -375,16 +375,16 @@ export default function GameRoomPage({ onClose }: Props) {
     scoreSavedRef.current = true
     // Admin updates final ranks
     if (isAdmin) {
-      const sorted = [...players].filter(p => p.is_active).sort((a, b) => b.total_score - a.total_score)
+      const sorted = [...players].filter(p => p.is_active).sort((a, b) => b.score - a.score)
       sorted.forEach((p, i) => {
         void supabase.from('room_players').update({ final_rank: i + 1 }).eq('id', p.id)
       })
     }
     // Each player saves their score to profiles via saveGameResultSafe
-    if (me && me.total_score > 0) {
+    if (me && me.score > 0) {
       void supabase.rpc('add_game_score_safe', {
         p_user_id: currentUser!.id,
-        p_score:   me.total_score,
+        p_score:   me.score,
         p_game_key: 'realtime_room',
         p_date:     new Date().toISOString().slice(0, 10),
       }).catch(() => {/* RPC may not exist yet — silent fail */})
@@ -475,7 +475,7 @@ export default function GameRoomPage({ onClose }: Props) {
         user_id:      fakeId,
         display_name: bot.display_name,
         is_active:    true,
-        total_score:  bot.score,
+        score:  bot.score,
         correct_count: 0,
       })
     }
@@ -517,7 +517,7 @@ export default function GameRoomPage({ onClose }: Props) {
     const nextIndex = room.current_question_index + 1
     if (nextIndex >= room.total_questions) {
       // Game finished
-      await supabase.from('game_rooms').update({ status: 'finished', finished_at: new Date().toISOString() }).eq('id', room.id)
+      await supabase.from('game_rooms').update({ status: 'finished', ended_at: new Date().toISOString() }).eq('id', room.id)
     } else {
       await supabase.from('game_rooms').update({
         status:                       'playing',
@@ -588,7 +588,7 @@ export default function GameRoomPage({ onClose }: Props) {
 
   const me = players.find(p => p.user_id === currentUser?.id)
   const currentQ = questions[room?.current_question_index ?? 0]
-  const sortedPlayers = [...players].filter(p => p.is_active).sort((a, b) => b.total_score - a.total_score)
+  const sortedPlayers = [...players].filter(p => p.is_active).sort((a, b) => b.score - a.score)
   const myRank = me ? sortedPlayers.findIndex(p => p.user_id === currentUser?.id) + 1 : null
 
   // ── Screens ───────────────────────────────────────────────
@@ -700,7 +700,7 @@ export default function GameRoomPage({ onClose }: Props) {
         questionIndex={room.current_question_index}
         totalQuestions={room.total_questions || questions.length}
         onNextQuestion={() => void handleNextQuestion()}
-        onEndGame={() => void supabase.from('game_rooms').update({ status: 'finished', finished_at: new Date().toISOString() }).eq('id', room.id)}
+        onEndGame={() => void supabase.from('game_rooms').update({ status: 'finished', ended_at: new Date().toISOString() }).eq('id', room.id)}
       />
     }
     // Players see the question
@@ -708,7 +708,7 @@ export default function GameRoomPage({ onClose }: Props) {
       questionIndex={room.current_question_index}
       totalQuestions={room.total_questions || questions.length}
       myAnswer={myAnswer} onAnswer={(i, ms) => void handleAnswer(i, ms)}
-      currentScore={me?.total_score ?? 0}
+      currentScore={me?.score ?? 0}
       myRank={myRank} />
   }
   if (screen === 'leaderboard' && room) {

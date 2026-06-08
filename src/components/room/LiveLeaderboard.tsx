@@ -21,7 +21,7 @@ export default function LiveLeaderboard({
   const [progress, setProgress] = useState(0)
   const sorted = [...players]
     .filter(p => p.is_active)
-    .sort((a, b) => b.total_score - a.total_score)
+    .sort((a, b) => b.score - a.score)
 
   useEffect(() => {
     setProgress(0)
@@ -87,7 +87,7 @@ export default function LiveLeaderboard({
                   {p.correct_count}✓
                 </span>
                 <span className="font-black" style={{ fontSize: '16px', color: isMe ? '#E94E1B' : '#fff' }}>
-                  {p.total_score}đ
+                  {p.score}đ
                 </span>
               </div>
             </div>

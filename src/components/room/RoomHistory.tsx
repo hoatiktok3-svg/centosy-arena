@@ -9,7 +9,7 @@ interface RoomSummary {
   title:          string
   status:         string
   created_at:     string
-  finished_at:    string | null
+  ended_at:    string | null
   total_questions: number
   playerCount:    number
   winner:         string | null
@@ -32,7 +32,7 @@ export default function RoomHistory({ onClose }: Props) {
     setLoading(true)
     const { data } = await supabase
       .from('game_rooms')
-      .select('id, code, title, status, created_at, finished_at, total_questions')
+      .select('id, code, title, status, created_at, ended_at, total_questions')
       .eq('created_by', currentUser!.id)
       .in('status', ['finished', 'cancelled'])
       .order('created_at', { ascending: false })
@@ -43,12 +43,12 @@ export default function RoomHistory({ onClose }: Props) {
     const summaries: RoomSummary[] = await Promise.all(data.map(async r => {
       const [{ count }, { data: topPlayer }] = await Promise.all([
         supabase.from('room_players').select('id', { count: 'exact', head: true }).eq('room_id', r.id),
-        supabase.from('room_players').select('display_name,total_score').eq('room_id', r.id).eq('final_rank', 1).single(),
+        supabase.from('room_players').select('display_name,score').eq('room_id', r.id).eq('final_rank', 1).single(),
       ])
       return {
         ...r,
         playerCount: count ?? 0,
-        winner: topPlayer ? `${topPlayer.display_name ?? 'Ẩn danh'} (${topPlayer.total_score}đ)` : null,
+        winner: topPlayer ? `${topPlayer.display_name ?? 'Ẩn danh'} (${topPlayer.score}đ)` : null,
       }
     }))
     setRooms(summaries)
@@ -124,9 +124,9 @@ export default function RoomHistory({ onClose }: Props) {
                   🥇 {r.winner}
                 </span>
               )}
-              {r.finished_at && (
+              {r.ended_at && (
                 <span style={{ fontSize: '11px', color: '#444' }}>
-                  Kết thúc: {formatDate(r.finished_at)}
+                  Kết thúc: {formatDate(r.ended_at)}
                 </span>
               )}
             </div>
