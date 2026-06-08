@@ -1,4 +1,4 @@
-// STEP 95: Hiển thị câu hỏi + timer đồng bộ server time
+// STEP 95+110: Hiển thị câu hỏi + timer đồng bộ server time + mobile polish
 import { useState, useEffect } from 'react'
 import { RoomQuestion, GameRoom } from './roomTypes'
 
@@ -52,9 +52,9 @@ export default function QuestionDisplay({
   return (
     <div className="fixed inset-0 z-[150] flex flex-col" style={{ background: '#080808' }}>
 
-      {/* Top bar */}
-      <div className="shrink-0 px-4 pt-5 pb-3"
-           style={{ borderBottom: '1px solid #1a1a1a' }}>
+      {/* Top bar — safe area */}
+      <div className="shrink-0 px-4 pb-3"
+           style={{ paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: '1px solid #1a1a1a' }}>
         <div className="flex items-center justify-between mb-2">
           <span style={{ fontSize: '12px', color: '#888' }}>
             Câu <span className="text-white font-black">{questionIndex + 1}</span>/{totalQuestions}
@@ -116,7 +116,7 @@ export default function QuestionDisplay({
                 key={i}
                 onClick={() => handleSelect(i)}
                 disabled={locked}
-                className="w-full text-left rounded-2xl px-4 py-4 transition-all active:scale-[0.98] disabled:cursor-default"
+                className="w-full text-left rounded-2xl px-4 py-5 transition-all active:scale-[0.98] disabled:cursor-default"
                 style={{
                   background: isSelected ? `${color}15` : '#141414',
                   border: `1.5px solid ${isSelected ? color : '#222'}`,

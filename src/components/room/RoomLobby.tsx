@@ -27,8 +27,8 @@ export default function RoomLobby({ room, players, myUserId, isAdmin, onStart, o
   return (
     <div className="fixed inset-0 z-[150] flex flex-col" style={{ background: '#080808' }}>
       {/* Header */}
-      <div className="shrink-0 px-4 pt-5 pb-4 flex items-center gap-3"
-           style={{ borderBottom: '1px solid #1a1a1a' }}>
+      <div className="shrink-0 px-4 pb-4 flex items-center gap-3"
+           style={{ paddingTop: 'max(20px, env(safe-area-inset-top))', borderBottom: '1px solid #1a1a1a' }}>
         <button
           onClick={isAdmin ? onCancel : onLeave}
           className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center"
