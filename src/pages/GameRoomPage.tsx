@@ -13,6 +13,8 @@ import RoomLobby from '../components/room/RoomLobby'
 import QuestionDisplay from '../components/room/QuestionDisplay'
 import LiveLeaderboard from '../components/room/LiveLeaderboard'
 import RoomResult from '../components/room/RoomResult'
+import RoomHistory from '../components/room/RoomHistory'
+import GameLibraryPage from './GameLibraryPage'
 
 interface Props {
   onClose: () => void
@@ -268,7 +270,9 @@ export default function GameRoomPage({ onClose }: Props) {
   const { currentUser } = useAuth()
   const isAdmin = canAccessAdminPanel(currentUser?.role)
 
-  const [screen, setScreen]       = useState<Screen>('landing')
+  const [screen, setScreen]           = useState<Screen>('landing')
+  const [showHistory, setShowHistory] = useState(false)
+  const [showLibrary, setShowLibrary] = useState(false)
   const [room, setRoom]           = useState<GameRoom | null>(null)
   const [players, setPlayers]     = useState<RoomPlayer[]>([])
   const [questions, setQuestions] = useState<RoomQuestion[]>([])
@@ -553,6 +557,22 @@ export default function GameRoomPage({ onClose }: Props) {
           </button>
         )}
 
+        {/* Admin extra actions */}
+        {isAdmin && (
+          <div className="flex gap-2">
+            <button onClick={() => setShowHistory(true)}
+                    className="flex-1 rounded-2xl py-3 font-semibold"
+                    style={{ fontSize: '12px', color: '#888', background: '#141414', border: '1px solid #333' }}>
+              📋 Lịch sử phòng
+            </button>
+            <button onClick={() => setShowLibrary(true)}
+                    className="flex-1 rounded-2xl py-3 font-semibold"
+                    style={{ fontSize: '12px', color: '#888', background: '#141414', border: '1px solid #333' }}>
+              📚 Bộ câu hỏi
+            </button>
+          </div>
+        )}
+
         {/* How it works */}
         <div className="rounded-2xl p-4"
              style={{ background: '#141414', border: '1px solid #1f1f1f' }}>
@@ -572,6 +592,9 @@ export default function GameRoomPage({ onClose }: Props) {
           ))}
         </div>
       </div>
+
+      {showHistory && <RoomHistory onClose={() => setShowHistory(false)} />}
+      {showLibrary  && <GameLibraryPage onClose={() => setShowLibrary(false)} />}
     </div>
   )
 }
