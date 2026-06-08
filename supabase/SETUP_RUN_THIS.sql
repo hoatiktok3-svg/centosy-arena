@@ -63,9 +63,9 @@ CREATE POLICY "insert own answer"    ON game_answers  FOR INSERT WITH CHECK (aut
 
 -- Admin đọc tất cả sessions/answers
 CREATE POLICY "admin select sessions" ON game_sessions FOR SELECT
-  USING ((SELECT role FROM profiles WHERE id = auth.uid()) IN ('admin','director','manager'));
+  USING ((SELECT role FROM profiles WHERE id = auth.uid()) = 'admin');
 CREATE POLICY "admin select answers"  ON game_answers  FOR SELECT
-  USING ((SELECT role FROM profiles WHERE id = auth.uid()) IN ('admin','director','manager'));
+  USING ((SELECT role FROM profiles WHERE id = auth.uid()) = 'admin');
 
 
 -- ──────────────────────────────────────────────────────────────────
@@ -119,7 +119,7 @@ DROP POLICY IF EXISTS "admin read all profiles" ON profiles;
 CREATE POLICY "admin read all profiles" ON profiles FOR SELECT
   USING (
     auth.uid() = id
-    OR (SELECT role FROM profiles WHERE id = auth.uid()) IN ('admin','director','manager')
+    OR (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
   );
 
 
