@@ -139,12 +139,19 @@ export default function RegisterScreen({ onBackToLogin }: Props) {
     setLoading(false)
 
     if (signUpError) {
-      if (signUpError.message.includes('already registered') || signUpError.message.includes('User already registered')) {
+      const msg = signUpError.message.toLowerCase()
+      if (msg.includes('already registered') || msg.includes('user already registered')) {
         setError('Email này đã được đăng ký. Vui lòng dùng email khác hoặc quay lại đăng nhập.')
-      } else if (signUpError.message.includes('invalid')) {
+      } else if (msg.includes('rate limit') || msg.includes('email rate')) {
+        setError('Hệ thống đang xử lý. Vui lòng thử lại sau 1 phút.')
+      } else if (msg.includes('invalid') || msg.includes('email')) {
         setError('Email không hợp lệ. Vui lòng kiểm tra lại.')
+      } else if (msg.includes('network') || msg.includes('fetch')) {
+        setError('Lỗi kết nối mạng. Kiểm tra internet và thử lại.')
+      } else if (msg.includes('password')) {
+        setError('Mật khẩu không đạt yêu cầu. Vui lòng dùng mật khẩu mạnh hơn.')
       } else {
-        setError(signUpError.message)
+        setError('Đăng ký thất bại. Vui lòng thử lại hoặc liên hệ Admin.')
       }
       return
     }
@@ -179,11 +186,35 @@ export default function RegisterScreen({ onBackToLogin }: Props) {
             </div>
 
             <h2 className="text-xl font-black text-text-primary mb-2">Đăng ký thành công!</h2>
-            <p className="text-text-secondary text-sm leading-relaxed">
-              Tài khoản của bạn đã được gửi cho Admin Centosy.
-              <br /><br />
-              Vui lòng chờ Admin xét duyệt. Bạn sẽ nhận thông báo qua email khi tài khoản được kích hoạt.
+            <p className="text-text-secondary text-sm leading-relaxed mb-4">
+              Yêu cầu của bạn đã được ghi nhận.
             </p>
+
+            {/* 2-step instructions */}
+            <div className="text-left space-y-3">
+              <div className="flex items-start gap-3 p-3 rounded-xl"
+                   style={{ background: 'rgba(233,78,27,0.08)', border: '1px solid rgba(233,78,27,0.2)' }}>
+                <span className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-black"
+                      style={{ background: '#E94E1B', color: '#fff' }}>1</span>
+                <div>
+                  <p className="text-white text-xs font-bold mb-0.5">Xác nhận email</p>
+                  <p className="text-text-muted text-xs leading-relaxed">
+                    Kiểm tra hộp thư (kể cả Spam) — nhấn link xác nhận trong email từ Centosy Arena.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-3 rounded-xl"
+                   style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <span className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-black"
+                      style={{ background: '#333', color: '#888' }}>2</span>
+                <div>
+                  <p className="text-text-secondary text-xs font-bold mb-0.5">Chờ Admin duyệt</p>
+                  <p className="text-text-muted text-xs leading-relaxed">
+                    Sau khi xác nhận email, tài khoản sẽ chờ Admin Centosy kích hoạt.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           <button

@@ -1,6 +1,21 @@
 # SUPABASE AUTH REDIRECT — HƯỚNG DẪN CẤU HÌNH
 **CENTOSY ARENA** | Cập nhật: 2026-06-08
 
+---
+
+## ⚡ QUAN TRỌNG — Tắt xác nhận email (Khuyến nghị cho app nội bộ)
+
+App Centosy Arena dùng luồng **Admin duyệt tài khoản**, không cần email confirmation của Supabase.
+Nếu không tắt, nhân viên phải thực hiện 2 bước: xác nhận email → chờ admin duyệt → rất confuse.
+
+**Vào Supabase Dashboard → Authentication → Providers → Email:**
+- ✅ **"Enable Email provider"**: BẬT (giữ nguyên)
+- ❌ **"Confirm email"**: **TẮT ← làm ngay**
+
+Sau khi tắt: đăng ký xong → đăng nhập được ngay (chỉ cần chờ admin duyệt, không cần confirm email).
+
+---
+
 Bước bắt buộc để tính năng **Quên mật khẩu** hoạt động trên production.
 
 ---
