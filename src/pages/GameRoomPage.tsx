@@ -17,6 +17,7 @@ import RoomHistory from '../components/room/RoomHistory'
 import GameLibraryPage from './GameLibraryPage'
 import AIQuestionGenerator from '../components/room/AIQuestionGenerator'
 import RoomInviteModal from '../components/room/RoomInviteModal'
+import AdminGameView from '../components/room/AdminGameView'
 
 interface Props {
   onClose: () => void
@@ -527,6 +528,19 @@ export default function GameRoomPage({ onClose }: Props) {
     )
   }
   if (screen === 'question' && room && currentQ) {
+    // Admin sees live leaderboard + question control panel
+    if (isAdmin) {
+      return <AdminGameView
+        room={room}
+        players={players}
+        question={currentQ}
+        questionIndex={room.current_question_index}
+        totalQuestions={room.total_questions || questions.length}
+        onNextQuestion={() => void handleNextQuestion()}
+        onEndGame={() => void supabase.from('game_rooms').update({ status: 'finished', finished_at: new Date().toISOString() }).eq('id', room.id)}
+      />
+    }
+    // Players see the question
     return <QuestionDisplay room={room} question={currentQ}
       questionIndex={room.current_question_index}
       totalQuestions={room.total_questions || questions.length}
