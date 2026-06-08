@@ -5,56 +5,38 @@
 
 ## ĐÂY LÀ GÌ?
 
-Đây là bộ prompt roadmap cho dự án **CENTOSY ARENA** — app gamification nội bộ của Centosy Việt Nam.
-
-Mỗi file `.md` trong `centosy-arena-prompts/` là một prompt hoàn chỉnh dành cho Claude Code.
-Paste nội dung file vào Claude Code để xây dựng từng tính năng theo thứ tự.
+Bộ prompt roadmap cho dự án **CENTOSY ARENA** — app gamification nội bộ Centosy Việt Nam.
+Mỗi file `.md` = 1 prompt hoàn chỉnh dành cho Claude Code. Paste từng file theo thứ tự.
 
 ---
 
-## QUY TẮC SỬ DỤNG
+## QUY TẮC BẮT BUỘC
 
-### ❌ KHÔNG làm
-- Không chạy tất cả prompt cùng lúc
-- Không bỏ qua thứ tự STEP
-- Không chạy STEP mới khi P0 chưa xong
-- Không deploy/push khi anh Hóa chưa yêu cầu rõ ràng
-- Không sửa source code ngoài phạm vi từng STEP
-- Không refactor toàn bộ project
-- Không xóa/đổi tên component đang dùng
-- Không hardcode secret, API key, token, password
-
-### ✅ ĐÚNG cách
-- Chỉ chạy từng STEP/P0/AUX/OPS theo yêu cầu từng lần
-- Đọc `00_PROJECT_RULES/` trước khi bắt đầu session mới
-- Báo cáo DONE sau mỗi prompt
-- Giữ nguyên UI hiện tại, chỉ thêm không phá
+- **Không chạy tất cả prompt cùng lúc** — chỉ chạy từng STEP/P0/AUX/OPS theo yêu cầu
+- **Không deploy/push** nếu chưa được yêu cầu rõ ràng
+- **Không tự chạy SQL** — tạo file patch, chờ chủ dự án chạy thủ công
+- **Luôn giữ UI hiện tại** — không refactor, không phá component đang dùng
+- **Không hardcode secret/key/token** vào source code
 
 ---
 
-## CÁC LOẠI PROMPT
+## 4 LOẠI PROMPT
 
-### 🟢 STEP — Tính năng mới
-- Xây dựng tính năng theo roadmap
-- Chạy tuần tự, không nhảy số
-- Mỗi STEP phụ thuộc STEP trước
-- Thư mục: `centosy-arena-prompts/01_CORE_ACCESS/` → `18_OPS_PROMPTS/`
+| Loại | Ký hiệu | Dùng khi nào |
+|------|---------|--------------|
+| 🟢 **STEP** | `STEP_XX` | Phát triển tính năng mới theo roadmap |
+| 🔴 **P0** | `P0_XX` | Sửa lỗi nền móng / audit nguy hiểm / bảo mật |
+| 🟡 **AUX** | `AUX_XX` | Audit, checklist, test trước khi lên production |
+| 🔵 **OPS** | `OPS_XX` | Tài liệu, vận hành, sắp xếp project |
 
-### 🔴 P0 — Lỗi nền móng khẩn cấp
-- Dùng khi có lỗi NGHIÊM TRỌNG ngăn app hoạt động
-- Auth bị hỏng, database mất kết nối, permission sai hoàn toàn
-- Chạy P0 TRƯỚC khi tiếp tục STEP mới
-- Thư mục: `centosy-arena-prompts/16_P0_FIXES/`
+---
 
-### 🟡 AUX — Audit & chuẩn bị
-- Kiểm tra code, SQL, mock data trước khi ra production
-- Test nội bộ, E2E, phát hiện lỗi sớm
-- Thư mục: `centosy-arena-prompts/17_AUX_AUDITS/`
+## PACK ĐÃ CÓ
 
-### 🔵 OPS — Tài liệu & vận hành
-- Sắp xếp prompt pack, cập nhật RUN_ORDER, viết hướng dẫn
-- Không liên quan đến code app
-- Thư mục: `centosy-arena-prompts/18_OPS_PROMPTS/`
+| Pack | Phạm vi | File prompt | Trạng thái |
+|------|---------|-------------|-----------|
+| Pack 1–4 (cũ) | STEP 27–90, P0-01–05, AUX-01–06, OPS-01–02 | `centosy-arena-prompts/` | ✅ Đã merge vào main |
+| **Pack 5** (mới) | STEP 91–111, P0-04–07, AUX-08–13, OPS-03–06 | `docs/centosy-arena/prompts/CENTOSY_ARENA_FULL_PROMPT_PACK_DANH_STT.md` | ✅ Đã sắp xếp, chưa chạy |
 
 ---
 
@@ -62,44 +44,50 @@ Paste nội dung file vào Claude Code để xây dựng từng tính năng theo
 
 ```
 docs/centosy-arena/
-├── README_PROJECT_PROMPTS.md     ← file này
-├── README.md                     ← overview ngắn (cũ)
-├── RUN_ORDER.md                  ← run order tổng (cũ, STEP 27-90)
+├── README_PROJECT_PROMPTS.md        ← file này
+├── README_CENTOSY_ARENA_PROMPT_PACK.md  ← hướng dẫn từ pack mới
+├── README.md                        ← overview cũ (STEP 27-90)
+├── RUN_ORDER.md                     ← run order cũ (STEP 27-90)
 ├── roadmap/
-│   ├── README_STEP27_90.md       ← guide STEP 27-90
-│   └── RUN_ORDER_STEP27_90.md    ← thứ tự chạy STEP 27-90
+│   ├── README_STEP27_90.md
+│   └── RUN_ORDER_STEP27_90.md
 ├── prompts/
-│   └── *.md                      ← file prompt pack gốc (MD chính)
+│   └── CENTOSY_ARENA_FULL_PROMPT_PACK_DANH_STT.md  ← FILE CHÍNH PACK 5
 ├── run-order/
-│   └── RUN_ORDER_STEP91_111.md   ← thứ tự chạy STEP 91-111
+│   └── RUN_ORDER_STEP91_111.md      ← thứ tự 34 items pack 5
 └── archive/
-    └── *.txt                     ← bản TXT dự phòng
+    └── CENTOSY_ARENA_FULL_PROMPT_PACK_DANH_STT.txt ← bản TXT dự phòng
 ```
 
 ---
 
-## PACK ĐÃ CÓ
+## THỨ TỰ CHẠY PACK 5
 
-| Pack | STEP | P0 | AUX | OPS | Trạng thái |
-|------|------|----|-----|-----|-----------|
-| Pack 1 (step 1–26) | 1–26 | — | — | — | ✅ Đã chạy xong |
-| Pack 2 (step 27–47) | 27–47 | — | — | — | ✅ Đã chạy xong |
-| Pack 3 (step 48–84) | 48–84 | — | — | — | ✅ Đã chạy xong |
-| Pack 4 (step 85+) | 85–90 | P0-01–05 | AUX-01–06 | OPS-01–02 | ✅ Đã sắp xếp |
-| Pack 5 (step 91–111) | 91–111 | P0-06–07 | AUX-08–13 | OPS-03–05 | ⏳ Chờ giải nén |
+Xem chi tiết: `run-order/RUN_ORDER_STEP91_111.md`
+
+Tóm tắt luồng:
+```
+OPS-06 (done) → STEP 91→96 → AUX-08 → STEP 97→100
+→ AUX-09 → P0-04 → STEP 101→103 → AUX-10 → OPS-03
+→ STEP 104 → P0-05 → OPS-04 → P0-06 → STEP 105→108
+→ AUX-11 → STEP 109→110 → OPS-05 → P0-07 → STEP 111 → AUX-13
+```
+
+---
+
+## TRẠNG THÁI HIỆN TẠI (2026-06-08)
+
+- Code app: STEP 47 hoàn thành, STEP 48 là bước tiếp theo
+- Prompt pack main (`centosy-arena-prompts/`): STEP 27–90 + P0-01–05 + AUX-01–06 + OPS-01
+- Pack 5 mới: sẵn sàng tại `docs/centosy-arena/prompts/`
+- STEP 39: missing — cần xác nhận
+- STEP 85: có 2 bản khác nhau — chờ quyết định
 
 ---
 
 ## BƯỚC TIẾP THEO
 
-1. Giải nén `CENTOSY_ARENA_CLAUDE_CODE_PROMPT_PACK.zip`
-2. Copy 3 file vào đúng vị trí (xem `run-order/RUN_ORDER_STEP91_111.md`)
-3. Báo Claude để tách từng STEP vào `centosy-arena-prompts/`
-4. Bắt đầu chạy theo thứ tự: **P0 → AUX → STEP 91**
-
----
-
-## LIÊN HỆ
-- Giám đốc Marketing: Đỗ Văn Hóa
-- Dự án: Centosy Arena — app nội bộ gamification
-- Repo: `F:\CLAUDE CODE HÓA\`
+1. Mở Claude Code → paste `NEXT_SESSION_PROMPT.md` để khởi động session
+2. Commit code STEP 38–47 nếu chưa commit
+3. Chạy `supabase/feedback.sql` trên Supabase Dashboard
+4. Paste **STEP 48** từ `centosy-arena-prompts/05_TRAINING_ACADEMY/STEP_48_PRODUCT_QUIZ.md`

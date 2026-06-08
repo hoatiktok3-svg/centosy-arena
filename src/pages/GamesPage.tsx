@@ -10,6 +10,7 @@ import GameLeaderboardPage from './GameLeaderboardPage'
 import SeasonLeaderboardPage from './SeasonLeaderboardPage'
 import DeptTournamentPage from './DeptTournamentPage'
 import LiveQuizRoomPage from './LiveQuizRoomPage'
+import GameRoomPage from './GameRoomPage'
 import TournamentBracketPage from './TournamentBracketPage'
 
 /* ── Rule Modal ──────────────────────────────────────────── */
@@ -195,6 +196,7 @@ export default function GamesPage() {
   const [showDeptTournament,    setShowDeptTournament]      = useState(false)
   const [showLiveRoom,          setShowLiveRoom]            = useState(false)
   const [showBracket,           setShowBracket]             = useState(false)
+  const [showGameRoom,          setShowGameRoom]            = useState(false)
 
   const filtered = activeCategory === 'Tất cả'
     ? mockGames
@@ -298,6 +300,12 @@ export default function GamesPage() {
           style={{ fontSize: '11px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', color: '#10b981' }}>
           🎯 Live
         </button>
+        <button
+          onClick={() => setShowGameRoom(true)}
+          className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold"
+          style={{ fontSize: '11px', background: 'rgba(233,78,27,0.1)', border: '1px solid rgba(233,78,27,0.35)', color: '#E94E1B' }}>
+          🏟️ Phòng
+        </button>
       </div>
 
       {/* Academy section */}
@@ -376,6 +384,7 @@ export default function GamesPage() {
       {showDeptTournament    && <DeptTournamentPage      onClose={() => setShowDeptTournament(false)}    />}
       {showLiveRoom          && <LiveQuizRoomPage          onClose={() => setShowLiveRoom(false)}         />}
       {showBracket           && <TournamentBracketPage    onClose={() => setShowBracket(false)}           />}
+      {showGameRoom          && <GameRoomPage             onClose={() => setShowGameRoom(false)}           />}
     </div>
   )
 }

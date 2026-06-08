@@ -1,0 +1,6 @@
+Please read docs/centosy-arena/README_PROJECT_PROMPTS.md and docs/centosy-arena/run-order/RUN_ORDER_STEP91_111.md.
+Understand this as the implementation roadmap for CENTOSY ARENA.
+Do not execute all prompts at once.
+Wait for my instruction for each STEP/P0/AUX/OPS.
+Always preserve current UI, avoid full refactor, do not deploy, do not push git unless I explicitly ask.
+Do not run SQL automatically. If SQL is needed, create a separate SQL patch file for me to run manually.
