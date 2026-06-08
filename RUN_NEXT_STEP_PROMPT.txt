@@ -1,0 +1,13 @@
+Hãy đọc CLAUDE.md, PROJECT_STATUS.md và PROMPT_QUEUE.md trong thư mục dự án.
+
+Sau đó tìm step đầu tiên có trạng thái [PENDING], mở file prompt tương ứng trong thư mục /prompts và thực hiện đúng step đó.
+
+Chỉ làm 1 step trong lần này.
+
+Sau khi làm xong:
+1. Cập nhật PROJECT_STATUS.md
+2. Đổi trạng thái step vừa làm trong PROMPT_QUEUE.md từ [PENDING] sang [DONE]
+3. Ghi rõ file đã sửa/tạo
+4. Nếu có lỗi thì đổi trạng thái sang [ERROR] và ghi rõ lỗi
+5. Báo cáo ngắn cho tôi biết kết quả
+6. Đề xuất step tiếp theo nhưng chưa làm tiếp

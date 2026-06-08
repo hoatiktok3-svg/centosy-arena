@@ -1,0 +1,40 @@
+# Roadmap tiếp theo STEP 48–85
+
+- STEP 48 — Product Quiz: Tạo quiz kiến thức sản phẩm cho nhân viên Centosy.
+- STEP 49 — Training Library: Tạo thư viện đào tạo nội bộ Centosy.
+- STEP 50 — Training Tests: Liên kết bài học với bài kiểm tra sau đào tạo.
+- STEP 51 — New Employee Onboarding: Tạo lộ trình onboarding 7 ngày cho nhân viên mới.
+- STEP 52 — Level System: Tạo hệ thống cấp độ theo totalPoints.
+- STEP 53 — Daily Check-in Streak: Tạo điểm danh hằng ngày và streak.
+- STEP 54 — Multi Leaderboard: Nâng cấp bảng xếp hạng đa tầng.
+- STEP 55 — Reward Shop Foundation: Tạo nền móng shop đổi quà nội bộ.
+- STEP 56 — Manager Alerts: Tạo cảnh báo cho quản lý.
+- STEP 57 — Department Health Score: Tạo điểm sức khỏe phòng ban.
+- STEP 58 — Executive Weekly Summary: Tạo báo cáo tuần cho giám đốc/admin.
+- STEP 59 — Activity Log: Tạo nhật ký hoạt động nền móng.
+- STEP 60 — Admin System Settings: Tạo cài đặt hệ thống cho admin.
+- STEP 61 — Google Sheet Sync Foundation: Export CSV/chuẩn bị Google Sheet Sync.
+- STEP 62 — AI Quiz & Mission Generator: Mock AI hỗ trợ tạo quiz/nhiệm vụ.
+- STEP 63 — Activity Log Advanced: Nâng cấp activity log nếu STEP 59 đã có.
+- STEP 64 — Admin System Settings Advanced: Nâng cấp system settings nếu STEP 60 đã có.
+- STEP 65 — Audit Game Data Flow: Audit game, answer log, score, leaderboard, recognition.
+- STEP 66 — Game Session + Answer Log: Chuẩn hóa game_session và game_answer.
+- STEP 67 — Score Engine + Anti Duplicate: Tính điểm game và chống cộng trùng.
+- STEP 68 — Realtime Leaderboard: Leaderboard cập nhật sau khi game hoàn thành.
+- STEP 69 — Live Recognition Events: Tạo sự kiện vinh danh tự động sau game.
+- STEP 70 — Admin Game Monitor: Admin theo dõi hoạt động game.
+- STEP 71 — Speed-based Scoring + Anti-Cheat: Đúng nhanh điểm cao hơn và chống gian lận nền móng.
+- STEP 72 — Play Limits: Giới hạn lượt chơi tính điểm.
+- STEP 73 — Season Leaderboard: Bảng xếp hạng theo mùa thi đua.
+- STEP 74 — Season Rewards: Giải thưởng mùa thi đua.
+- STEP 75 — Season Reset & Archive: Reset mùa thi đua an toàn.
+- STEP 76 — Department Tournament Mode: Giải đấu theo phòng ban/khối.
+- STEP 77 — Live Quiz Room: Phòng thi live bằng mã phòng/link.
+- STEP 78 — Qualifier & Final Rounds: Vòng loại và chung kết.
+- STEP 79 — Stage Recognition Screen: Màn hình sân khấu vinh danh.
+- STEP 80 — Tournament Control Center: Trung tâm điều hành giải đấu.
+- STEP 81 — Mobile Game Polish: Tối ưu game trên điện thoại.
+- STEP 82 — Game Sound & Effects: Hiệu ứng game nhẹ.
+- STEP 83 — TV / Projector Mode: Chế độ chiếu TV/projector.
+- STEP 84 — Public Event Mode: Link sự kiện read-only an toàn.
+- STEP 85 — Export Tournament Results: Xuất kết quả giải đấu.

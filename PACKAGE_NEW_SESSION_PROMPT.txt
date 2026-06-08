@@ -1,0 +1,19 @@
+Hãy đóng gói trạng thái dự án hiện tại để tôi chuyển sang session Claude Code mới.
+
+Việc cần làm:
+1. Đọc toàn bộ PROJECT_STATUS.md
+2. Đọc PROMPT_QUEUE.md
+3. Kiểm tra các file/code quan trọng đã sửa gần đây
+4. Cập nhật PROJECT_STATUS.md với:
+   - Step đã hoàn thành
+   - Step đang lỗi nếu có
+   - File quan trọng đã tạo/sửa
+   - Quyết định kỹ thuật đã chốt
+   - Việc cần làm tiếp theo
+5. Không code thêm tính năng mới
+6. Chỉ cập nhật tài liệu trạng thái
+
+Sau khi xong, hãy báo cáo cho tôi:
+- Đã đóng gói xong chưa
+- Step tiếp theo là step nào
+- Khi sang session mới tôi cần dán câu lệnh nào

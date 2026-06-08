@@ -39,3 +39,32 @@ Bắt buộc có đủ 9 mục: A B C D E F G H I.
 3. Không làm gì ngoài phạm vi step được giao.
 4. Luôn build/typecheck trước khi báo DONE.
 5. Luôn xuất đủ mục G H I ở cuối output.
+
+---
+
+## Quy tắc khi context gần hết (Context Limit Rule)
+
+**Dấu hiệu context sắp hết:**
+- Claude bắt đầu quên nội dung đầu session
+- Response bị cắt ngắn bất thường
+- Claude hỏi lại những gì đã biết
+
+**Khi context còn ~20% (khoảng 15-20 tool calls liên tiếp):**
+
+Claude PHẢI chủ động dừng và thực hiện Session Handoff Package:
+
+1. Cập nhật PROJECT_STATUS.md
+2. Cập nhật SESSION_HANDOFF.md (step đã làm, file đã sửa)
+3. Cập nhật CURRENT_STEP.md
+4. Cập nhật PROMPT_QUEUE.md
+5. Tạo/cập nhật NEXT_SESSION_PROMPT.md
+6. Tạo CHANGELOG_SESSION.md (log chi tiết session hiện tại)
+7. In ra câu lệnh New Session đầy đủ theo format:
+
+---
+TÔI MỞ NEW SESSION MỚI — HÃY ĐỌC TRƯỚC KHI LÀM:
+[nội dung NEXT_SESSION_PROMPT.md]
+---
+
+**Không bao giờ để context hết mà không có handoff.**
+Nếu bị forced-summary (Claude tự tóm tắt), đó là dấu hiệu đã quá muộn.
