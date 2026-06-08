@@ -468,8 +468,12 @@ export default function GameRoomPage({ onClose }: Props) {
       { display_name: '🤖 Bot Lan',  score: 0 },
       { display_name: '🤖 Bot Tuấn', score: 0 },
     ]
+    // UUID polyfill cho HTTP (crypto.randomUUID chỉ hoạt động trên HTTPS)
+    const genUUID = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16)
+    })
     for (const bot of bots) {
-      const fakeId = crypto.randomUUID()
+      const fakeId = genUUID()
       await supabase.from('room_players').insert({
         room_id:      room.id,
         user_id:      fakeId,
@@ -504,26 +508,33 @@ export default function GameRoomPage({ onClose }: Props) {
       setQuestions(qs as RoomQuestion[])
     }
     setStartError('')
+    const startedAt = new Date().toISOString()
     await supabase.from('game_rooms').update({
       status:                        'playing',
       current_question_index:        0,
-      current_question_started_at:   new Date().toISOString(),
+      current_question_started_at:   startedAt,
     }).eq('id', room.id)
+    // Cập nhật local state ngay lập tức (không chờ realtime vì RLS có thể chặn SELECT)
+    setRoom(prev => prev ? { ...prev, status: 'playing', current_question_index: 0, current_question_started_at: startedAt } : null)
   }
 
   // ── Admin: Advance to next question / show leaderboard ───
   const handleNextQuestion = async () => {
     if (!room) return
     const nextIndex = room.current_question_index + 1
-    if (nextIndex >= room.total_questions) {
+    if (nextIndex >= (room.total_questions || questions.length)) {
       // Game finished
-      await supabase.from('game_rooms').update({ status: 'finished', ended_at: new Date().toISOString() }).eq('id', room.id)
+      const endedAt = new Date().toISOString()
+      await supabase.from('game_rooms').update({ status: 'finished', ended_at: endedAt }).eq('id', room.id)
+      setRoom(prev => prev ? { ...prev, status: 'finished', ended_at: endedAt } : null)
     } else {
+      const nextStartedAt = new Date().toISOString()
       await supabase.from('game_rooms').update({
         status:                       'playing',
         current_question_index:       nextIndex,
-        current_question_started_at:  new Date().toISOString(),
+        current_question_started_at:  nextStartedAt,
       }).eq('id', room.id)
+      setRoom(prev => prev ? { ...prev, status: 'playing', current_question_index: nextIndex, current_question_started_at: nextStartedAt } : null)
     }
   }
 
@@ -700,7 +711,11 @@ export default function GameRoomPage({ onClose }: Props) {
         questionIndex={room.current_question_index}
         totalQuestions={room.total_questions || questions.length}
         onNextQuestion={() => void handleNextQuestion()}
-        onEndGame={() => void supabase.from('game_rooms').update({ status: 'finished', ended_at: new Date().toISOString() }).eq('id', room.id)}
+        onEndGame={async () => {
+          const endedAt = new Date().toISOString()
+          await supabase.from('game_rooms').update({ status: 'finished', ended_at: endedAt }).eq('id', room.id)
+          setRoom(prev => prev ? { ...prev, status: 'finished', ended_at: endedAt } : null)
+        }}
       />
     }
     // Players see the question
