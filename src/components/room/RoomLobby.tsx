@@ -1,6 +1,7 @@
-// STEP 95: Phòng chờ — Admin + Player view
+// STEP 95-96: Phòng chờ — Admin + Player view + Luật chơi
 import { useState } from 'react'
 import { GameRoom, RoomPlayer } from './roomTypes'
+import GameRules from './GameRules'
 
 interface Props {
   room:       GameRoom
@@ -13,7 +14,8 @@ interface Props {
 }
 
 export default function RoomLobby({ room, players, myUserId, isAdmin, onStart, onCancel, onLeave }: Props) {
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied]     = useState(false)
+  const [showRules, setShowRules] = useState(false)
   const activePlayers = players.filter(p => p.is_active)
 
   const copyCode = () => {
@@ -39,6 +41,13 @@ export default function RoomLobby({ room, players, myUserId, isAdmin, onStart, o
             {isAdmin ? '👑 Admin · ' : ''}Phòng chờ · {activePlayers.length} người
           </p>
         </div>
+        {/* Rules button */}
+        <button
+          onClick={() => setShowRules(true)}
+          className="px-3 py-1.5 rounded-xl font-bold"
+          style={{ fontSize: '11px', background: '#141414', border: '1px solid #333', color: '#888' }}>
+          📋 Luật
+        </button>
         {/* Live indicator */}
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
              style={{ background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)' }}>
@@ -160,6 +169,9 @@ export default function RoomLobby({ room, players, myUserId, isAdmin, onStart, o
           </div>
         )}
       </div>
+      {showRules && (
+        <GameRules questionTimeLimitS={room.question_time_limit_s} onClose={() => setShowRules(false)} />
+      )}
     </div>
   )
 }
