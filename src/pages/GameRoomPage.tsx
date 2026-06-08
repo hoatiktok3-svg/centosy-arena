@@ -354,7 +354,7 @@ export default function GameRoomPage({ onClose }: Props) {
   // ── Load questions when room started ─────────────────────
   useEffect(() => {
     if (!room?.question_set_id) return
-    void supabase.from('questions').select('*').eq('set_id', room.question_set_id).order('order_index')
+    void supabase.from('room_questions').select('*').eq('question_set_id', room.question_set_id).order('sort_order')
       .then(({ data }) => {
         if (!data) return
         setQuestions(data as RoomQuestion[])
@@ -479,8 +479,9 @@ export default function GameRoomPage({ onClose }: Props) {
     if (!q) return
     const isCorrect    = optionIndex === q.correct_index
     const timeFrac     = Math.max(0, 1 - responseTimeMs / (room.question_time_limit_s * 1000))
-    const speedBonus   = Math.floor(timeFrac * q.points * 0.5)
-    const pointsEarned = isCorrect ? q.points + speedBonus : 0
+    const basePoints   = 100  // mỗi câu đúng = 100 điểm
+    const speedBonus   = Math.floor(timeFrac * basePoints * 0.5)
+    const pointsEarned = isCorrect ? basePoints + speedBonus : 0
 
     await supabase.from('room_answers').insert({
       room_id:          room.id,

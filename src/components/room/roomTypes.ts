@@ -47,11 +47,11 @@ export interface QuestionSet {
 }
 
 export interface RoomQuestion {
-  id:            string
-  set_id:        string
-  question_text: string
-  options:       string[]
-  correct_index: number
-  points:        number
-  order_index:   number
+  id:              string
+  question_set_id: string
+  question_text:   string
+  options:         string[]
+  correct_index:   number
+  explanation:     string
+  sort_order:      number
 }
