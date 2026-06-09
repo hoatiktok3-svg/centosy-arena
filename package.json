@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "import:questions": "tsx scripts/import-questions-csv.ts"
+    "import:questions": "tsx scripts/import-questions-csv.ts",
+    "check:questions":  "tsx scripts/check-question-bank.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.107.0",

@@ -11,64 +11,18 @@
  *    (hoặc SUPABASE_SERVICE_ROLE_KEY để bypass RLS)
  */
 
-import { createClient } from '@supabase/supabase-js'
 import Papa from 'papaparse'
-import fs from 'fs'
+import fs   from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import WebSocket from 'ws'
+import { loadEnv, makeSupabaseClient, ROOT } from './_supabase-node.js'
 
 // ── Path helpers (ESM) ─────────────────────────────────────────
 const __filename = fileURLToPath(import.meta.url)
 const __dirname  = path.dirname(__filename)
-const ROOT       = path.resolve(__dirname, '..')
+void __filename; void __dirname // suppress unused warnings
 
-// ── Load .env / .env.local manually ────────────────────────────
-function loadEnv(): Record<string, string> {
-  const candidates = ['.env.local', '.env']
-  const vars: Record<string, string> = {}
-  let found = false
-  for (const name of candidates) {
-    const envPath = path.join(ROOT, name)
-    if (fs.existsSync(envPath)) {
-      found = true
-      fs.readFileSync(envPath, 'utf-8').split('\n').forEach(line => {
-        const m = line.match(/^([^#=\s][^=]*)=(.*)$/)
-        if (m) vars[m[1].trim()] = m[2].trim().replace(/^["']|["']$/g, '')
-      })
-      console.log(`📂 Loaded env: ${name}`)
-    }
-  }
-  if (!found) {
-    console.error('❌ Không tìm thấy .env hoặc .env.local')
-    process.exit(1)
-  }
-  return vars
-}
-
-// ── Supabase client ─────────────────────────────────────────────
-function makeClient(env: Record<string, string>) {
-  const url = env['VITE_SUPABASE_URL']
-  // Ưu tiên service role key → anon key → publishable key
-  const key =
-    env['SUPABASE_SERVICE_ROLE_KEY'] ||
-    env['VITE_SUPABASE_ANON_KEY']    ||
-    env['VITE_SUPABASE_PUBLISHABLE_KEY']
-
-  if (!url || !key) {
-    console.error('❌ Thiếu VITE_SUPABASE_URL hoặc key trong .env/.env.local')
-    console.error('   Cần một trong: SUPABASE_SERVICE_ROLE_KEY | VITE_SUPABASE_ANON_KEY | VITE_SUPABASE_PUBLISHABLE_KEY')
-    process.exit(1)
-  }
-  if (!env['SUPABASE_SERVICE_ROLE_KEY']) {
-    console.warn('⚠️  Không có SUPABASE_SERVICE_ROLE_KEY — dùng publishable/anon key')
-    console.warn('   Nếu RLS chặn insert, thêm SUPABASE_SERVICE_ROLE_KEY=<service_role> vào .env.local')
-  }
-  return createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    realtime: { transport: WebSocket as unknown as typeof WebSocket },
-  })
-}
+// loadEnv & makeClient → dùng từ ./_supabase-node.ts
 
 // ── Types ───────────────────────────────────────────────────────
 interface CsvRow {
@@ -249,7 +203,7 @@ async function main() {
 
   // ── 1. Load env & connect ───────────────────────────────────
   const env = loadEnv()
-  const supabase = makeClient(env)
+  const supabase = makeSupabaseClient(env)
 
   // ── 2. Verify question_bank table exists ────────────────────
   const { error: tableErr } = await supabase
