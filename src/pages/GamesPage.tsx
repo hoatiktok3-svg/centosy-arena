@@ -12,7 +12,6 @@ import OnboardingPage from './OnboardingPage'
 import GameLeaderboardPage from './GameLeaderboardPage'
 import SeasonLeaderboardPage from './SeasonLeaderboardPage'
 import DeptTournamentPage from './DeptTournamentPage'
-import LiveQuizRoomPage from './LiveQuizRoomPage'
 import GameRoomPage from './GameRoomPage'
 import TournamentBracketPage from './TournamentBracketPage'
 
@@ -281,7 +280,6 @@ export default function GamesPage() {
   const [showGameLeaderboard,   setShowGameLeaderboard]   = useState(false)
   const [showSeasonLeaderboard, setShowSeasonLeaderboard] = useState(false)
   const [showDeptTournament,    setShowDeptTournament]    = useState(false)
-  const [showLiveRoom,          setShowLiveRoom]          = useState(false)
   const [showBracket,           setShowBracket]           = useState(false)
   const [showGameRoom,          setShowGameRoom]          = useState(false)
 
@@ -332,8 +330,7 @@ export default function GamesPage() {
             { label: '🏆 Xếp hạng', color: '#facc15', onClick: () => setShowGameLeaderboard(true)   },
             { label: '🏅 Mùa',      color: BRAND,     onClick: () => setShowSeasonLeaderboard(true) },
             { label: '🏢 Phòng ban', color: '#8b5cf6', onClick: () => setShowDeptTournament(true)    },
-            { label: '🎯 Live',      color: '#10b981', onClick: () => setShowLiveRoom(true)           },
-            { label: '🏟️ Phòng',    color: BRAND,     onClick: () => setShowGameRoom(true)           },
+            { label: '🎯 Phòng thi',  color: '#10b981', onClick: () => setShowGameRoom(true)           },
           ].map(btn => (
             <button key={btn.label} onClick={btn.onClick}
               className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold whitespace-nowrap"
@@ -422,7 +419,7 @@ export default function GamesPage() {
         {showGameLeaderboard   && <GameLeaderboardPage   onClose={() => setShowGameLeaderboard(false)}   />}
         {showSeasonLeaderboard && <SeasonLeaderboardPage onClose={() => setShowSeasonLeaderboard(false)} />}
         {showDeptTournament    && <DeptTournamentPage    onClose={() => setShowDeptTournament(false)}    />}
-        {showLiveRoom          && <LiveQuizRoomPage      onClose={() => setShowLiveRoom(false)}          />}
+
         {showBracket           && <TournamentBracketPage onClose={() => setShowBracket(false)}           />}
         {showGameRoom          && <GameRoomPage          onClose={() => setShowGameRoom(false)}          />}
       </div>
@@ -547,11 +544,11 @@ export default function GamesPage() {
           <span style={{ fontSize: '20px' }}>🏢</span>
           <span style={{ fontSize: '11px', color: '#585858', fontWeight: 600 }}>Phòng ban</span>
         </button>
-        <button onClick={() => setShowLiveRoom(true)}
+        <button onClick={() => setShowGameRoom(true)}
           className="flex-1 rounded-2xl py-3.5 flex flex-col items-center gap-1.5 transition-all active:scale-[0.97]"
-          style={{ background: '#0f0f0f', border: '1px solid #1e1e1e' }}>
-          <span style={{ fontSize: '20px' }}>⚡</span>
-          <span style={{ fontSize: '11px', color: '#585858', fontWeight: 600 }}>Live Quiz</span>
+          style={{ background: 'rgba(233,78,27,0.06)', border: '1px solid rgba(233,78,27,0.2)' }}>
+          <span style={{ fontSize: '20px' }}>🎯</span>
+          <span style={{ fontSize: '11px', color: '#E94E1B', fontWeight: 700 }}>Phòng thi Live</span>
         </button>
       </div>
 
@@ -563,7 +560,7 @@ export default function GamesPage() {
       {showGameLeaderboard   && <GameLeaderboardPage   onClose={() => setShowGameLeaderboard(false)}   />}
       {showSeasonLeaderboard && <SeasonLeaderboardPage onClose={() => setShowSeasonLeaderboard(false)} />}
       {showDeptTournament    && <DeptTournamentPage    onClose={() => setShowDeptTournament(false)}    />}
-      {showLiveRoom          && <LiveQuizRoomPage      onClose={() => setShowLiveRoom(false)}          />}
+      {showLiveRoom          && <LiveQuizRoomPage      onClose={() => setShowGameRoom(false)}          />}
       {showBracket           && <TournamentBracketPage onClose={() => setShowBracket(false)}           />}
       {showGameRoom          && <GameRoomPage          onClose={() => setShowGameRoom(false)}          />}
     </div>

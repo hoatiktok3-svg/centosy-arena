@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabaseClient'
 import { canAccessAdminPanel } from '../lib/permissions'
-import LiveQuizRoomPage from './LiveQuizRoomPage'
+import GameRoomPage from './GameRoomPage'
 import TournamentBracketPage from './TournamentBracketPage'
 import StageRecognitionPage from './StageRecognitionPage'
 import DeptTournamentPage from './DeptTournamentPage'
@@ -85,7 +85,7 @@ export default function TournamentControlCenterPage({ onClose }: Props) {
   }
 
   // Sub-views rendered on top
-  if (subView === 'live')    return <LiveQuizRoomPage        onClose={() => setSubView(null)} />
+  if (subView === 'live')    return <GameRoomPage        onClose={() => setSubView(null)} />
   if (subView === 'bracket') return <TournamentBracketPage   onClose={() => setSubView(null)} />
   if (subView === 'stage')   return <StageRecognitionPage    onClose={() => setSubView(null)} />
   if (subView === 'dept')    return <DeptTournamentPage      onClose={() => setSubView(null)} />
