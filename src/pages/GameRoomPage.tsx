@@ -48,11 +48,17 @@ function JoinRoomView({
         .in('status', ['waiting', 'playing'])
         .single()
       if (e || !room) { setError('Không tìm thấy phòng. Kiểm tra lại mã.'); return }
+      // Fetch profile display_name for proper name (avoid leaking email in leaderboard)
+      const { data: profile } = await supabase
+        .from('profiles').select('display_name').eq('id', currentUser!.id).single()
+      const displayName = profile?.display_name
+        || currentUser!.fullName
+        || currentUser!.email!.split('@')[0]
       // Join room_players
       await supabase.from('room_players').upsert({
         room_id:      room.id,
         user_id:      currentUser!.id,
-        display_name: currentUser!.fullName || currentUser!.email,
+        display_name: displayName,
         is_active:    true,
       }, { onConflict: 'room_id,user_id' })
       onJoined(room as GameRoom)
@@ -332,6 +338,7 @@ export default function GameRoomPage({ onClose }: Props) {
   const [myAnswer, setMyAnswer]   = useState<number | null>(null)
   const channelRef                = useRef<ReturnType<typeof supabase.channel> | null>(null)
   const autoAdvanceRef            = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pollPlayersRef            = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // ── Subscribe to room realtime ────────────────────────────
   const subscribeRoom = useCallback((roomId: string) => {
@@ -352,6 +359,13 @@ export default function GameRoomPage({ onClose }: Props) {
       })
       .subscribe()
     channelRef.current = ch
+    // Polling fallback: RLS blocks postgres_changes on room_players, so poll every 3s
+    // to ensure scores and player list stay up-to-date during gameplay
+    if (pollPlayersRef.current) clearInterval(pollPlayersRef.current)
+    pollPlayersRef.current = setInterval(() => {
+      void supabase.from('room_players').select('*').eq('room_id', roomId)
+        .then(({ data }) => { if (data) setPlayers(data as RoomPlayer[]) })
+    }, 3000)
   }, [])
 
   // ── Load questions when room started ─────────────────────
@@ -406,15 +420,20 @@ export default function GameRoomPage({ onClose }: Props) {
         const remaining = Math.max(0, room.question_time_limit_s * 1000 - elapsed + 800) // +800ms buffer
         autoAdvanceRef.current = setTimeout(() => {
           void supabase.from('game_rooms').update({ status: 'showing_leaderboard' }).eq('id', room.id)
+          // Bypass RLS: update local state immediately so screen transitions before AdminGameView's
+          // own 1500ms timer fires (which would call onNextQuestion() creating a race condition)
+          setRoom(prev => prev ? { ...prev, status: 'showing_leaderboard' } : null)
         }, remaining)
       }
     } else if (room.status === 'showing_leaderboard') {
       if (autoAdvanceRef.current) { clearTimeout(autoAdvanceRef.current); autoAdvanceRef.current = null }
       setScreen('leaderboard')
     } else if (room.status === 'finished') {
+      if (pollPlayersRef.current) { clearInterval(pollPlayersRef.current); pollPlayersRef.current = null }
       setScreen('result')
     } else if (room.status === 'cancelled') {
       // Someone cancelled — go back to landing
+      if (pollPlayersRef.current) { clearInterval(pollPlayersRef.current); pollPlayersRef.current = null }
       if (channelRef.current) void supabase.removeChannel(channelRef.current)
       setRoom(null); setPlayers([]); setScreen('landing')
     }
@@ -580,10 +599,15 @@ export default function GameRoomPage({ onClose }: Props) {
     answerSubmittingRef.current = false
   }
 
+  const stopPolling = () => {
+    if (pollPlayersRef.current) { clearInterval(pollPlayersRef.current); pollPlayersRef.current = null }
+  }
+
   const handleCancel = async () => {
     if (room && isAdmin) {
       await supabase.from('game_rooms').update({ status: 'cancelled' }).eq('id', room.id)
     }
+    stopPolling()
     if (channelRef.current) void supabase.removeChannel(channelRef.current)
     setRoom(null); setPlayers([]); setScreen('landing')
   }
@@ -593,6 +617,7 @@ export default function GameRoomPage({ onClose }: Props) {
       await supabase.from('room_players').update({ is_active: false })
         .eq('room_id', room.id).eq('user_id', currentUser.id)
     }
+    stopPolling()
     if (channelRef.current) void supabase.removeChannel(channelRef.current)
     setRoom(null); setPlayers([]); setScreen('landing')
   }
