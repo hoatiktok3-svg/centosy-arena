@@ -22,6 +22,7 @@ import TournamentControlCenterPage from './TournamentControlCenterPage'
 import TVProjectorModePage from './TVProjectorModePage'
 import PublicEventModePage from './PublicEventModePage'
 import TournamentExportPage from './TournamentExportPage'
+import QuestionBankAdminPage from './QuestionBankAdminPage'
 
 // me chỉ dùng cho mock data chưa có API: weeklyRank, game history
 const me = getCurrentUser()
@@ -117,6 +118,7 @@ export default function ProfilePage() {
   const [showTVMode,        setShowTVMode]        = useState(false)
   const [showPublicEvent,   setShowPublicEvent]   = useState(false)
   const [showTournamentExport, setShowTournamentExport] = useState(false)
+  const [showQuestionBank,     setShowQuestionBank]     = useState(false)
   const [myBadgeIds,      setMyBadgeIds]      = useState<string[] | null>(null) // null = loading
   const [recentMissions,  setRecentMissions]  = useState<RecentMission[] | null>(null)
 
@@ -412,6 +414,13 @@ export default function ProfilePage() {
             </button>
             <button
               className="w-full py-3 rounded-xl font-semibold text-left px-4 transition-all active:scale-[0.98]"
+              style={{ background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.25)', color: '#a78bfa' }}
+              onClick={() => setShowQuestionBank(true)}
+            >
+              📚 Ngân hàng câu hỏi →
+            </button>
+            <button
+              className="w-full py-3 rounded-xl font-semibold text-left px-4 transition-all active:scale-[0.98]"
               style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)', color: '#34d399' }}
               onClick={() => setShowGameMonitor(true)}
             >
@@ -610,6 +619,7 @@ export default function ProfilePage() {
       {showTVMode         && <TVProjectorModePage     onClose={() => setShowTVMode(false)}      />}
       {showPublicEvent    && <PublicEventModePage     onClose={() => setShowPublicEvent(false)}      />}
       {showTournamentExport && <TournamentExportPage  onClose={() => setShowTournamentExport(false)} />}
+      {showQuestionBank     && <QuestionBankAdminPage onClose={() => setShowQuestionBank(false)}     />}
 
       {showLogout && (
         <LogoutSheet
