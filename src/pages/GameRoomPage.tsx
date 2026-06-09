@@ -53,7 +53,7 @@ function JoinRoomView({
       const { data: profile } = await supabase
         .from('profiles').select('display_name').eq('id', currentUser!.id).single()
       const displayName = profile?.display_name
-        || currentUser!.fullName
+        || currentUser!.name
         || currentUser!.email!.split('@')[0]
       // Join room_players
       await supabase.from('room_players').upsert({
@@ -429,7 +429,7 @@ export default function GameRoomPage({ onClose }: Props) {
               p_score:    freshScore,
               p_game_key: 'realtime_room',
               p_date:     new Date().toISOString().slice(0, 10),
-            }).catch(() => {/* RPC may not exist yet — silent fail */})
+            }).then(undefined, () => {/* RPC may not exist yet — silent fail */})
           }
         })
     }

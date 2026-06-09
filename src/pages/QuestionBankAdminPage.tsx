@@ -149,8 +149,6 @@ function QuestionCard({ q, onEdit, onApprove, onToggle, onDelete }: {
   const answerMap: Record<string, string> = {
     A: q.option_a, B: q.option_b, C: q.option_c, D: q.option_d,
   }
-  const correctText = answerMap[q.correct_answer?.toUpperCase()] ?? '—'
-
   return (
     <div className="rounded-2xl overflow-hidden transition-all"
          style={{

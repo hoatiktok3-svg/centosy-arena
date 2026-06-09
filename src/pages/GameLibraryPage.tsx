@@ -304,7 +304,7 @@ export default function GameLibraryPage({ onClose }: Props) {
                   ))}
                 </div>
                 <p style={{ fontSize: '10px', color: '#444', marginTop: 6 }}>
-                  {q.points}đ/câu
+                  100đ/câu
                 </p>
               </div>
             ))}

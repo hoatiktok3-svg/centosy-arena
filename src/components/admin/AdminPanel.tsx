@@ -206,10 +206,8 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
   // ── KPI aggregates ─────────────────────────────────────
   const totalProfiles  = profiles.length
   const totalAdmin     = profiles.filter(p => p.role === 'admin').length
-  const totalDirector  = profiles.filter(p => (p.role as string) === 'director').length
   const totalManager   = profiles.filter(p => (p.role as string) === 'manager').length
   const totalStaff     = profiles.filter(p => p.role === 'staff' || (p.role as string) === 'employee').length
-  const totalActive    = profiles.filter(p => p.is_active !== false && p.account_status !== 'pending' && p.account_status !== 'rejected').length
   const totalPending   = pendingList.length
   const hasPlayedIds   = new Set(Object.keys(gameStats))
   const totalPlayers   = hasPlayedIds.size

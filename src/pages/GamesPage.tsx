@@ -560,7 +560,6 @@ export default function GamesPage() {
       {showGameLeaderboard   && <GameLeaderboardPage   onClose={() => setShowGameLeaderboard(false)}   />}
       {showSeasonLeaderboard && <SeasonLeaderboardPage onClose={() => setShowSeasonLeaderboard(false)} />}
       {showDeptTournament    && <DeptTournamentPage    onClose={() => setShowDeptTournament(false)}    />}
-      {showLiveRoom          && <LiveQuizRoomPage      onClose={() => setShowGameRoom(false)}          />}
       {showBracket           && <TournamentBracketPage onClose={() => setShowBracket(false)}           />}
       {showGameRoom          && <GameRoomPage          onClose={() => setShowGameRoom(false)}          />}
     </div>
