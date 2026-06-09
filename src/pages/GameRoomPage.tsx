@@ -19,6 +19,7 @@ import AIQuestionGenerator from '../components/room/AIQuestionGenerator'
 import RoomInviteModal from '../components/room/RoomInviteModal'
 import AdminGameView from '../components/room/AdminGameView'
 import QuestionUploader from '../components/room/QuestionUploader'
+import QuestionBankImportModal from '../components/room/QuestionBankImportModal'
 
 interface Props {
   onClose: () => void
@@ -143,8 +144,9 @@ function CreateRoomView({
   const [selectedSet, setSelectedSet]   = useState<string>('')
   const [loading, setLoading]         = useState(false)
   const [error, setError]             = useState('')
-  const [showAIGen, setShowAIGen]       = useState(false)
-  const [showUploader, setShowUploader] = useState(false)
+  const [showAIGen, setShowAIGen]             = useState(false)
+  const [showUploader, setShowUploader]       = useState(false)
+  const [showBankImport, setShowBankImport]   = useState(false)
 
   const loadSets = () => {
     void supabase.from('question_sets').select('id,title,description,is_active').eq('is_active', true)
@@ -233,23 +235,31 @@ function CreateRoomView({
           <label style={{ fontSize: '11px', color: '#888', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
             Bộ câu hỏi (tuỳ chọn)
           </label>
-          {/* AI Generator + Upload buttons */}
-          <div className="mt-2 mb-1 grid grid-cols-2 gap-2">
+          {/* AI Generator + Upload + Question Bank buttons */}
+          <div className="mt-2 mb-1 grid grid-cols-3 gap-2">
             <button
               onClick={() => setShowAIGen(true)}
               className="flex flex-col items-start gap-1 px-3 py-3 rounded-xl transition-all active:scale-95"
               style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.35)', color: '#a78bfa' }}>
               <span className="text-lg">🤖</span>
-              <p className="font-bold text-xs">Tạo bằng AI</p>
-              <p className="text-xs opacity-60 leading-tight">Nhập chủ đề → AI sinh câu</p>
+              <p className="font-bold text-xs">Tạo AI</p>
+              <p className="text-xs opacity-60 leading-tight">Nhập chủ đề</p>
             </button>
             <button
               onClick={() => setShowUploader(true)}
               className="flex flex-col items-start gap-1 px-3 py-3 rounded-xl transition-all active:scale-95"
               style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.3)', color: '#10b981' }}>
               <span className="text-lg">📂</span>
-              <p className="font-bold text-xs">Tải file lên</p>
-              <p className="text-xs opacity-60 leading-tight">JSON / CSV từ ChatGPT</p>
+              <p className="font-bold text-xs">Tải file</p>
+              <p className="text-xs opacity-60 leading-tight">JSON / CSV</p>
+            </button>
+            <button
+              onClick={() => setShowBankImport(true)}
+              className="flex flex-col items-start gap-1 px-3 py-3 rounded-xl transition-all active:scale-95"
+              style={{ background: 'rgba(250,204,21,0.08)', border: '1px solid rgba(250,204,21,0.3)', color: '#facc15' }}>
+              <span className="text-lg">📚</span>
+              <p className="font-bold text-xs">Ngân hàng</p>
+              <p className="text-xs opacity-60 leading-tight">200 câu có sẵn</p>
             </button>
           </div>
 
@@ -314,6 +324,17 @@ function CreateRoomView({
           }}
         />
       )}
+      {showBankImport && (
+        <QuestionBankImportModal
+          onClose={() => setShowBankImport(false)}
+          onCreated={(setId, setTitle) => {
+            setShowBankImport(false)
+            setSelectedSet(setId)
+            loadSets()
+            void setTitle // mark used
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -329,8 +350,9 @@ export default function GameRoomPage({ onClose }: Props) {
   const [showHistory, setShowHistory] = useState(false)
   const [showLibrary, setShowLibrary] = useState(false)
   const [showInvite, setShowInvite]   = useState(false)
-  const [showSetPicker, setShowSetPicker] = useState(false)
-  const [setPickerSets, setSetPickerSets] = useState<QuestionSet[]>([])
+  const [showSetPicker, setShowSetPicker]       = useState(false)
+  const [setPickerSets, setSetPickerSets]       = useState<QuestionSet[]>([])
+  const [showLobbyBankImport, setShowLobbyBankImport] = useState(false)
   const [startError, setStartError]   = useState('')
   const [room, setRoom]           = useState<GameRoom | null>(null)
   const [players, setPlayers]     = useState<RoomPlayer[]>([])
@@ -394,14 +416,22 @@ export default function GameRoomPage({ onClose }: Props) {
         void supabase.from('room_players').update({ final_rank: i + 1 }).eq('id', p.id)
       })
     }
-    // Each player saves their score to profiles via saveGameResultSafe
-    if (me && me.score > 0) {
-      void supabase.rpc('add_game_score_safe', {
-        p_user_id: currentUser!.id,
-        p_score:   me.score,
-        p_game_key: 'realtime_room',
-        p_date:     new Date().toISOString().slice(0, 10),
-      }).catch(() => {/* RPC may not exist yet — silent fail */})
+    // FIX: fetch fresh player data để tránh stale closure của `me`
+    // (players state có thể chưa cập nhật khi effect chạy lần đầu)
+    if (!isAdmin && currentUser) {
+      void supabase.from('room_players')
+        .select('score').eq('room_id', room.id).eq('user_id', currentUser.id).single()
+        .then(({ data }) => {
+          const freshScore = data?.score ?? 0
+          if (freshScore > 0) {
+            void supabase.rpc('add_game_score_safe', {
+              p_user_id:  currentUser.id,
+              p_score:    freshScore,
+              p_game_key: 'realtime_room',
+              p_date:     new Date().toISOString().slice(0, 10),
+            }).catch(() => {/* RPC may not exist yet — silent fail */})
+          }
+        })
     }
   }, [room?.status])  // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -570,10 +600,11 @@ export default function GameRoomPage({ onClose }: Props) {
     if (myAnswer !== null) return        // đã chọn rồi
     if (answerSubmittingRef.current) return  // đang submit
     if (room.status !== 'playing') return    // không phải lúc chơi
-    answerSubmittingRef.current = true
-    setMyAnswer(optionIndex)
+    // FIX: kiểm tra câu hỏi tồn tại TRƯỚC khi lock UI — tránh player bị khoá mà không submit được
     const q = questions[room.current_question_index]
     if (!q) return
+    answerSubmittingRef.current = true
+    setMyAnswer(optionIndex)
     const isCorrect    = optionIndex === q.correct_index
     const timeFrac     = Math.max(0, 1 - responseTimeMs / (room.question_time_limit_s * 1000))
     const basePoints   = 100  // mỗi câu đúng = 100 điểm
@@ -613,7 +644,8 @@ export default function GameRoomPage({ onClose }: Props) {
   }
 
   const handleLeave = async () => {
-    if (room && currentUser) {
+    // FIX: admin không có room_players row → chỉ cập nhật DB khi là player thường
+    if (room && currentUser && !isAdmin) {
       await supabase.from('room_players').update({ is_active: false })
         .eq('room_id', room.id).eq('user_id', currentUser.id)
     }
@@ -667,12 +699,23 @@ export default function GameRoomPage({ onClose }: Props) {
               </div>
             </div>
             <div className="flex-1 overflow-y-auto px-4 py-5 flex flex-col gap-3">
+              {/* Nút import từ question_bank — luôn hiện */}
+              <button
+                onClick={() => setShowLobbyBankImport(true)}
+                className="w-full text-left px-4 py-3 rounded-2xl transition-all active:scale-[0.98] flex items-center gap-3"
+                style={{ background: 'rgba(250,204,21,0.06)', border: '1px solid rgba(250,204,21,0.25)' }}>
+                <span style={{ fontSize: '20px' }}>📚</span>
+                <div>
+                  <p className="font-bold" style={{ fontSize: '13px', color: '#facc15' }}>Import từ Ngân hàng câu hỏi</p>
+                  <p style={{ fontSize: '11px', color: '#666', marginTop: 2 }}>Chọn câu từ 200+ câu đã import</p>
+                </div>
+                <span style={{ marginLeft: 'auto', fontSize: '16px', color: '#555' }}>→</span>
+              </button>
               {setPickerSets.length === 0 && (
-                <div className="text-center py-10">
-                  <p style={{ fontSize: '32px', marginBottom: 8 }}>📭</p>
-                  <p style={{ fontSize: '13px', color: '#555' }}>Chưa có bộ câu hỏi nào.</p>
+                <div className="text-center py-6">
+                  <p style={{ fontSize: '13px', color: '#555' }}>Chưa có bộ câu hỏi đã tạo.</p>
                   <p style={{ fontSize: '12px', color: '#444', marginTop: 4 }}>
-                    Tạo phòng mới và dùng AI hoặc tải file lên.
+                    Dùng "Ngân hàng câu hỏi" ở trên hoặc tạo bằng AI.
                   </p>
                 </div>
               )}
@@ -693,6 +736,17 @@ export default function GameRoomPage({ onClose }: Props) {
               ))}
             </div>
           </div>
+        )}
+        {/* Lobby: QuestionBankImportModal */}
+        {showLobbyBankImport && (
+          <QuestionBankImportModal
+            onClose={() => setShowLobbyBankImport(false)}
+            onCreated={(setId) => {
+              setShowLobbyBankImport(false)
+              setShowSetPicker(false)
+              void handlePickSet(setId)
+            }}
+          />
         )}
       </>
     )

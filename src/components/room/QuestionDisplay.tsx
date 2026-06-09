@@ -1,5 +1,5 @@
 // STEP 95+110: Hiển thị câu hỏi + timer đồng bộ server time + mobile polish
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { RoomQuestion, GameRoom } from './roomTypes'
 
 interface Props {
@@ -21,22 +21,27 @@ export default function QuestionDisplay({
   myAnswer, onAnswer, currentScore, myRank,
 }: Props) {
   const timeLimitS = room.question_time_limit_s
-  const [timeLeft, setTimeLeft] = useState(timeLimitS)
-  const [startedAt] = useState(() => {
+
+  // FIX: useMemo thay cho useState — tính lại mỗi khi questionIndex hoặc started_at thay đổi
+  // useState chỉ chạy lazy initializer 1 lần → câu 2, 3 timer sẽ bắt đầu từ thời điểm sai
+  const initialTime = useMemo(() => {
     if (room.current_question_started_at) {
       const elapsed = (Date.now() - new Date(room.current_question_started_at).getTime()) / 1000
       return Math.max(0, timeLimitS - elapsed)
     }
     return timeLimitS
-  })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questionIndex, room.current_question_started_at, timeLimitS])
+
+  const [timeLeft, setTimeLeft] = useState(initialTime)
 
   useEffect(() => {
-    setTimeLeft(startedAt)
+    setTimeLeft(initialTime)   // reset đúng thời gian cho mỗi câu hỏi mới
     const id = setInterval(() => {
       setTimeLeft(t => Math.max(0, t - 0.05))
     }, 50)
     return () => clearInterval(id)
-  }, [questionIndex, startedAt])
+  }, [questionIndex, initialTime])
 
   const pct        = (timeLeft / timeLimitS) * 100
   const timerColor = timeLeft > timeLimitS * 0.5 ? '#E94E1B' : timeLeft > timeLimitS * 0.25 ? '#facc15' : '#ef4444'

@@ -27,8 +27,10 @@ export default function AdminGameView({
   const [answeredCount, setAnsweredCount] = useState(0)
   const [timeLeft, setTimeLeft]           = useState(room.question_time_limit_s)
   const [autoAdvanced, setAutoAdvanced]   = useState(false)
-  const timerRef  = useRef<ReturnType<typeof setInterval> | null>(null)
-  const chanRef   = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const timerRef      = useRef<ReturnType<typeof setInterval> | null>(null)
+  const chanRef       = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  // FIX: lưu ref để clearTimeout khi component unmount — tránh leak timeout gây nhảy câu sớm
+  const nextStepRef   = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const activePlayers = players.filter(p => p.is_active)
   const sorted = [...activePlayers].sort((a, b) => b.score - a.score)
@@ -80,13 +82,18 @@ export default function AdminGameView({
       setTimeLeft(remaining)
       if (remaining === 0 && !autoAdvanced) {
         setAutoAdvanced(true)
-        // Auto advance after 1.5s when time runs out
-        setTimeout(() => onNextQuestion(), 1500)
+        // FIX: lưu vào ref để clearTimeout khi unmount — tránh leak gây nhảy câu ngay sau leaderboard
+        if (nextStepRef.current) clearTimeout(nextStepRef.current)
+        nextStepRef.current = setTimeout(() => onNextQuestion(), 1500)
       }
     }
     tick()
     timerRef.current = setInterval(tick, 500)
-    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+    return () => {
+      if (timerRef.current)  clearInterval(timerRef.current)
+      // FIX: clear leaked setTimeout khi question thay đổi hoặc component unmount
+      if (nextStepRef.current) { clearTimeout(nextStepRef.current); nextStepRef.current = null }
+    }
   }, [questionIndex, room.current_question_started_at]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const answeredPct = totalActive > 0 ? Math.round((answeredCount / totalActive) * 100) : 0
