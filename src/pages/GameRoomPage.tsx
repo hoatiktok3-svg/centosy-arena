@@ -403,12 +403,12 @@ export default function GameRoomPage({ onClose, initialCode }: Props) {
       .subscribe()
     channelRef.current = ch
 
-    // Polling fallback for room_players (RLS may block postgres_changes)
+    // Polling fallback for room_players — 1500ms để leaderboard gần realtime
     if (pollPlayersRef.current) clearInterval(pollPlayersRef.current)
     pollPlayersRef.current = setInterval(() => {
       void supabase.from('room_players').select('*').eq('room_id', roomId)
         .then(({ data }) => { if (data) setPlayers(data as RoomPlayer[]) })
-    }, 3000)
+    }, 1500)
 
     // Polling fallback for game_rooms status (RLS blocks realtime for players)
     // Without this, players stay stuck in lobby when admin starts the game
@@ -438,12 +438,23 @@ export default function GameRoomPage({ onClose, initialCode }: Props) {
   useEffect(() => {
     if (!room || room.status !== 'finished' || scoreSavedRef.current) return
     scoreSavedRef.current = true
-    // Admin updates final ranks
+    // Admin: fetch fresh player data then update final_rank
     if (isAdmin) {
-      const sorted = [...players].filter(p => p.is_active).sort((a, b) => b.score - a.score)
-      sorted.forEach((p, i) => {
-        void supabase.from('room_players').update({ final_rank: i + 1 }).eq('id', p.id)
-      })
+      void supabase.from('room_players').select('*').eq('room_id', room.id).eq('is_active', true)
+        .then(({ data: freshPlayers }) => {
+          if (!freshPlayers) return
+          const sorted = [...freshPlayers].sort((a, b) => b.score - a.score)
+          // Set players với data mới nhất
+          setPlayers(freshPlayers as RoomPlayer[])
+          sorted.forEach((p, i) => {
+            void supabase.from('room_players').update({ final_rank: i + 1 }).eq('id', p.id)
+          })
+          // Reload after ranks saved
+          setTimeout(() => {
+            void supabase.from('room_players').select('*').eq('room_id', room.id)
+              .then(({ data }) => { if (data) setPlayers(data as RoomPlayer[]) })
+          }, 800)
+        })
     }
     // Fetch fresh player data + lưu vào game_results
     if (!isAdmin && currentUser) {
@@ -667,21 +678,21 @@ export default function GameRoomPage({ onClose, initialCode }: Props) {
     const speedBonus   = Math.floor(timeFrac * basePoints * 0.5)
     const pointsEarned = isCorrect ? basePoints + speedBonus : 0
 
+    // BUG FIX: column name is chosen_index (not chosen_option)
     await supabase.from('room_answers').insert({
       room_id:          room.id,
       question_index:   room.current_question_index,
       user_id:          currentUser.id,
-      chosen_option:    optionIndex,
+      chosen_index:     optionIndex,       // ← correct column name
       is_correct:       isCorrect,
       response_time_ms: responseTimeMs,
       points_earned:    pointsEarned,
     })
-    // Update room_players score via RPC
+    // BUG FIX: DB function only accepts 3 params (no p_is_correct)
     await supabase.rpc('add_room_score_safe', {
-      p_room_id:    room.id,
-      p_user_id:    currentUser.id,
-      p_points:     pointsEarned,
-      p_is_correct: isCorrect,
+      p_room_id: room.id,
+      p_user_id: currentUser.id,
+      p_points:  pointsEarned,
     })
     answerSubmittingRef.current = false
   }
@@ -876,7 +887,7 @@ export default function GameRoomPage({ onClose, initialCode }: Props) {
   }
   if (screen === 'result' && room) {
     return <RoomResult players={players} myUserId={currentUser?.id ?? ''}
-      roomTitle={room.title} onClose={() => { void handleLeave(); onClose() }} />
+      roomTitle={room.title} roomId={room.id} onClose={() => { void handleLeave(); onClose() }} />
   }
 
   // ── Landing ───────────────────────────────────────────────
