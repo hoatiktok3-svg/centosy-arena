@@ -14,6 +14,7 @@ import SeasonLeaderboardPage from './SeasonLeaderboardPage'
 import DeptTournamentPage from './DeptTournamentPage'
 import GameRoomPage from './GameRoomPage'
 import TournamentBracketPage from './TournamentBracketPage'
+import MyGameHistory from '../components/room/MyGameHistory'
 
 const BRAND = '#E94E1B'
 
@@ -282,6 +283,7 @@ export default function GamesPage() {
   const [showDeptTournament,    setShowDeptTournament]    = useState(false)
   const [showBracket,           setShowBracket]           = useState(false)
   const [showGameRoom,          setShowGameRoom]          = useState(false)
+  const [showMyHistory,         setShowMyHistory]         = useState(false)
 
   // ── Game flow handlers ────────────────────────────────────
   const handleStart = (game: Game) => {
@@ -550,6 +552,12 @@ export default function GamesPage() {
           <span style={{ fontSize: '20px' }}>🎯</span>
           <span style={{ fontSize: '11px', color: '#E94E1B', fontWeight: 700 }}>Phòng thi Live</span>
         </button>
+        <button onClick={() => setShowMyHistory(true)}
+          className="flex-1 rounded-2xl py-3.5 flex flex-col items-center gap-1.5 transition-all active:scale-[0.97]"
+          style={{ background: '#0f0f0f', border: '1px solid #1e1e1e' }}>
+          <span style={{ fontSize: '20px' }}>📊</span>
+          <span style={{ fontSize: '11px', color: '#585858', fontWeight: 600 }}>Lịch sử</span>
+        </button>
       </div>
 
       <div className="h-2" />
@@ -562,6 +570,7 @@ export default function GamesPage() {
       {showDeptTournament    && <DeptTournamentPage    onClose={() => setShowDeptTournament(false)}    />}
       {showBracket           && <TournamentBracketPage onClose={() => setShowBracket(false)}           />}
       {showGameRoom          && <GameRoomPage          onClose={() => setShowGameRoom(false)}          />}
+      {showMyHistory         && <MyGameHistory         onClose={() => setShowMyHistory(false)}         />}
     </div>
   )
 }

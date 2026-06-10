@@ -445,21 +445,35 @@ export default function GameRoomPage({ onClose, initialCode }: Props) {
         void supabase.from('room_players').update({ final_rank: i + 1 }).eq('id', p.id)
       })
     }
-    // FIX: fetch fresh player data để tránh stale closure của `me`
-    // (players state có thể chưa cập nhật khi effect chạy lần đầu)
+    // Fetch fresh player data + lưu vào game_results
     if (!isAdmin && currentUser) {
       void supabase.from('room_players')
-        .select('score').eq('room_id', room.id).eq('user_id', currentUser.id).single()
-        .then(({ data }) => {
-          const freshScore = data?.score ?? 0
+        .select('score, correct_count, final_rank')
+        .eq('room_id', room.id)
+        .eq('user_id', currentUser.id)
+        .single()
+        .then(({ data: pd }) => {
+          const freshScore   = pd?.score ?? 0
+          const correctCount = pd?.correct_count ?? 0
+          // Lưu vào game_results (global leaderboard)
           if (freshScore > 0) {
             void supabase.rpc('add_game_score_safe', {
               p_user_id:  currentUser.id,
               p_score:    freshScore,
               p_game_key: 'realtime_room',
               p_date:     new Date().toISOString().slice(0, 10),
-            }).then(undefined, () => {/* RPC may not exist yet — silent fail */})
+            }).then(undefined, () => {/* RPC may not exist — silent fail */})
           }
+          // Ghi game_results với đầy đủ thông tin để lịch sử cá nhân
+          void supabase.from('game_results').insert({
+            user_id:         currentUser.id,
+            game_key:        'realtime_room',
+            game_title:      room.title ?? 'Phòng thi',
+            score:           freshScore,
+            max_score:       (room.total_questions ?? 0) * 150,
+            correct_count:   correctCount,
+            total_questions: room.total_questions ?? 0,
+          }).then(undefined, () => {/* silent fail */})
         })
     }
   }, [room?.status])  // eslint-disable-line react-hooks/exhaustive-deps
