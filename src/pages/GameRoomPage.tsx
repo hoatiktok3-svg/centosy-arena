@@ -372,7 +372,6 @@ export default function GameRoomPage({ onClose, initialCode }: Props) {
   const [questions, setQuestions] = useState<RoomQuestion[]>([])
   const [myAnswer, setMyAnswer]   = useState<number | null>(null)
   const channelRef                = useRef<ReturnType<typeof supabase.channel> | null>(null)
-  const autoAdvanceRef            = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pollPlayersRef            = useRef<ReturnType<typeof setInterval> | null>(null)
   const pollRoomRef               = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -473,20 +472,7 @@ export default function GameRoomPage({ onClose, initialCode }: Props) {
     } else if (room.status === 'playing') {
       setScreen('question')
       setMyAnswer(null)
-      // Admin: auto-advance to showing_leaderboard after question time limit
-      if (isAdmin && room.current_question_started_at) {
-        if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current)
-        const elapsed  = Date.now() - new Date(room.current_question_started_at).getTime()
-        const remaining = Math.max(0, room.question_time_limit_s * 1000 - elapsed + 800) // +800ms buffer
-        autoAdvanceRef.current = setTimeout(() => {
-          void supabase.from('game_rooms').update({ status: 'showing_leaderboard' }).eq('id', room.id)
-          // Bypass RLS: update local state immediately so screen transitions before AdminGameView's
-          // own 1500ms timer fires (which would call onNextQuestion() creating a race condition)
-          setRoom(prev => prev ? { ...prev, status: 'showing_leaderboard' } : null)
-        }, remaining)
-      }
     } else if (room.status === 'showing_leaderboard') {
-      if (autoAdvanceRef.current) { clearTimeout(autoAdvanceRef.current); autoAdvanceRef.current = null }
       setScreen('leaderboard')
     } else if (room.status === 'finished') {
       if (pollPlayersRef.current) { clearInterval(pollPlayersRef.current); pollPlayersRef.current = null }
@@ -614,6 +600,13 @@ export default function GameRoomPage({ onClose, initialCode }: Props) {
     }).eq('id', room.id)
     // Cập nhật local state ngay lập tức (không chờ realtime vì RLS có thể chặn SELECT)
     setRoom(prev => prev ? { ...prev, status: 'playing', current_question_index: 0, current_question_started_at: startedAt } : null)
+  }
+
+  // ── Admin: Khi hết giờ / bấm chuyển → hiện leaderboard ────
+  const handleShowLeaderboard = async () => {
+    if (!room || !isAdmin) return
+    await supabase.from('game_rooms').update({ status: 'showing_leaderboard' }).eq('id', room.id)
+    setRoom(prev => prev ? { ...prev, status: 'showing_leaderboard' } : null)
   }
 
   // ── Admin: Advance to next question / show leaderboard ───
@@ -839,7 +832,7 @@ export default function GameRoomPage({ onClose, initialCode }: Props) {
         question={currentQ}
         questionIndex={room.current_question_index}
         totalQuestions={room.total_questions || questions.length}
-        onNextQuestion={() => void handleNextQuestion()}
+        onShowLeaderboard={() => void handleShowLeaderboard()}
         onEndGame={async () => {
           const endedAt = new Date().toISOString()
           await supabase.from('game_rooms').update({ status: 'finished', ended_at: endedAt }).eq('id', room.id)
@@ -859,7 +852,7 @@ export default function GameRoomPage({ onClose, initialCode }: Props) {
     return <LiveLeaderboard players={players} myUserId={currentUser?.id ?? ''}
       questionIndex={room.current_question_index}
       totalQuestions={room.total_questions || questions.length}
-      autoNextMs={3000}
+      autoNextMs={5000}
       onNextQuestion={() => void handleLeaderboardNext()}
       isAdmin={isAdmin} />
   }

@@ -1,5 +1,5 @@
 // STEP 95: Leaderboard realtime hiển thị sau từng câu
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { RoomPlayer } from './roomTypes'
 
 interface Props {
@@ -18,21 +18,34 @@ export default function LiveLeaderboard({
   players, myUserId, questionIndex, totalQuestions,
   autoNextMs, onNextQuestion, isAdmin,
 }: Props) {
-  const [progress, setProgress] = useState(0)
+  const [progress, setProgress]     = useState(0)
+  const [countdown, setCountdown]   = useState(Math.ceil(autoNextMs / 1000))
+  const advancedRef                 = useRef(false)
   const sorted = [...players]
     .filter(p => p.is_active)
     .sort((a, b) => b.score - a.score)
 
   useEffect(() => {
     setProgress(0)
+    setCountdown(Math.ceil(autoNextMs / 1000))
+    advancedRef.current = false
+
     const step = 100
     const interval = setInterval(() => {
       setProgress(p => {
         const next = p + (step / autoNextMs) * 100
         return next >= 100 ? 100 : next
       })
+      setCountdown(c => Math.max(0, c - step / 1000))
     }, step)
-    const timeout = setTimeout(() => onNextQuestion(), autoNextMs)
+
+    // Dùng ref để tránh stale closure
+    const timeout = setTimeout(() => {
+      if (!advancedRef.current) {
+        advancedRef.current = true
+        onNextQuestion()
+      }
+    }, autoNextMs)
     return () => { clearInterval(interval); clearTimeout(timeout) }
   }, [questionIndex])  // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -53,8 +66,10 @@ export default function LiveLeaderboard({
           <div className="h-full rounded-full transition-none"
                style={{ width: `${progress}%`, background: 'linear-gradient(90deg,#E94E1B,#FF5A28)' }} />
         </div>
-        <p style={{ fontSize: '10px', color: '#444', marginTop: 4 }}>
-          {questionIndex + 1 < totalQuestions ? 'Tự chuyển câu tiếp...' : 'Câu cuối — chuẩn bị kết quả...'}
+        <p style={{ fontSize: '11px', color: '#666', marginTop: 4 }}>
+          {questionIndex + 1 < totalQuestions
+            ? `⏱ Tự chuyển câu tiếp sau ${Math.ceil(countdown)}s...`
+            : `🏁 Kết thúc sau ${Math.ceil(countdown)}s...`}
         </p>
       </div>
 

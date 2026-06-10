@@ -8,13 +8,14 @@ import { supabase } from '../../lib/supabaseClient'
 import { RoomPlayer, RoomQuestion, GameRoom } from './roomTypes'
 
 interface Props {
-  room:           GameRoom
-  players:        RoomPlayer[]         // realtime từ GameRoomPage
-  question:       RoomQuestion
-  questionIndex:  number
-  totalQuestions: number
-  onNextQuestion: () => void
-  onEndGame:      () => void
+  room:              GameRoom
+  players:           RoomPlayer[]         // realtime từ GameRoomPage
+  question:          RoomQuestion
+  questionIndex:     number
+  totalQuestions:    number
+  /** Khi admin bấm "Chuyển ngay" hoặc hết giờ → chuyển sang leaderboard */
+  onShowLeaderboard: () => void
+  onEndGame:         () => void
 }
 
 const BRAND = '#E94E1B'
@@ -22,7 +23,7 @@ const MEDALS = ['🥇', '🥈', '🥉']
 
 export default function AdminGameView({
   room, players, question, questionIndex, totalQuestions,
-  onNextQuestion, onEndGame,
+  onShowLeaderboard, onEndGame,
 }: Props) {
   const [answeredCount, setAnsweredCount] = useState(0)
   const [timeLeft, setTimeLeft]           = useState(room.question_time_limit_s)
@@ -66,9 +67,12 @@ export default function AdminGameView({
     return () => { if (chanRef.current) void supabase.removeChannel(chanRef.current) }
   }, [questionIndex, room.id])
 
-  // ── Timer countdown ────────────────────────────────────
+  // ── Timer countdown — tự động chuyển leaderboard khi hết giờ ──
+  // Dùng ref thay vì state để tránh stale closure khi gọi onShowLeaderboard
+  const shownLeaderboardRef = useRef(false)
   useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current)
+    shownLeaderboardRef.current = false
     setAutoAdvanced(false)
 
     const startedAt = room.current_question_started_at
@@ -77,28 +81,26 @@ export default function AdminGameView({
     const limitMs = room.question_time_limit_s * 1000
 
     const tick = () => {
-      const elapsed = Date.now() - startedAt
+      const elapsed   = Date.now() - startedAt
       const remaining = Math.max(0, Math.ceil((limitMs - elapsed) / 1000))
       setTimeLeft(remaining)
-      if (remaining === 0 && !autoAdvanced) {
+      if (remaining === 0 && !shownLeaderboardRef.current) {
+        shownLeaderboardRef.current = true
         setAutoAdvanced(true)
-        // FIX: lưu vào ref để clearTimeout khi unmount — tránh leak gây nhảy câu ngay sau leaderboard
-        if (nextStepRef.current) clearTimeout(nextStepRef.current)
-        nextStepRef.current = setTimeout(() => onNextQuestion(), 1500)
+        // Gọi trực tiếp — không dùng setTimeout để tránh race condition
+        onShowLeaderboard()
       }
     }
     tick()
     timerRef.current = setInterval(tick, 500)
     return () => {
-      if (timerRef.current)  clearInterval(timerRef.current)
-      // FIX: clear leaked setTimeout khi question thay đổi hoặc component unmount
+      if (timerRef.current) clearInterval(timerRef.current)
       if (nextStepRef.current) { clearTimeout(nextStepRef.current); nextStepRef.current = null }
     }
   }, [questionIndex, room.current_question_started_at]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const answeredPct = totalActive > 0 ? Math.round((answeredCount / totalActive) * 100) : 0
-  const isLastQ = questionIndex + 1 >= totalQuestions
-  const timerPct = Math.max(0, (timeLeft / room.question_time_limit_s) * 100)
+const timerPct = Math.max(0, (timeLeft / room.question_time_limit_s) * 100)
   const timerColor = timeLeft > 10 ? BRAND : timeLeft > 5 ? '#f59e0b' : '#ef4444'
 
   return (
@@ -207,15 +209,24 @@ export default function AdminGameView({
         ))}
       </div>
 
-      {/* ── Footer buttons ── */}
+      {/* ── Footer: chỉ nút bỏ qua + kết thúc sớm — tự động chuyển khi hết giờ ── */}
       <div className="shrink-0 px-4 pb-8 pt-3 flex flex-col gap-2"
            style={{ borderTop: '1px solid #1a1a1a', background: '#080808' }}>
-        <button
-          onClick={onNextQuestion}
-          className="w-full font-black text-white rounded-2xl py-4 transition-all active:scale-[0.98]"
-          style={{ fontSize: '15px', background: `linear-gradient(90deg, ${BRAND}, #FF5A28)` }}>
-          {isLastQ ? '🏁 Kết thúc & xem kết quả' : `→ Câu tiếp theo (${questionIndex + 2}/${totalQuestions})`}
-        </button>
+        {/* Hiển thị trạng thái đang tự động */}
+        {autoAdvanced ? (
+          <div className="w-full py-3.5 rounded-2xl text-center font-bold"
+               style={{ fontSize: '14px', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', color: '#10b981' }}>
+            ⏳ Đang chuyển bảng xếp hạng...
+          </div>
+        ) : (
+          <button
+            onClick={onShowLeaderboard}
+            disabled={autoAdvanced}
+            className="w-full font-black text-white rounded-2xl py-3.5 transition-all active:scale-[0.98] disabled:opacity-40"
+            style={{ fontSize: '14px', background: `rgba(233,78,27,0.15)`, border: `1px solid ${BRAND}66`, color: BRAND }}>
+            ⏩ Chuyển ngay → xếp hạng
+          </button>
+        )}
         <button
           onClick={onEndGame}
           className="w-full py-2.5 rounded-xl font-bold transition-all"
