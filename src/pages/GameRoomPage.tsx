@@ -482,6 +482,23 @@ export default function GameRoomPage({ onClose }: Props) {
     }
   }, [room?.status, room?.current_question_index])  // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Player lobby: aggressive poll every 1.5s until game starts ──
+  // Supabase Realtime postgres_changes is blocked by RLS for regular users.
+  // This effect is the PRIMARY mechanism for players to detect game start.
+  useEffect(() => {
+    if (screen !== 'lobby' || !room?.id || isAdmin) return
+    const roomId = room.id
+    const interval = setInterval(() => {
+      void supabase.from('game_rooms').select('*').eq('id', roomId).single()
+        .then(({ data, error }) => {
+          if (data && !error) {
+            setRoom(data as GameRoom)
+          }
+        })
+    }, 1500)
+    return () => clearInterval(interval)
+  }, [screen, room?.id, isAdmin])  // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleRoomCreated = (r: GameRoom) => {
     setRoom(r)
     setScreen('lobby')
