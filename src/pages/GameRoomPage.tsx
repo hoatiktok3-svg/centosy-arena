@@ -20,6 +20,7 @@ import RoomInviteModal from '../components/room/RoomInviteModal'
 import AdminGameView from '../components/room/AdminGameView'
 import QuestionUploader from '../components/room/QuestionUploader'
 import QuestionBankImportModal from '../components/room/QuestionBankImportModal'
+import { useGameAudio } from '../hooks/useGameAudio'
 
 interface Props {
   onClose: () => void
@@ -375,6 +376,14 @@ export default function GameRoomPage({ onClose, initialCode }: Props) {
   const pollPlayersRef            = useRef<ReturnType<typeof setInterval> | null>(null)
   const pollRoomRef               = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  // ── Streak tracking ───────────────────────────────────────────
+  const streakRef    = useRef(0)                  // consecutive correct answers
+  const [currentStreak, setCurrentStreak] = useState(0)
+  const answeredThisQ = useRef(false)             // did player answer current question?
+
+  // ── Audio ─────────────────────────────────────────────────────
+  const audio = useGameAudio()
+
   // ── Auto-navigate to join screen when initialCode is provided ──
   useEffect(() => {
     if (initialCode && !isAdmin) {
@@ -489,25 +498,37 @@ export default function GameRoomPage({ onClose, initialCode }: Props) {
     }
   }, [room?.status])  // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Sync screen with room status ─────────────────────────
+  // ── Sync screen with room status + music control ─────────
   useEffect(() => {
     if (!room) return
     if (room.status === 'waiting') {
       setScreen('lobby')
     } else if (room.status === 'playing') {
+      // Reset streak if player didn't answer previous question
+      if (!answeredThisQ.current && room.current_question_index > 0) {
+        streakRef.current = 0
+        setCurrentStreak(0)
+      }
+      answeredThisQ.current = false
       setScreen('question')
       setMyAnswer(null)
+      // Start music on first question
+      if (!isAdmin) {
+        audio.initAudio()
+        if (audio.musicOn) audio.startMusic()
+      }
     } else if (room.status === 'showing_leaderboard') {
       setScreen('leaderboard')
     } else if (room.status === 'finished') {
       if (pollPlayersRef.current) { clearInterval(pollPlayersRef.current); pollPlayersRef.current = null }
       if (pollRoomRef.current)    { clearInterval(pollRoomRef.current);    pollRoomRef.current    = null }
+      audio.stopMusic()
       setScreen('result')
     } else if (room.status === 'cancelled') {
-      // Someone cancelled — go back to landing
       if (pollPlayersRef.current) { clearInterval(pollPlayersRef.current); pollPlayersRef.current = null }
       if (pollRoomRef.current)    { clearInterval(pollRoomRef.current);    pollRoomRef.current    = null }
       if (channelRef.current) void supabase.removeChannel(channelRef.current)
+      audio.stopMusic()
       setRoom(null); setPlayers([]); setScreen('landing')
     }
   }, [room?.status, room?.current_question_index])  // eslint-disable-line react-hooks/exhaustive-deps
@@ -660,35 +681,45 @@ export default function GameRoomPage({ onClose, initialCode }: Props) {
     await handleNextQuestion()
   }
 
-  // ── Player: Submit answer (STEP 99: chống bấm nhiều lần) ─
+  // ── Player: Submit answer ─────────────────────────────────
   const answerSubmittingRef = useRef(false)
   const handleAnswer = async (optionIndex: number, responseTimeMs: number) => {
     if (!room || !currentUser) return
-    if (myAnswer !== null) return        // đã chọn rồi
-    if (answerSubmittingRef.current) return  // đang submit
-    if (room.status !== 'playing') return    // không phải lúc chơi
-    // FIX: kiểm tra câu hỏi tồn tại TRƯỚC khi lock UI — tránh player bị khoá mà không submit được
+    if (myAnswer !== null) return
+    if (answerSubmittingRef.current) return
+    if (room.status !== 'playing') return
     const q = questions[room.current_question_index]
     if (!q) return
     answerSubmittingRef.current = true
     setMyAnswer(optionIndex)
-    const isCorrect    = optionIndex === q.correct_index
-    const timeFrac     = Math.max(0, 1 - responseTimeMs / (room.question_time_limit_s * 1000))
-    const basePoints   = 100  // mỗi câu đúng = 100 điểm
-    const speedBonus   = Math.floor(timeFrac * basePoints * 0.5)
-    const pointsEarned = isCorrect ? basePoints + speedBonus : 0
+    answeredThisQ.current = true
 
-    // BUG FIX: column name is chosen_index (not chosen_option)
+    const isCorrect = optionIndex === q.correct_index
+
+    // ── Streak tracking ──────────────────────────────────────
+    if (isCorrect) {
+      streakRef.current++
+    } else {
+      streakRef.current = 0
+    }
+    setCurrentStreak(streakRef.current)
+
+    // ── Points: base + speed bonus + streak bonus ────────────
+    const timeFrac    = Math.max(0, 1 - responseTimeMs / (room.question_time_limit_s * 1000))
+    const speedBonus  = Math.floor(timeFrac * 50)                   // max +50
+    const streakBonus = isCorrect ? Math.min(streakRef.current, 5) * 15 : 0  // max +75
+    const basePoints  = 100
+    const pointsEarned = isCorrect ? basePoints + speedBonus + streakBonus : 0
+
     await supabase.from('room_answers').insert({
       room_id:          room.id,
       question_index:   room.current_question_index,
       user_id:          currentUser.id,
-      chosen_index:     optionIndex,       // ← correct column name
+      chosen_index:     optionIndex,
       is_correct:       isCorrect,
       response_time_ms: responseTimeMs,
       points_earned:    pointsEarned,
     })
-    // BUG FIX: DB function only accepts 3 params (no p_is_correct)
     await supabase.rpc('add_room_score_safe', {
       p_room_id: room.id,
       p_user_id: currentUser.id,
@@ -866,14 +897,26 @@ export default function GameRoomPage({ onClose, initialCode }: Props) {
       />
     }
     // Players see the question
-    return <QuestionDisplay room={room} question={currentQ}
-      questionIndex={room.current_question_index}
-      totalQuestions={room.total_questions || questions.length}
-      myAnswer={myAnswer} onAnswer={(i, ms) => void handleAnswer(i, ms)}
-      currentScore={me?.score ?? 0}
-      myRank={myRank}
-      players={players}
-      myUserId={currentUser?.id ?? ''} />
+    return (
+      <div className="relative">
+        <QuestionDisplay room={room} question={currentQ}
+          questionIndex={room.current_question_index}
+          totalQuestions={room.total_questions || questions.length}
+          myAnswer={myAnswer} onAnswer={(i, ms) => void handleAnswer(i, ms)}
+          currentScore={me?.score ?? 0}
+          myRank={myRank}
+          players={players}
+          myUserId={currentUser?.id ?? ''}
+          currentStreak={currentStreak} />
+        {/* Music toggle button — floating */}
+        <button
+          onClick={() => { audio.initAudio(); audio.toggleMusic() }}
+          className="fixed bottom-36 right-3 w-9 h-9 rounded-full flex items-center justify-center z-[200] transition-all active:scale-90"
+          style={{ background: audio.musicOn ? `${BRAND}22` : '#1a1a1a', border: `1px solid ${audio.musicOn ? BRAND + '55' : '#333'}`, fontSize: '16px' }}>
+          {audio.musicOn ? '🎵' : '🔇'}
+        </button>
+      </div>
+    )
   }
   if (screen === 'leaderboard' && room) {
     return <LiveLeaderboard players={players} myUserId={currentUser?.id ?? ''}
