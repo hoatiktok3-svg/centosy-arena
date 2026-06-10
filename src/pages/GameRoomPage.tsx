@@ -159,12 +159,14 @@ function CreateRoomView({
     if (!title.trim()) { setError('Nhập tên buổi chơi.'); return }
     setLoading(true); setError('')
     try {
-      // Generate room code via RPC
-      const { data: code } = await supabase.rpc('generate_room_code')
+      // Generate room code via RPC, fallback to client-side if RPC unavailable
+      const { data: rpcCode } = await supabase.rpc('generate_room_code')
+      const code: string = rpcCode as string
+        || Array.from({ length: 6 }, () => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random() * 36)]).join('')
       const { data: room, error: e } = await supabase
         .from('game_rooms')
         .insert({
-          code:                   code as string,
+          code,
           title:                  title.trim(),
           created_by:             currentUser!.id,
           question_set_id:        selectedSet || null,
