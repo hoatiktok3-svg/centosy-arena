@@ -363,6 +363,7 @@ export default function GameRoomPage({ onClose }: Props) {
   const channelRef                = useRef<ReturnType<typeof supabase.channel> | null>(null)
   const autoAdvanceRef            = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pollPlayersRef            = useRef<ReturnType<typeof setInterval> | null>(null)
+  const pollRoomRef               = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // ── Subscribe to room realtime ────────────────────────────
   const subscribeRoom = useCallback((roomId: string) => {
@@ -383,13 +384,21 @@ export default function GameRoomPage({ onClose }: Props) {
       })
       .subscribe()
     channelRef.current = ch
-    // Polling fallback: RLS blocks postgres_changes on room_players, so poll every 3s
-    // to ensure scores and player list stay up-to-date during gameplay
+
+    // Polling fallback for room_players (RLS may block postgres_changes)
     if (pollPlayersRef.current) clearInterval(pollPlayersRef.current)
     pollPlayersRef.current = setInterval(() => {
       void supabase.from('room_players').select('*').eq('room_id', roomId)
         .then(({ data }) => { if (data) setPlayers(data as RoomPlayer[]) })
     }, 3000)
+
+    // Polling fallback for game_rooms status (RLS blocks realtime for players)
+    // Without this, players stay stuck in lobby when admin starts the game
+    if (pollRoomRef.current) clearInterval(pollRoomRef.current)
+    pollRoomRef.current = setInterval(() => {
+      void supabase.from('game_rooms').select('*').eq('id', roomId).single()
+        .then(({ data }) => { if (data) setRoom(data as GameRoom) })
+    }, 2000)
   }, [])
 
   // ── Load questions when room started ─────────────────────
@@ -462,10 +471,12 @@ export default function GameRoomPage({ onClose }: Props) {
       setScreen('leaderboard')
     } else if (room.status === 'finished') {
       if (pollPlayersRef.current) { clearInterval(pollPlayersRef.current); pollPlayersRef.current = null }
+      if (pollRoomRef.current)    { clearInterval(pollRoomRef.current);    pollRoomRef.current    = null }
       setScreen('result')
     } else if (room.status === 'cancelled') {
       // Someone cancelled — go back to landing
       if (pollPlayersRef.current) { clearInterval(pollPlayersRef.current); pollPlayersRef.current = null }
+      if (pollRoomRef.current)    { clearInterval(pollRoomRef.current);    pollRoomRef.current    = null }
       if (channelRef.current) void supabase.removeChannel(channelRef.current)
       setRoom(null); setPlayers([]); setScreen('landing')
     }
@@ -634,6 +645,7 @@ export default function GameRoomPage({ onClose }: Props) {
 
   const stopPolling = () => {
     if (pollPlayersRef.current) { clearInterval(pollPlayersRef.current); pollPlayersRef.current = null }
+    if (pollRoomRef.current)    { clearInterval(pollRoomRef.current);    pollRoomRef.current    = null }
   }
 
   const handleCancel = async () => {
