@@ -122,7 +122,7 @@ export default function RoomInviteModal({ roomId, roomCode, roomTitle, onClose }
 
   if (sent) {
     return (
-      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm px-0 sm:px-4">
+      <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm px-0 sm:px-4">
         <div className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-8 text-center"
              style={{ background: '#111', border: '1px solid rgba(255,255,255,0.08)' }}>
           <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center text-3xl"
@@ -157,7 +157,7 @@ export default function RoomInviteModal({ roomId, roomCode, roomTitle, onClose }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm px-0 sm:px-4">
+    <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm px-0 sm:px-4">
       <div className="w-full sm:max-w-lg max-h-[92vh] flex flex-col rounded-t-3xl sm:rounded-2xl"
            style={{ background: '#111', border: '1px solid rgba(255,255,255,0.08)' }}>
 
