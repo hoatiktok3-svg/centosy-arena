@@ -23,22 +23,33 @@ import QuestionBankImportModal from '../components/room/QuestionBankImportModal'
 
 interface Props {
   onClose: () => void
+  /** Mã phòng được điền sẵn (từ lời mời) — tự chuyển màn hình join */
+  initialCode?: string
 }
 
 // ── Join by code (Player) ──────────────────────────────────────
 function JoinRoomView({
-  onJoined, onClose,
+  onJoined, onClose, initialCode: preCode,
 }: {
   onJoined: (room: GameRoom) => void
   onClose: () => void
+  initialCode?: string
 }) {
   const { currentUser } = useAuth()
-  const [code, setCode] = useState('')
+  const [code, setCode] = useState(preCode ?? '')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleJoin = async () => {
-    const trimmed = code.trim().toUpperCase()
+  // Nếu được truyền mã phòng sẵn, tự động bấm join
+  useEffect(() => {
+    if (preCode && preCode.length === 6) {
+      void handleJoin(preCode)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const handleJoin = async (overrideCode?: string) => {
+    const trimmed = (overrideCode ?? code).trim().toUpperCase()
     if (trimmed.length !== 6) { setError('Mã phòng gồm 6 ký tự.'); return }
     setLoading(true); setError('')
     try {
@@ -344,7 +355,7 @@ function CreateRoomView({
 // ── Main: GameRoomPage ─────────────────────────────────────────
 type Screen = 'landing' | 'create' | 'join' | 'lobby' | 'question' | 'leaderboard' | 'result'
 
-export default function GameRoomPage({ onClose }: Props) {
+export default function GameRoomPage({ onClose, initialCode }: Props) {
   const { currentUser } = useAuth()
   const isAdmin = canAccessAdminPanel(currentUser?.role)
 
@@ -364,6 +375,14 @@ export default function GameRoomPage({ onClose }: Props) {
   const autoAdvanceRef            = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pollPlayersRef            = useRef<ReturnType<typeof setInterval> | null>(null)
   const pollRoomRef               = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // ── Auto-navigate to join screen when initialCode is provided ──
+  useEffect(() => {
+    if (initialCode && !isAdmin) {
+      setScreen('join')
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // ── Subscribe to room realtime ────────────────────────────
   const subscribeRoom = useCallback((roomId: string) => {
@@ -695,7 +714,7 @@ export default function GameRoomPage({ onClose }: Props) {
     return <CreateRoomView onCreated={handleRoomCreated} onClose={() => setScreen('landing')} />
   }
   if (screen === 'join') {
-    return <JoinRoomView onJoined={handleRoomJoined} onClose={() => setScreen('landing')} />
+    return <JoinRoomView onJoined={handleRoomJoined} onClose={() => setScreen('landing')} initialCode={initialCode} />
   }
   if (screen === 'lobby' && room) {
     return (

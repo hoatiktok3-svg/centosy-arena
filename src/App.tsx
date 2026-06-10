@@ -12,6 +12,8 @@ import PendingApprovalScreen from './components/auth/PendingApprovalScreen'
 import ForgotPasswordScreen from './components/auth/ForgotPasswordScreen'
 import ResetPasswordScreen from './components/auth/ResetPasswordScreen'
 import NotificationCenter from './components/notifications/NotificationCenter'
+import RoomInvitationBanner from './components/room/RoomInvitationBanner'
+import GameRoomPage from './pages/GameRoomPage'
 import { useAuth } from './context/AuthContext'
 import { supabase } from './lib/supabaseClient'
 
@@ -24,6 +26,8 @@ export default function App() {
   const [authScreen,       setAuthScreen]       = useState<AuthScreen>('login')
   const [showNotifications,setShowNotifications] = useState(false)
   const [unreadCount,      setUnreadCount]      = useState(0)
+  /** Mã phòng từ lời mời → mở GameRoomPage và tự join */
+  const [inviteJoinCode,   setInviteJoinCode]   = useState<string | null>(null)
 
   // ── Lắng nghe PASSWORD_RECOVERY event từ Supabase ───────────
   // Khi user click link trong email đặt lại mật khẩu, Supabase sẽ:
@@ -113,6 +117,19 @@ export default function App() {
         <NotificationCenter
           onClose={() => setShowNotifications(false)}
           onUnreadChange={setUnreadCount}
+        />
+      )}
+
+      {/* Lời mời tham gia phòng thi — hiện toàn cục cho nhân viên */}
+      <RoomInvitationBanner
+        onJoin={(code) => setInviteJoinCode(code)}
+      />
+
+      {/* GameRoomPage mở từ lời mời — có mã phòng điền sẵn */}
+      {inviteJoinCode && (
+        <GameRoomPage
+          initialCode={inviteJoinCode}
+          onClose={() => setInviteJoinCode(null)}
         />
       )}
     </>
