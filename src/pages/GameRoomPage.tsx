@@ -860,7 +860,9 @@ export default function GameRoomPage({ onClose, initialCode }: Props) {
       totalQuestions={room.total_questions || questions.length}
       myAnswer={myAnswer} onAnswer={(i, ms) => void handleAnswer(i, ms)}
       currentScore={me?.score ?? 0}
-      myRank={myRank} />
+      myRank={myRank}
+      players={players}
+      myUserId={currentUser?.id ?? ''} />
   }
   if (screen === 'leaderboard' && room) {
     return <LiveLeaderboard players={players} myUserId={currentUser?.id ?? ''}
@@ -868,7 +870,9 @@ export default function GameRoomPage({ onClose, initialCode }: Props) {
       totalQuestions={room.total_questions || questions.length}
       autoNextMs={5000}
       onNextQuestion={() => void handleLeaderboardNext()}
-      isAdmin={isAdmin} />
+      isAdmin={isAdmin}
+      question={currentQ ?? null}
+      myAnswer={myAnswer} />
   }
   if (screen === 'result' && room) {
     return <RoomResult players={players} myUserId={currentUser?.id ?? ''}
