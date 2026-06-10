@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { getCurrentUser } from '../data/mockUsers'
 import { mockGameHistory } from '../data/mockProfile'
 import { useAuth } from '../context/AuthContext'
@@ -76,6 +76,135 @@ function rankLabel(rank: number) {
   return { text: `#${rank}`, color: 'text-text-muted' }
 }
 
+// ── Đổi mật khẩu ─────────────────────────────────────────────
+import { supabase as _supabase } from '../lib/supabaseClient'
+
+function ChangePasswordSheet({ onClose }: { onClose: () => void }) {
+  const [current,  setCurrent]  = useState('')
+  const [next,     setNext]     = useState('')
+  const [confirm,  setConfirm]  = useState('')
+  const [loading,  setLoading]  = useState(false)
+  const [error,    setError]    = useState('')
+  const [success,  setSuccess]  = useState(false)
+  const showRef = useRef({ current: false, next: false, confirm: false })
+  const [, forceUpdate] = useState(0)
+  const toggle = (field: 'current' | 'next' | 'confirm') => {
+    showRef.current[field] = !showRef.current[field]
+    forceUpdate(n => n + 1)
+  }
+
+  const handleChange = async () => {
+    setError('')
+    if (!current.trim() || !next.trim() || !confirm.trim()) { setError('Vui lòng điền đầy đủ.'); return }
+    if (next.length < 6) { setError('Mật khẩu mới tối thiểu 6 ký tự.'); return }
+    if (next !== confirm)  { setError('Mật khẩu xác nhận không khớp.'); return }
+
+    setLoading(true)
+    try {
+      // Verify current password by re-authenticating
+      const { data: { user } } = await _supabase.auth.getUser()
+      if (!user?.email) throw new Error('Không xác định được tài khoản.')
+
+      const { error: signInErr } = await _supabase.auth.signInWithPassword({
+        email: user.email, password: current,
+      })
+      if (signInErr) { setError('Mật khẩu hiện tại không đúng.'); return }
+
+      // Update to new password
+      const { error: updateErr } = await _supabase.auth.updateUser({ password: next })
+      if (updateErr) throw updateErr
+      setSuccess(true)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Đổi mật khẩu thất bại.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (success) {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-end justify-center">
+        <div className="absolute inset-0 bg-black/70" onClick={onClose} />
+        <div className="relative w-full max-w-[430px] bg-arena-card border-t border-arena-border rounded-t-2xl p-6 pb-10 z-10">
+          <div className="flex flex-col items-center gap-3 mb-5">
+            <div className="w-14 h-14 rounded-full flex items-center justify-center text-2xl"
+                 style={{ background: 'rgba(16,185,129,0.15)', border: '2px solid #10b981' }}>✅</div>
+            <p className="text-white font-bold text-base">Đổi mật khẩu thành công!</p>
+            <p className="text-text-secondary text-sm text-center">Mật khẩu mới đã được cập nhật.</p>
+          </div>
+          <button onClick={onClose}
+                  className="w-full py-3 rounded-xl font-bold text-white text-sm"
+                  style={{ background: '#E94E1B' }}>
+            Xong
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const inputStyle: React.CSSProperties = {
+    background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 12,
+    color: '#fff', fontSize: 14, padding: '10px 40px 10px 14px', width: '100%', outline: 'none',
+  }
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-end justify-center">
+      <div className="absolute inset-0 bg-black/70" onClick={onClose} />
+      <div className="relative w-full max-w-[430px] bg-arena-card border-t border-arena-border rounded-t-2xl p-5 pb-10 z-10">
+        <p className="text-white font-bold text-lg text-center mb-1">🔑 Đổi mật khẩu</p>
+        <p className="text-text-secondary text-xs text-center mb-5">Nhập mật khẩu hiện tại và chọn mật khẩu mới</p>
+
+        <div className="flex flex-col gap-3 mb-4">
+          {([
+            { label: 'Mật khẩu hiện tại', val: current, set: setCurrent, field: 'current' as const },
+            { label: 'Mật khẩu mới',      val: next,    set: setNext,    field: 'next'    as const },
+            { label: 'Xác nhận mật khẩu', val: confirm, set: setConfirm, field: 'confirm' as const },
+          ]).map(({ label, val, set, field }) => (
+            <div key={field}>
+              <p style={{ fontSize: 11, color: '#666', marginBottom: 5 }}>{label}</p>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showRef.current[field] ? 'text' : 'password'}
+                  value={val}
+                  onChange={e => { set(e.target.value); setError('') }}
+                  placeholder="••••••••"
+                  style={inputStyle}
+                />
+                <button
+                  type="button"
+                  onClick={() => toggle(field)}
+                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#555', fontSize: 14 }}>
+                  {showRef.current[field] ? '🙈' : '👁'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {error && (
+          <div className="mb-3 px-3 py-2 rounded-xl text-xs font-medium"
+               style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171' }}>
+            ⚠️ {error}
+          </div>
+        )}
+
+        <div className="flex gap-3">
+          <button onClick={onClose}
+                  className="flex-1 py-2.5 rounded-xl font-semibold text-sm"
+                  style={{ background: '#1a1a1a', color: '#888', border: '1px solid #2a2a2a' }}>
+            Huỷ
+          </button>
+          <button onClick={() => void handleChange()} disabled={loading}
+                  className="flex-1 py-2.5 rounded-xl font-bold text-white text-sm disabled:opacity-50"
+                  style={{ background: '#E94E1B' }}>
+            {loading ? 'Đang xử lý...' : 'Cập nhật'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function LogoutSheet({ onClose, onConfirm }: { onClose: () => void; onConfirm: () => void }) {
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center">
@@ -101,7 +230,8 @@ function LogoutSheet({ onClose, onConfirm }: { onClose: () => void; onConfirm: (
 
 export default function ProfilePage() {
   const { currentUser, logout } = useAuth()
-  const [showLogout,    setShowLogout]    = useState(false)
+  const [showLogout,          setShowLogout]          = useState(false)
+  const [showChangePassword,  setShowChangePassword]  = useState(false)
   const [showAdmin,     setShowAdmin]     = useState(false)
   const [showTeam,      setShowTeam]      = useState(false)
   const [showDirector,  setShowDirector]  = useState(false)
@@ -593,6 +723,14 @@ export default function ProfilePage() {
         💬 Báo lỗi / Góp ý
       </button>
 
+      {/* ── Đổi mật khẩu ── */}
+      <button
+        onClick={() => setShowChangePassword(true)}
+        className="w-full py-3 rounded-xl border border-arena-border text-text-secondary text-sm font-semibold hover:bg-arena-card transition-all active:scale-95"
+      >
+        🔑 Đổi mật khẩu
+      </button>
+
       {/* ── Đăng xuất ── */}
       <button
         onClick={() => setShowLogout(true)}
@@ -620,6 +758,10 @@ export default function ProfilePage() {
       {showPublicEvent    && <PublicEventModePage     onClose={() => setShowPublicEvent(false)}      />}
       {showTournamentExport && <TournamentExportPage  onClose={() => setShowTournamentExport(false)} />}
       {showQuestionBank     && <QuestionBankAdminPage onClose={() => setShowQuestionBank(false)}     />}
+
+      {showChangePassword && (
+        <ChangePasswordSheet onClose={() => setShowChangePassword(false)} />
+      )}
 
       {showLogout && (
         <LogoutSheet
