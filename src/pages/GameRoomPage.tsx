@@ -8,6 +8,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabaseClient'
 import { canAccessAdminPanel } from '../lib/permissions'
+
+const BRAND = '#E94E1B'
 import { GameRoom, RoomPlayer, RoomQuestion, QuestionSet } from '../components/room/roomTypes'
 import RoomLobby from '../components/room/RoomLobby'
 import QuestionDisplay from '../components/room/QuestionDisplay'

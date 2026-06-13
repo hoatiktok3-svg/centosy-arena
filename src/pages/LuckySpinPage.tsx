@@ -122,7 +122,8 @@ export default function LuckySpinPage({ onClose }: Props) {
       .order('created_at', { ascending: false })
       .limit(8)
     setGlobalFeed(
-      (feed ?? []).map((f: { prize_label: string; profiles: { full_name: string | null } | null }) => ({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (feed ?? []).map((f: any) => ({
         name: f.profiles?.full_name?.split(' ').slice(-1)[0] ?? 'Ai đó',
         prize: f.prize_label,
       }))
@@ -130,8 +131,6 @@ export default function LuckySpinPage({ onClose }: Props) {
 
     setLoading(false)
   }
-
-  const canSpin = hasFree || bonusSpins > 0 || (paidLeft > 0 && userScore >= SPIN_COST)
 
   function calcSpinAngle(prizeIdx: number): number {
     const sliceAngle = 360 / PRIZES.length

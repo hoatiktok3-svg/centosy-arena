@@ -18,7 +18,7 @@ const LOOKAHEAD = BAR * 2          // schedule 2 bars ahead
 const SCHEDULE_INTERVAL_MS = 100
 
 // C minor pentatonic (Hz): C2 Eb2 F2 G2 Bb2 / C3 Eb3 G3 / C4 Eb4 F4 G4 Bb4
-const C2 = 65.41, Eb2 = 77.78, F2 = 87.31, G2 = 98.00, Bb2 = 116.54
+const C2 = 65.41, F2 = 87.31, G2 = 98.00, Bb2 = 116.54
 const G3 = 196.00, Bb3 = 233.08
 const C4 = 261.63, Eb4 = 311.13, F4 = 349.23, G4 = 392.00, Bb4 = 466.16
 const C5 = 523.25, Eb5 = 622.25, G5 = 783.99

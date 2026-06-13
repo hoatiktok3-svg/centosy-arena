@@ -117,7 +117,6 @@ export default function RoomResult({ players: initialPlayers, myUserId, roomTitl
   }
 
   const sorted  = [...players].filter(p => p.is_active).sort((a, b) => b.score - a.score)
-  const top3    = sorted.slice(0, 3)
   const me      = sorted.find(p => p.user_id === myUserId)
   const myRank  = me ? sorted.indexOf(me) + 1 : null
   const totalQ  = details.length

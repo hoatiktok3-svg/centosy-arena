@@ -25,16 +25,6 @@ interface LCRowV2 {
   lc_score_30d: number
 }
 
-// Fallback v1 row (se xài khi view chưa có)
-interface LCRowV1 {
-  user_id:         string
-  full_name:       string | null
-  org_group:       string | null
-  score:           number
-  streak:          number
-  badge_count:     number
-  lc_score:        number
-}
 
 const GROUP_TABS = ['Tất cả', 'Cửa hàng', 'Kho', 'Văn phòng'] as const
 type GroupTab = typeof GROUP_TABS[number]
@@ -81,7 +71,8 @@ export default function LucChienLeaderboardPage({ onClose }: Props) {
         .select('id, full_name, org_group, score, streak, badge_count')
         .eq('is_active', true)
 
-      const v1rows: LCRowV2[] = (profiles ?? []).map((p: LCRowV1 & { id?: string }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const v1rows: LCRowV2[] = (profiles ?? []).map((p: any) => {
         const lc = (p.score ?? 0) + (Math.min(p.streak ?? 0, 30) * 3) + ((p.badge_count ?? 0) * 5)
         return {
           user_id:       p.id ?? '',
