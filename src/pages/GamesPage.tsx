@@ -540,7 +540,7 @@ export default function GamesPage() {
 
   const liveGames     = visibleGames.filter(g => g.status === 'active')
   const upcomingGames = mockGames.filter(g => !visibility[g.id] || g.status !== 'active')
-  const orgLabel      = currentUser?.org_group ? (ORG_MAP[currentUser.org_group] ?? currentUser.org_group) : ''
+  const orgLabel      = currentUser?.orgGroup ? (ORG_MAP[currentUser.orgGroup] ?? currentUser.orgGroup) : ''
   const initials      = currentUser?.name?.split(' ').map((w: string) => w[0]).slice(-2).join('').toUpperCase() ?? 'CV'
 
   const FEATURE_BTNS = [
