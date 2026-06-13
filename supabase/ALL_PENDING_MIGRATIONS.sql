@@ -235,6 +235,9 @@ grant execute on function public.check_free_spin to authenticated;
 -- Công thức: LC = score_30d×1 + min(streak,30)×3 + badges_30d×8 + praises_30d×3 + missions_30d×4
 -- ══════════════════════════════════════════════
 
+-- Ensure streak column exists on profiles
+alter table public.profiles add column if not exists streak integer not null default 0;
+
 -- Helper: đếm badges cấp trong 30 ngày qua
 -- (cần bảng user_badges từ badges.sql đã chạy trước)
 create or replace view public.luc_chien_scores_30d as
@@ -244,7 +247,7 @@ select
   p.org_group,
   p.department,
   p.score,
-  p.streak,
+  coalesce(p.streak, 0)                         as streak,
   -- Điểm game 30 ngày (từ game_sessions nếu có, fallback về 0)
   coalesce((
     select sum(gs.score)
