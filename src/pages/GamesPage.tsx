@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { supabase } from '../lib/supabaseClient'
 import { canAccessAdminPanel } from '../lib/permissions'
 import { mockGames, gameCategories, GameCategory, Game } from '../data/mockGames'
 import { useGameVisibility } from '../hooks/useGameVisibility'
@@ -19,6 +20,12 @@ import LuckySpinPage from './LuckySpinPage'
 import LucChienLeaderboardPage from './LucChienLeaderboardPage'
 
 const BRAND = '#E94E1B'
+
+const ORG_MAP: Record<string, string> = {
+  'cua-hang': 'Cửa hàng',
+  'kho': 'Kho',
+  'van-phong': 'Văn phòng',
+}
 
 /* ── Rule Modal ──────────────────────────────────────────────── */
 function RuleModal({ game, onClose }: { game: Game; onClose: () => void }) {
@@ -264,12 +271,103 @@ function AcademyCard({ icon, title, subtitle, accentColor, onClick }: {
   )
 }
 
+/* ── Live Game Banner ───────────────────────────────────────── */
+function LiveGameBanner({ game, onStart, onViewRule }: { game: Game; onStart: (g: Game) => void; onViewRule: (g: Game) => void }) {
+  return (
+    <div className="overflow-hidden rounded-2xl transition-all active:scale-[0.99]"
+         style={{ border: '1px solid rgba(233,78,27,0.3)', background: '#0f0f0f' }}>
+      <div style={{ height: 2, background: 'linear-gradient(90deg, #E94E1B, transparent)' }} />
+      <div className="flex items-center gap-3 px-4 py-3.5">
+        <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+             style={{ fontSize: '22px', background: 'rgba(233,78,27,0.1)', border: '1px solid rgba(233,78,27,0.2)' }}>
+          {game.icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <p className="font-black text-white truncate" style={{ fontSize: '13px' }}>{game.title}</p>
+            <span className="shrink-0 font-black rounded px-1.5 py-0.5"
+                  style={{ fontSize: '9px', background: 'rgba(74,222,128,0.12)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.25)', letterSpacing: '0.06em' }}>
+              LIVE
+            </span>
+          </div>
+          <p style={{ fontSize: '11px', color: '#585858', marginBottom: 6 }} className="line-clamp-1">{game.description}</p>
+          <div className="flex gap-1.5">
+            <span style={{ fontSize: '10px', background: '#181818', border: '1px solid #252525', borderRadius: 20, padding: '2px 8px', color: '#686868' }}>⏱ {game.duration}</span>
+            <span style={{ fontSize: '10px', background: '#181818', border: '1px solid #252525', borderRadius: 20, padding: '2px 8px', color: BRAND, fontWeight: 700 }}>🏅 {game.maxScore}đ</span>
+          </div>
+        </div>
+        <div className="flex flex-col gap-2 shrink-0">
+          <button
+            className="font-black text-white rounded-xl px-3 py-2 transition-all active:scale-[0.97]"
+            style={{ fontSize: '12px', background: `linear-gradient(90deg, ${BRAND}, #FF5A28)`, boxShadow: `0 4px 14px rgba(233,78,27,0.28)`, whiteSpace: 'nowrap' }}
+            onClick={() => onStart(game)}>
+            Chơi →
+          </button>
+          <button
+            className="rounded-xl px-3 py-1.5 font-semibold transition-all active:scale-[0.97]"
+            style={{ fontSize: '11px', color: '#585858', background: '#141414', border: '1px solid #222', whiteSpace: 'nowrap' }}
+            onClick={() => onViewRule(game)}>
+            Luật
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ── Upcoming Game Row ───────────────────────────────────────── */
+function UpcomingGameRow({ game, onViewRule }: { game: Game; onViewRule: (g: Game) => void }) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl px-4 py-3"
+         style={{ background: '#111', border: '1px solid #1e1e1e' }}>
+      <div className="text-xl w-8 text-center shrink-0">{game.icon}</div>
+      <div className="flex-1 min-w-0">
+        <p className="font-bold truncate" style={{ fontSize: '12px', color: '#585858' }}>{game.title}</p>
+        <p style={{ fontSize: '10px', color: '#383838', marginTop: 2 }}>{game.category} · {game.duration}</p>
+      </div>
+      <button
+        onClick={() => onViewRule(game)}
+        style={{ fontSize: '10px', background: '#181818', border: '1px solid #252525', borderRadius: 8, padding: '4px 10px', color: '#484848', flexShrink: 0 }}>
+        Xem
+      </button>
+    </div>
+  )
+}
+
 /* ── Main Page ───────────────────────────────────────────────── */
 export default function GamesPage() {
   const { currentUser } = useAuth()
   const isAdmin = canAccessAdminPanel(currentUser?.role)
 
   const { visibility, loading, toggle } = useGameVisibility(isAdmin)
+
+  const [userRank,     setUserRank]     = useState<number | null>(null)
+  const [userStreak,   setUserStreak]   = useState<number>(0)
+  const [sessionCount, setSessionCount] = useState<number>(0)
+  const [userScore,    setUserScore]    = useState<number>(0)
+
+  useEffect(() => {
+    if (!currentUser) return
+    async function loadStats() {
+      const [{ data: profile }, { count: rankCount }, { count: sessions }] = await Promise.all([
+        supabase.from('profiles').select('score, streak').eq('id', currentUser!.id).single(),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_active', true).gt('score', 0),
+        supabase.from('game_sessions').select('*', { count: 'exact', head: true }).eq('user_id', currentUser!.id),
+      ])
+      if (profile) {
+        const p = profile as { score: number; streak: number }
+        setUserScore(p.score ?? 0)
+        setUserStreak(p.streak ?? 0)
+        const { count: above } = await supabase
+          .from('profiles').select('*', { count: 'exact', head: true })
+          .eq('is_active', true).gt('score', p.score ?? 0)
+        setUserRank((above ?? 0) + 1)
+      }
+      void rankCount
+      setSessionCount(sessions ?? 0)
+    }
+    void loadStats()
+  }, [currentUser?.id])
 
   const [activeCategory, setActiveCategory] = useState<GameCategory>('Tất cả')
   const [ruleGame,       setRuleGame]        = useState<Game | null>(null)
@@ -437,150 +535,153 @@ export default function GamesPage() {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // USER VIEW — Tinh gọn & sang trọng
+  // USER VIEW — Game Hub
   // ═══════════════════════════════════════════════════════════
+
+  const liveGames     = visibleGames.filter(g => g.status === 'active')
+  const upcomingGames = mockGames.filter(g => !visibility[g.id] || g.status !== 'active')
+  const orgLabel      = currentUser?.org_group ? (ORG_MAP[currentUser.org_group] ?? currentUser.org_group) : ''
+  const initials      = currentUser?.name?.split(' ').map((w: string) => w[0]).slice(-2).join('').toUpperCase() ?? 'CV'
+
+  const FEATURE_BTNS = [
+    { icon: '🏆', label: 'Xếp hạng',      color: '#facc15', onClick: () => setShowGameLeaderboard(true)   },
+    { icon: '🏅', label: 'Mùa giải',       color: BRAND,     onClick: () => setShowSeasonLeaderboard(true) },
+    { icon: '⚔️', label: 'Lực Chiến',      color: '#e879f9', onClick: () => setShowLucChien(true)          },
+    { icon: '🎰', label: 'Vòng quay',      color: '#f59e0b', onClick: () => setShowLuckySpin(true)         },
+    { icon: '🎯', label: 'Phòng thi Live', color: '#10b981', onClick: () => setShowGameRoom(true)          },
+    { icon: '📊', label: 'Lịch sử',        color: '#60a5fa', onClick: () => setShowMyHistory(true)         },
+  ]
+
   return (
-    <div className="flex flex-col gap-5 py-4">
+    <div className="flex flex-col" style={{ gap: 0 }}>
 
-      {/* Hero Banner */}
-      <div className="relative overflow-hidden rounded-3xl px-5 py-6"
-           style={{
-             background: 'linear-gradient(135deg, #0f0f0f 0%, #0a0a0a 50%, #0d0d0d 100%)',
-             border: '1px solid rgba(233,78,27,0.12)',
-             boxShadow: '0 8px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.03)',
-           }}>
-        {/* Ambient glow */}
-        <div style={{
-          position: 'absolute', top: -40, right: -40, width: 160, height: 160,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(233,78,27,0.12) 0%, transparent 70%)',
-          pointerEvents: 'none',
-        }} />
-
-        <div className="relative flex items-center justify-between">
-          <div>
-            <p style={{ fontSize: '11px', color: '#484848', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 700, marginBottom: 8 }}>
-              CENTOSY
-            </p>
-            <p className="font-black text-white" style={{ fontSize: '22px', letterSpacing: '-0.5px', lineHeight: 1.1 }}>
-              Game Arena
-            </p>
-            <p style={{ fontSize: '12px', color: '#585858', marginTop: 6, lineHeight: 1.6 }}>
-              Thi đấu · Học kỹ năng · Leo bảng xếp hạng
+      {/* ── 1. Personalized Hero ─────────────────────────── */}
+      <div className="px-4 pt-5 pb-4" style={{ background: '#0e0e0e', borderBottom: '1px solid #1a1a1a' }}>
+        {/* User row */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0"
+               style={{ fontSize: '14px', background: '#1e1e1e', border: '1px solid #2a2a2a', color: '#888' }}>
+            {initials}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-black text-white truncate" style={{ fontSize: '15px' }}>{currentUser?.name ?? 'Bạn'}</p>
+            <p style={{ fontSize: '11px', color: '#484848', marginTop: 2 }}>
+              {orgLabel}{orgLabel ? ' · ' : ''}Game Arena
             </p>
           </div>
-          <div className="shrink-0 w-[64px] h-[64px] rounded-2xl flex items-center justify-center"
-               style={{ background: 'rgba(233,78,27,0.08)', border: '1px solid rgba(233,78,27,0.15)', fontSize: '28px' }}>
-            🎮
-          </div>
+          {userStreak > 0 && (
+            <div className="flex items-center gap-1.5 rounded-full px-3 py-1.5 shrink-0"
+                 style={{ background: 'rgba(251,146,60,0.1)', border: '1px solid rgba(251,146,60,0.25)' }}>
+              <span style={{ fontSize: '13px' }}>🔥</span>
+              <span style={{ fontSize: '11px', color: '#fb923c', fontWeight: 700 }}>{userStreak} ngày</span>
+            </div>
+          )}
         </div>
 
-        {/* Stats row */}
-        <div className="flex gap-3 mt-5">
-          <button
-            onClick={() => setShowGameLeaderboard(true)}
-            className="flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 transition-all active:scale-[0.97]"
-            style={{ background: 'rgba(250,204,21,0.07)', border: '1px solid rgba(250,204,21,0.2)', fontSize: '12px', color: '#facc15', fontWeight: 700 }}>
-            🏆 Xếp hạng
-          </button>
-          <button
-            onClick={() => setShowSeasonLeaderboard(true)}
-            className="flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 transition-all active:scale-[0.97]"
-            style={{ background: `rgba(233,78,27,0.07)`, border: `1px solid rgba(233,78,27,0.2)`, fontSize: '12px', color: BRAND, fontWeight: 700 }}>
-            🏅 Mùa giải
-          </button>
-          <button
-            onClick={() => setShowGameRoom(true)}
-            className="flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 transition-all active:scale-[0.97]"
-            style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.2)', fontSize: '12px', color: '#10b981', fontWeight: 700 }}>
-            🏟️ Phòng
-          </button>
-          <button
-            onClick={() => setShowLuckySpin(true)}
-            className="flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 transition-all active:scale-[0.97]"
-            style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.2)', fontSize: '12px', color: '#f59e0b', fontWeight: 700 }}>
-            🎰 Quay
-          </button>
-          <button
-            onClick={() => setShowLucChien(true)}
-            className="flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 transition-all active:scale-[0.97]"
-            style={{ background: 'rgba(232,121,249,0.07)', border: '1px solid rgba(232,121,249,0.2)', fontSize: '12px', color: '#e879f9', fontWeight: 700 }}>
-            ⚔️ LC
-          </button>
+        {/* Stats 3-col */}
+        <div className="grid grid-cols-3 gap-2">
+          <div className="rounded-xl py-3 text-center" style={{ background: '#141414', border: '1px solid #222' }}>
+            <p className="font-black" style={{ fontSize: '20px', color: '#facc15', lineHeight: 1 }}>
+              {userRank ? `#${userRank}` : '—'}
+            </p>
+            <p style={{ fontSize: '10px', color: '#484848', marginTop: 5 }}>Hạng</p>
+          </div>
+          <div className="rounded-xl py-3 text-center" style={{ background: '#141414', border: '1px solid #222' }}>
+            <p className="font-black" style={{ fontSize: '20px', color: BRAND, lineHeight: 1 }}>
+              {userScore.toLocaleString()}
+            </p>
+            <p style={{ fontSize: '10px', color: '#484848', marginTop: 5 }}>Điểm</p>
+          </div>
+          <div className="rounded-xl py-3 text-center" style={{ background: '#141414', border: '1px solid #222' }}>
+            <p className="font-black" style={{ fontSize: '20px', color: '#f0f0f0', lineHeight: 1 }}>{sessionCount}</p>
+            <p style={{ fontSize: '10px', color: '#484848', marginTop: 5 }}>Trận</p>
+          </div>
         </div>
       </div>
 
-      {/* Academy quick-access */}
-      <div className="flex flex-col gap-2">
-        <p style={{ fontSize: '11px', color: '#404040', letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700 }}>
-          Học & Phát triển
+      {/* ── 2. Feature Grid 3×2 ──────────────────────────── */}
+      <div className="px-4 pt-4 pb-2">
+        <p style={{ fontSize: '10px', color: '#404040', letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700, marginBottom: 10 }}>
+          Tính năng
         </p>
-        <AcademyCard icon="📚" title="Học viện Centosy" subtitle="Bài học sản phẩm · kỹ năng · quy trình"
-          accentColor="#60a5fa" onClick={() => setShowTrainingLibrary(true)} />
-        <AcademyCard icon="🚀" title="Onboarding 7 ngày" subtitle="Checklist nhân viên mới · tiến độ hội nhập"
-          accentColor="#a78bfa" onClick={() => setShowOnboarding(true)} />
+        <div className="grid grid-cols-3 gap-2">
+          {FEATURE_BTNS.map(f => (
+            <button key={f.label} onClick={f.onClick}
+              className="rounded-xl py-3 px-2 flex flex-col items-center gap-1.5 transition-all active:scale-[0.96]"
+              style={{ background: `${f.color}12`, border: `1px solid ${f.color}28` }}>
+              <span style={{ fontSize: '22px', lineHeight: 1 }}>{f.icon}</span>
+              <span style={{ fontSize: '10px', color: f.color, fontWeight: 700, textAlign: 'center', lineHeight: 1.3 }}>{f.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* ── Games Section ──────────────────────────────────── */}
-      <div>
-        {loading
-          ? /* Skeleton */
+      {/* ── 3. Live Games ────────────────────────────────── */}
+      <div className="px-4 pt-4 pb-1">
+        {loading ? (
+          <div className="flex flex-col gap-3">
+            {[1,2].map(i => <div key={i} className="h-20 rounded-2xl animate-pulse" style={{ background: '#111' }} />)}
+          </div>
+        ) : liveGames.length > 0 ? (
+          <>
+            <p style={{ fontSize: '10px', color: '#4ade80', letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700, marginBottom: 10 }}>
+              🔴 Đang mở · {liveGames.length}
+            </p>
             <div className="flex flex-col gap-3">
-              {[1,2].map(i => (
-                <div key={i} className="h-[180px] rounded-2xl animate-pulse" style={{ background: '#111' }} />
+              {liveGames.map(game => (
+                <LiveGameBanner key={game.id} game={game} onStart={handleStart} onViewRule={setRuleGame} />
               ))}
             </div>
-          : visibleGames.length === 0
-            ? <EmptyGameState />
-            : <>
-                <div className="flex items-center justify-between mb-3">
-                  <p style={{ fontSize: '11px', color: '#404040', letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700 }}>
-                    🎯 Game đang mở · {visibleGames.length}
-                  </p>
-                  {visibleGames.length > 2 && (
-                    <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                      {gameCategories.slice(0, 4).map(cat => (
-                        <button key={cat} onClick={() => setActiveCategory(cat)}
-                          className={activeCategory === cat ? 'filter-pill-active' : 'filter-pill-inactive'}
-                          style={{ fontSize: '10px' }}>
-                          {cat}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="flex flex-col gap-3">
-                  {visibleGames.map(game => (
-                    <UserGameCard key={game.id} game={game} onViewRule={setRuleGame} onStart={handleStart} />
-                  ))}
-                </div>
-              </>
-        }
+          </>
+        ) : (
+          <EmptyGameState />
+        )}
       </div>
 
-      {/* Additional links */}
-      <div className="flex gap-2 pt-1">
-        <button onClick={() => setShowDeptTournament(true)}
-          className="flex-1 rounded-2xl py-3.5 flex flex-col items-center gap-1.5 transition-all active:scale-[0.97]"
-          style={{ background: '#0f0f0f', border: '1px solid #1e1e1e' }}>
-          <span style={{ fontSize: '20px' }}>🏢</span>
-          <span style={{ fontSize: '11px', color: '#585858', fontWeight: 600 }}>Phòng ban</span>
-        </button>
-        <button onClick={() => setShowGameRoom(true)}
-          className="flex-1 rounded-2xl py-3.5 flex flex-col items-center gap-1.5 transition-all active:scale-[0.97]"
-          style={{ background: 'rgba(233,78,27,0.06)', border: '1px solid rgba(233,78,27,0.2)' }}>
-          <span style={{ fontSize: '20px' }}>🎯</span>
-          <span style={{ fontSize: '11px', color: '#E94E1B', fontWeight: 700 }}>Phòng thi Live</span>
-        </button>
-        <button onClick={() => setShowMyHistory(true)}
-          className="flex-1 rounded-2xl py-3.5 flex flex-col items-center gap-1.5 transition-all active:scale-[0.97]"
-          style={{ background: '#0f0f0f', border: '1px solid #1e1e1e' }}>
-          <span style={{ fontSize: '20px' }}>📊</span>
-          <span style={{ fontSize: '11px', color: '#585858', fontWeight: 600 }}>Lịch sử</span>
-        </button>
+      {/* ── 4. Upcoming (compact rows) ───────────────────── */}
+      {upcomingGames.length > 0 && (
+        <div className="px-4 pt-4 pb-1">
+          <div className="flex items-center justify-between mb-3">
+            <p style={{ fontSize: '10px', color: '#404040', letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700 }}>
+              Sắp ra mắt
+            </p>
+            {upcomingGames.length > 2 && (
+              <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                {gameCategories.slice(0, 4).map(cat => (
+                  <button key={cat} onClick={() => setActiveCategory(cat)}
+                    className={activeCategory === cat ? 'filter-pill-active' : 'filter-pill-inactive'}
+                    style={{ fontSize: '10px' }}>
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col gap-2">
+            {(activeCategory === 'Tất cả' ? upcomingGames : upcomingGames.filter(g => g.category === activeCategory))
+              .map(game => (
+                <UpcomingGameRow key={game.id} game={game} onViewRule={setRuleGame} />
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── 5. Học & Phát triển (bottom) ─────────────────── */}
+      <div className="px-4 pt-5 pb-2" style={{ borderTop: '1px solid #141414', marginTop: 12 }}>
+        <p style={{ fontSize: '10px', color: '#404040', letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700, marginBottom: 10 }}>
+          Học & Phát triển
+        </p>
+        <div className="flex flex-col gap-2">
+          <AcademyCard icon="📚" title="Học viện Centosy" subtitle="Bài học sản phẩm · kỹ năng · quy trình"
+            accentColor="#60a5fa" onClick={() => setShowTrainingLibrary(true)} />
+          <AcademyCard icon="🚀" title="Onboarding 7 ngày" subtitle="Checklist nhân viên mới · tiến độ hội nhập"
+            accentColor="#a78bfa" onClick={() => setShowOnboarding(true)} />
+          <AcademyCard icon="🏢" title="Giải đấu phòng ban" subtitle="Xem bảng thi đua theo bộ phận"
+            accentColor="#8b5cf6" onClick={() => setShowDeptTournament(true)} />
+        </div>
       </div>
 
-      <div className="h-2" />
+      <div className="h-4" />
       {ruleGame && <RuleModal game={ruleGame} onClose={() => setRuleGame(null)} />}
       {showProductQuiz       && <ProductQuizPage       onClose={() => setShowProductQuiz(false)}       />}
       {showTrainingLibrary   && <TrainingLibraryPage   onClose={() => setShowTrainingLibrary(false)}   />}
