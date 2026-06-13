@@ -15,6 +15,7 @@ import DeptTournamentPage from './DeptTournamentPage'
 import GameRoomPage from './GameRoomPage'
 import TournamentBracketPage from './TournamentBracketPage'
 import MyGameHistory from '../components/room/MyGameHistory'
+import LuckySpinPage from './LuckySpinPage'
 
 const BRAND = '#E94E1B'
 
@@ -284,6 +285,7 @@ export default function GamesPage() {
   const [showBracket,           setShowBracket]           = useState(false)
   const [showGameRoom,          setShowGameRoom]          = useState(false)
   const [showMyHistory,         setShowMyHistory]         = useState(false)
+  const [showLuckySpin,         setShowLuckySpin]         = useState(false)
 
   // ── Game flow handlers ────────────────────────────────────
   const handleStart = (game: Game) => {
@@ -333,6 +335,7 @@ export default function GamesPage() {
             { label: '🏅 Mùa',      color: BRAND,     onClick: () => setShowSeasonLeaderboard(true) },
             { label: '🏢 Phòng ban', color: '#8b5cf6', onClick: () => setShowDeptTournament(true)    },
             { label: '🎯 Phòng thi',  color: '#10b981', onClick: () => setShowGameRoom(true)           },
+            { label: '🎰 Vòng Quay', color: '#f59e0b', onClick: () => setShowLuckySpin(true)           },
           ].map(btn => (
             <button key={btn.label} onClick={btn.onClick}
               className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold whitespace-nowrap"
@@ -424,6 +427,7 @@ export default function GamesPage() {
 
         {showBracket           && <TournamentBracketPage onClose={() => setShowBracket(false)}           />}
         {showGameRoom          && <GameRoomPage          onClose={() => setShowGameRoom(false)}          />}
+        {showLuckySpin         && <LuckySpinPage         onClose={() => setShowLuckySpin(false)}         />}
       </div>
     )
   }
@@ -486,6 +490,12 @@ export default function GamesPage() {
             className="flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 transition-all active:scale-[0.97]"
             style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.2)', fontSize: '12px', color: '#10b981', fontWeight: 700 }}>
             🏟️ Phòng
+          </button>
+          <button
+            onClick={() => setShowLuckySpin(true)}
+            className="flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 transition-all active:scale-[0.97]"
+            style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.2)', fontSize: '12px', color: '#f59e0b', fontWeight: 700 }}>
+            🎰 Quay
           </button>
         </div>
       </div>
@@ -571,6 +581,7 @@ export default function GamesPage() {
       {showBracket           && <TournamentBracketPage onClose={() => setShowBracket(false)}           />}
       {showGameRoom          && <GameRoomPage          onClose={() => setShowGameRoom(false)}          />}
       {showMyHistory         && <MyGameHistory         onClose={() => setShowMyHistory(false)}         />}
+      {showLuckySpin         && <LuckySpinPage         onClose={() => setShowLuckySpin(false)}         />}
     </div>
   )
 }
