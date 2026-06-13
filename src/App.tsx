@@ -1,21 +1,35 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import Layout from './components/Layout'
-import HomePage from './pages/HomePage'
-import GamesPage from './pages/GamesPage'
-import RankPage from './pages/RankPage'
-import HonorPage from './pages/HonorPage'
-import MissionsPage from './pages/MissionsPage'
-import ProfilePage from './pages/ProfilePage'
 import LoginScreen from './components/auth/LoginScreen'
 import RegisterScreen from './components/auth/RegisterScreen'
 import PendingApprovalScreen from './components/auth/PendingApprovalScreen'
 import ForgotPasswordScreen from './components/auth/ForgotPasswordScreen'
 import ResetPasswordScreen from './components/auth/ResetPasswordScreen'
-import NotificationCenter from './components/notifications/NotificationCenter'
-import RoomInvitationBanner from './components/room/RoomInvitationBanner'
-import GameRoomPage from './pages/GameRoomPage'
 import { useAuth } from './context/AuthContext'
 import { supabase } from './lib/supabaseClient'
+
+// ── Lazy-load heavy pages để giảm bundle chính ────────────────
+const HomePage      = lazy(() => import('./pages/HomePage'))
+const GamesPage     = lazy(() => import('./pages/GamesPage'))
+const RankPage      = lazy(() => import('./pages/RankPage'))
+const HonorPage     = lazy(() => import('./pages/HonorPage'))
+const MissionsPage  = lazy(() => import('./pages/MissionsPage'))
+const ProfilePage   = lazy(() => import('./pages/ProfilePage'))
+const NotificationCenter   = lazy(() => import('./components/notifications/NotificationCenter'))
+const RoomInvitationBanner = lazy(() => import('./components/room/RoomInvitationBanner'))
+const GameRoomPage  = lazy(() => import('./pages/GameRoomPage'))
+
+// Skeleton loading fallback
+function PageSkeleton() {
+  return (
+    <div className="flex flex-col gap-4 py-4 px-4 animate-pulse">
+      <div className="h-8 w-48 rounded-xl bg-arena-card" />
+      <div className="h-32 rounded-2xl bg-arena-card" />
+      <div className="h-24 rounded-2xl bg-arena-card" />
+      <div className="h-24 rounded-2xl bg-arena-card" />
+    </div>
+  )
+}
 
 type Tab = 'home' | 'games' | 'rank' | 'honor' | 'missions' | 'profile'
 type AuthScreen = 'login' | 'register' | 'forgot-password' | 'reset-password'
@@ -110,28 +124,32 @@ export default function App() {
         unreadCount={unreadCount}
         onBellClick={() => setShowNotifications(true)}
       >
-        {renderPage()}
+        <Suspense fallback={<PageSkeleton />}>
+          {renderPage()}
+        </Suspense>
       </Layout>
 
-      {showNotifications && (
-        <NotificationCenter
-          onClose={() => setShowNotifications(false)}
-          onUnreadChange={setUnreadCount}
-        />
-      )}
+      <Suspense fallback={null}>
+        {showNotifications && (
+          <NotificationCenter
+            onClose={() => setShowNotifications(false)}
+            onUnreadChange={setUnreadCount}
+          />
+        )}
 
-      {/* Lời mời tham gia phòng thi — hiện toàn cục cho nhân viên */}
-      <RoomInvitationBanner
-        onJoin={(code) => setInviteJoinCode(code)}
-      />
-
-      {/* GameRoomPage mở từ lời mời — có mã phòng điền sẵn */}
-      {inviteJoinCode && (
-        <GameRoomPage
-          initialCode={inviteJoinCode}
-          onClose={() => setInviteJoinCode(null)}
+        {/* Lời mời tham gia phòng thi — hiện toàn cục cho nhân viên */}
+        <RoomInvitationBanner
+          onJoin={(code) => setInviteJoinCode(code)}
         />
-      )}
+
+        {/* GameRoomPage mở từ lời mời — có mã phòng điền sẵn */}
+        {inviteJoinCode && (
+          <GameRoomPage
+            initialCode={inviteJoinCode}
+            onClose={() => setInviteJoinCode(null)}
+          />
+        )}
+      </Suspense>
     </>
   )
 }

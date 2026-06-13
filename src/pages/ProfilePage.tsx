@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { getCurrentUser } from '../data/mockUsers'
-import { mockGameHistory } from '../data/mockProfile'
 import { useAuth } from '../context/AuthContext'
 import AdminPanel from '../components/admin/AdminPanel'
 import TeamDashboard from '../components/team/TeamDashboard'
@@ -41,6 +40,22 @@ interface MissionSubmissionRow {
   status:    string
   created_at:string
   missions:  { title: string; points: number } | null
+}
+
+interface GameHistoryItem {
+  id:         string
+  score:      number
+  rank:       number | null
+  created_at: string
+  game_rooms: { name: string | null } | null
+}
+
+interface GameHistoryDisplay {
+  id:           string
+  gameTitle:    string
+  score:        number
+  rank:         number | null
+  playedAt:     string
 }
 
 const ORG_GROUP_LABEL: Record<string, string> = {
@@ -251,6 +266,7 @@ export default function ProfilePage() {
   const [showQuestionBank,     setShowQuestionBank]     = useState(false)
   const [myBadgeIds,      setMyBadgeIds]      = useState<string[] | null>(null) // null = loading
   const [recentMissions,  setRecentMissions]  = useState<RecentMission[] | null>(null)
+  const [gameHistory,     setGameHistory]     = useState<GameHistoryDisplay[] | null>(null)
 
   // Fetch real badges từ Supabase
   useEffect(() => {
@@ -288,8 +304,32 @@ export default function ProfilePage() {
     void fetchMissions()
   }, [currentUser?.id])
 
-  const winGames = mockGameHistory.filter(g => g.rank === 1).length
-  const totalGames = mockGameHistory.length
+  // Fetch game history từ Supabase (real data thay mock)
+  useEffect(() => {
+    if (!currentUser?.id) return
+    async function fetchHistory() {
+      const { data } = await supabase
+        .from('game_sessions')
+        .select('id, score, rank, created_at, game_rooms(name)')
+        .eq('user_id', currentUser!.id)
+        .eq('score_credited', true)
+        .order('created_at', { ascending: false })
+        .limit(10)
+      setGameHistory(
+        ((data ?? []) as unknown as GameHistoryItem[]).map(r => ({
+          id:        r.id,
+          gameTitle: r.game_rooms?.name ?? 'Phòng thi',
+          score:     r.score,
+          rank:      r.rank,
+          playedAt:  new Date(r.created_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+        }))
+      )
+    }
+    void fetchHistory()
+  }, [currentUser?.id])
+
+  const winGames  = (gameHistory ?? []).filter(g => g.rank === 1).length
+  const totalGames = (gameHistory ?? []).length
 
   // currentUser luôn có giá trị khi đã qua auth guard
   // Nếu title rỗng → profile chưa được Admin tạo đầy đủ trong Supabase
@@ -689,30 +729,42 @@ export default function ProfilePage() {
         )}
       </div>
 
-      {/* ── Lịch sử game (mock — sẽ thay bằng real data ở step sau) ── */}
+      {/* ── Lịch sử game (real data từ Supabase) ── */}
       <div>
         <div className="flex items-center justify-between mb-2">
           <p className="section-title">🎮 Lịch sử game</p>
-          <span className="badge-brand">{winGames} chiến thắng</span>
+          {winGames > 0 && <span className="badge-brand">{winGames} chiến thắng</span>}
         </div>
-        <div className="arena-card p-0 overflow-hidden divide-y divide-arena-border">
-          {mockGameHistory.map(g => {
-            const rl = rankLabel(g.rank)
-            return (
-              <div key={g.id} className="flex items-center gap-3 px-4 py-3">
-                <span className="text-xl shrink-0">{g.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-sm font-semibold truncate">{g.gameTitle}</p>
-                  <p className="text-text-muted text-[10px]">{g.playedAt} · {g.totalPlayers} người chơi</p>
+        {gameHistory === null ? (
+          <div className="arena-card flex flex-col gap-2">
+            {[1,2,3].map(i => <div key={i} className="h-10 rounded-xl animate-pulse bg-arena-border" />)}
+          </div>
+        ) : gameHistory.length === 0 ? (
+          <div className="arena-card flex flex-col items-center gap-2 py-6">
+            <span className="text-3xl">🎮</span>
+            <p className="text-text-muted text-sm">Chưa có lịch sử game</p>
+            <p className="text-text-muted text-xs">Tham gia phòng thi để bắt đầu!</p>
+          </div>
+        ) : (
+          <div className="arena-card p-0 overflow-hidden divide-y divide-arena-border">
+            {gameHistory.map(g => {
+              const rl = rankLabel(g.rank ?? 99)
+              return (
+                <div key={g.id} className="flex items-center gap-3 px-4 py-3">
+                  <span className="text-xl shrink-0">🎮</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-sm font-semibold truncate">{g.gameTitle}</p>
+                    <p className="text-text-muted text-[10px]">{g.playedAt}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className={`font-black text-sm ${rl.color}`}>{rl.text}</p>
+                    <p className="text-brand text-xs font-bold">{g.score} đ</p>
+                  </div>
                 </div>
-                <div className="text-right shrink-0">
-                  <p className={`font-black text-sm ${rl.color}`}>{rl.text}</p>
-                  <p className="text-brand text-xs font-bold">{g.score} đ</p>
-                </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* ── Báo lỗi / Góp ý ── */}

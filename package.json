@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "import:questions": "tsx scripts/import-questions-csv.ts",
-    "check:questions":  "tsx scripts/check-question-bank.ts"
+    "check:questions": "tsx scripts/check-question-bank.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.107.0",
@@ -24,6 +24,7 @@
     "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.20",
+    "playwright": "^1.60.0",
     "postcss": "^8.4.41",
     "tailwindcss": "^3.4.10",
     "tsx": "^4.22.4",
