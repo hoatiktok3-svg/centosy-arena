@@ -86,7 +86,7 @@ export default function LuckySpinPage({ onClose }: Props) {
     // Check free spin
     const { data: freeCheck } = await supabase
       .rpc('check_free_spin', { p_week: week })
-    setHasFree(freeCheck ?? true)
+    setHasFree(freeCheck === true)
 
     // Count paid spins this week
     const { count } = await supabase
@@ -330,7 +330,7 @@ export default function LuckySpinPage({ onClose }: Props) {
                 <span className="text-5xl">{result.type === 'miss' ? '😅' : result.type === 'badge' ? '🌟' : result.type === 'bonus_spin' ? '🎁' : '🎉'}</span>
                 <p className="text-white font-black text-xl" style={{ color: result.color }}>{result.label}</p>
                 <p className="text-text-secondary text-sm">{result.sublabel}</p>
-                <button onClick={() => setShowResult(false)} className="text-text-muted text-xs mt-1">Đóng</button>
+                <button onClick={() => { setShowResult(false); void loadState() }} className="text-text-muted text-xs mt-1">Đóng</button>
               </div>
             )}
 
